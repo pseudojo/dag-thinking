@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "dag-headroom": {
+      "type": "stdio",
+      "command": "D:\\workspace\\dag-headroom\\.venv\\Scripts\\python.exe",
+      "args": ["-m", "src.server"],
+      "env": {
+        "PYTHONPATH": "D:\\workspace\\dag-headroom"
+      }
+    }
+  }
+}
