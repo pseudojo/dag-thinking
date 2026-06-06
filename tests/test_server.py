@@ -280,7 +280,7 @@ class TestRestore:
 
 class TestCompressionPassthrough:
     def test_short_payload_passthrough(self, db_path):
-        # C10: <280 chars → compressed=NULL, tokens_saved=0
+        # C10: <100 chars → compressed=NULL, tokens_saved=0
         short = "This is a short payload under 280 characters. " * 2  # ~94 chars
         result = think(db_path, "s1", "short_node", "Objective", short)
         assert result["compression"]["tokens_saved"] == 0

@@ -17,10 +17,11 @@ IMPORTANCE_KEYWORDS = frozenset({
     "because", "since", "thus", "hence", "consequently",
 })
 
-_PASSTHROUGH_LEN = 280
-_SAVINGS_THRESHOLD = 0.10  # skip if savings < 10%
-_RATIO_SHORT = 0.58         # 280–700 chars → keep 58%
-_RATIO_LONG = 0.42          # 700+ chars → keep 42%
+_PASSTHROUGH_LEN = 100       # real Claude payloads avg ~200 chars; was 280
+_SAVINGS_THRESHOLD = 0.10    # skip if savings < 10%
+_RATIO_TINY = 0.70           # 100–280 chars → keep 70%
+_RATIO_SHORT = 0.58          # 280–700 chars → keep 58%
+_RATIO_LONG = 0.42           # 700+ chars → keep 42%
 
 
 # ---------------------------------------------------------------------------
@@ -124,14 +125,19 @@ def _compress_prose(text: str, target_ratio: float) -> str:
 def compress(text: str) -> Tuple[str, str, int]:
     """
     Returns (compressed_text, ccr_hash_24char, tokens_saved).
-    passthrough when: len < 280, or savings < 10%.
+    passthrough when: len < 100, or savings < 10%.
     """
     hash_val = ccr_hash(text)
 
     if len(text) < _PASSTHROUGH_LEN:
         return text, hash_val, 0
 
-    target_ratio = _RATIO_LONG if len(text) >= 700 else _RATIO_SHORT
+    if len(text) >= 700:
+        target_ratio = _RATIO_LONG
+    elif len(text) >= 280:
+        target_ratio = _RATIO_SHORT
+    else:
+        target_ratio = _RATIO_TINY
 
     if _is_list_content(text):
         compressed = _compress_list(text, target_ratio)

@@ -8,7 +8,6 @@ from datetime import datetime
 from typing import Literal, Optional
 
 from fastmcp import FastMCP
-from pydantic import BaseModel, Field
 
 from .compressor import compress, estimate_tokens
 
@@ -545,42 +544,41 @@ def _action_restore(
 mcp = FastMCP("dag-headroom")
 
 
-class DagHeadroomInput(BaseModel):
-    action: Literal["think", "status", "invalidate", "restore"]
-    session_id: str = Field(..., description="Unique session identifier")
-
-    node_name: Optional[str] = Field(None, description="Node name (think only)")
+@mcp.tool()
+def dag_headroom(
+    action: Literal["think", "status", "invalidate", "restore"],
+    session_id: str,
+    node_name: Optional[str] = None,
     thought_type: Optional[Literal[
         "Objective", "Hypothesis", "Assumption",
         "Evidence", "Critique", "Synthesis", "Action"
-    ]] = Field(None, description="Type of thought (think only)")
-    payload: Optional[str] = Field(None, description="Node content, 80–1500 chars (think only)")
-    depends_on: list[str] = Field(default_factory=list, description="Parent node names")
-    note: str = Field("", description="Scratchpad, not compressed")
-
-    target_node: Optional[str] = Field(None, description="Node to invalidate (invalidate only)")
-    reason: str = Field("", description="Reason for invalidation")
-
-    ccr_hash: Optional[str] = Field(None, description="Hash to restore (restore only; None=list)")
-
-
-@mcp.tool()
-def dag_headroom(input: DagHeadroomInput) -> dict:
+    ]] = None,
+    payload: Optional[str] = None,
+    depends_on: list[str] = [],
+    note: str = "",
+    target_node: Optional[str] = None,
+    reason: str = "",
+    ccr_hash: Optional[str] = None,
+) -> dict:
     """
     Single entry point for DAG-structured reasoning with automatic CCR context compression.
-    action: think | status | invalidate | restore
+
+    action="think"      — create/update a reasoning node (node_name, thought_type, payload required)
+    action="status"     — show DAG topology, metrics, and restoration manifest
+    action="invalidate" — cascade-invalidate a node and its descendants (target_node required)
+    action="restore"    — retrieve original payload by ccr_hash; omit hash to list all restorable nodes
     """
     return call_dag_headroom(
-        action=input.action,
-        session_id=input.session_id,
-        node_name=input.node_name,
-        thought_type=input.thought_type,
-        payload=input.payload,
-        depends_on=input.depends_on,
-        note=input.note,
-        target_node=input.target_node,
-        reason=input.reason,
-        ccr_hash=input.ccr_hash,
+        action=action,
+        session_id=session_id,
+        node_name=node_name,
+        thought_type=thought_type,
+        payload=payload,
+        depends_on=depends_on,
+        note=note,
+        target_node=target_node,
+        reason=reason,
+        ccr_hash=ccr_hash,
     )
 
 
