@@ -1,12 +1,19 @@
 {
   "mcpServers": {
-    "dag-headroom": {
+    "headroom": {
       "type": "stdio",
-      "command": "D:\\workspace\\dag-headroom\\.venv\\Scripts\\python.exe",
-      "args": ["-m", "src.server"],
-      "env": {
-        "PYTHONPATH": "D:\\workspace\\dag-headroom"
-      }
+      "command": "wsl",
+      "args": [
+        "-d", "Ubuntu",
+        "--",
+        "bash", "-c",
+        "export PATH='/home/hgcho/.local/bin:$PATH' && uvx --python 3.13 --from 'headroom-ai[mcp,proxy]' headroom mcp serve"
+      ]
+    },
+    "sequential-thinking": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
     }
   }
 }
