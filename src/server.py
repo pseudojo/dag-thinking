@@ -88,57 +88,28 @@ def _ensure_session(conn: sqlite3.Connection, session_id: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# T04: _has_cycle — DFS cycle detection
+# T04: _has_cycle — DFS cycle detection (I01: simplified to single DFS)
 # ---------------------------------------------------------------------------
 
 def _has_cycle(conn: sqlite3.Connection, session_id: str, new_parent: str, new_child: str) -> bool:
-    """Return True if adding edge new_parent→new_child would create a cycle."""
-    # Build adjacency: child → [parents] (reverse edges for ancestor search)
+    """Return True if adding edge new_parent→new_child would create a cycle.
+
+    Strategy: if new_child can already reach new_parent via existing forward
+    edges, then adding new_parent→new_child would close a cycle.
+    Single forward-DFS from new_child; self-reference handled upfront.
+    """
+    if new_parent == new_child:
+        return True
+
     rows = conn.execute(
         "SELECT parent, child FROM edges WHERE session_id=?", (session_id,)
     ).fetchall()
-    graph: dict[str, list[str]] = {}
-    for row in rows:
-        graph.setdefault(row["child"], []).append(row["parent"])
-
-    # Also add the prospective edge
-    graph.setdefault(new_child, []).append(new_parent)
-
-    # DFS from new_parent — can we reach new_child through existing parents?
-    # Equivalently: can we reach new_parent starting from new_child?
-    visited = set()
-    stack = [new_child]
-    while stack:
-        node = stack.pop()
-        if node == new_parent:
-            return True
-        if node in visited:
-            continue
-        visited.add(node)
-        # Walk from child's perspective upward through parents
-        # (we're checking if new_parent is an ancestor of new_child)
-        # Use forward direction instead: from new_parent, can we reach new_child?
-
-    # Reset: use forward edges to check if new_child is reachable from new_parent
     forward: dict[str, list[str]] = {}
     for row in rows:
         forward.setdefault(row["parent"], []).append(row["child"])
 
-    visited = set()
-    stack = [new_parent]
-    while stack:
-        node = stack.pop()
-        if node in visited:
-            continue
-        visited.add(node)
-        for child in forward.get(node, []):
-            if child == new_child:
-                return True
-            stack.append(child)
-
-    # Also check if new_child already transitively points to new_parent
-    # (would create a cycle via the new edge)
-    visited = set()
+    # DFS: can we reach new_parent starting from new_child?
+    visited: set[str] = set()
     stack = [new_child]
     while stack:
         node = stack.pop()
@@ -147,8 +118,7 @@ def _has_cycle(conn: sqlite3.Connection, session_id: str, new_parent: str, new_c
         if node in visited:
             continue
         visited.add(node)
-        for child in forward.get(node, []):
-            stack.append(child)
+        stack.extend(forward.get(node, []))
 
     return False
 
@@ -244,6 +214,129 @@ VALID_THOUGHT_TYPES = frozenset({
     "Evidence", "Critique", "Synthesis", "Action",
 })
 
+# I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
+_PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
+_PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
+
+
+def _compute_context_pressure(conn: sqlite3.Connection, session_id: str) -> dict:
+    """I07: 세션 노드 수 기반 컨텍스트 압박 수준 계산 (upsert 후 호출)."""
+    node_count = conn.execute(
+        "SELECT COUNT(*) FROM nodes WHERE session_id=?", (session_id,)
+    ).fetchone()[0]
+
+    if node_count >= _PRESSURE_HIGH:
+        level = "high"
+        hint = (
+            f"Session has {node_count} nodes — approaching reasoning capacity. "
+            "Consolidate with a Synthesis node or call status() to close."
+        )
+    elif node_count >= _PRESSURE_MEDIUM:
+        level = "medium"
+        hint = (
+            f"Session has {node_count} nodes. "
+            "Consider moving toward Synthesis to converge findings."
+        )
+    else:
+        level = "low"
+        hint = f"Session has {node_count} node(s). Plenty of capacity for further reasoning."
+
+    return {"level": level, "node_count": node_count, "hint": hint}
+
+
+def _compute_dag_health(node_rows, edge_rows) -> dict:
+    """I08: DAG 수렴 상태·고립 노드·최장 체인 깊이 진단."""
+    if not node_rows:
+        return {
+            "is_converging": False,
+            "max_depth": 0,
+            "orphan_nodes": [],
+            "thought_type_distribution": {},
+            "health_hint": "No nodes yet. Start with an Objective node.",
+        }
+
+    node_names = {r["name"] for r in node_rows}
+    type_dist: dict[str, int] = {}
+    is_converging = False
+
+    for r in node_rows:
+        t = r["thought_type"]
+        type_dist[t] = type_dist.get(t, 0) + 1
+        if t in ("Synthesis", "Action") and r["status"] == "COMPLETED":
+            is_converging = True
+
+    # 엣지 정보로 연결성 분석
+    child_map: dict[str, list[str]] = {}
+    has_parent: set[str] = set()
+    has_child: set[str] = set()
+    for r in edge_rows:
+        child_map.setdefault(r["parent"], []).append(r["child"])
+        has_parent.add(r["child"])
+        has_child.add(r["parent"])
+
+    # 고립 노드: 2개 이상 노드 세션에서 엣지가 전혀 없는 노드
+    connected = has_parent | has_child
+    orphan_nodes = (
+        sorted(n for n in node_names if n not in connected)
+        if len(node_names) > 1 else []
+    )
+
+    # 최장 체인 깊이: 루트 노드(부모 없음)에서 BFS
+    roots = [n for n in node_names if n not in has_parent]
+    max_depth = 0
+    if roots:
+        queue = [(r, 0) for r in roots]
+        visited: set[str] = set()
+        while queue:
+            node, depth = queue.pop(0)
+            if node in visited:
+                continue
+            visited.add(node)
+            if depth > max_depth:
+                max_depth = depth
+            for child in child_map.get(node, []):
+                if child not in visited:
+                    queue.append((child, depth + 1))
+
+    # health_hint: 우선순위 — 고립 > 수렴 > 미수렴 경고 > 정상
+    total_nodes = len(node_names)
+    if orphan_nodes:
+        health_hint = (
+            f"Orphan node(s) detected: {orphan_nodes}. "
+            "Use depends_on to connect them to the reasoning chain."
+        )
+    elif is_converging:
+        health_hint = (
+            "DAG converging — Synthesis or Action node reached. "
+            "Consider closing the session or adding Action nodes."
+        )
+    elif total_nodes >= 5 and "Synthesis" not in type_dist and "Action" not in type_dist:
+        health_hint = (
+            f"{total_nodes} nodes without Synthesis — "
+            "consider adding a Synthesis node to consolidate findings."
+        )
+    else:
+        health_hint = "Reasoning in progress. Continue building toward Synthesis."
+
+    return {
+        "is_converging": is_converging,
+        "max_depth": max_depth,
+        "orphan_nodes": orphan_nodes,
+        "thought_type_distribution": type_dist,
+        "health_hint": health_hint,
+    }
+
+# I05: thought_type별 컨텍스트 힌트 (LLM 다음 단계 안내)
+_NEXT_HINTS: dict[str, str] = {
+    "Objective":   "Add Hypothesis or Assumption nodes to explore this objective.",
+    "Hypothesis":  "Add Evidence or Assumption nodes to support or challenge this hypothesis.",
+    "Assumption":  "Add Evidence to validate, or Critique to challenge this assumption.",
+    "Evidence":    "Add Synthesis to draw conclusions, or Critique to challenge the evidence.",
+    "Critique":    "Add Synthesis to reconcile findings, or revise the critiqued node.",
+    "Synthesis":   "Add Action nodes to operationalize insights, or call status() to close.",
+    "Action":      "All conclusions reached. Call status() to review the full DAG.",
+}
+
 
 def _action_think(
     *,
@@ -304,8 +397,8 @@ def _action_think(
 
             parent_context[parent_name] = entry
 
-        # --- compress payload ---
-        compressed_text, hash_val, tokens_saved = compress(payload)
+        # --- compress payload (I06: thought_type 전달) ---
+        compressed_text, hash_val, tokens_saved = compress(payload, thought_type)
         is_compressed = compressed_text != payload
 
         # --- upsert node ---
@@ -361,6 +454,15 @@ def _action_think(
             (tokens_saved, session_id),
         )
 
+        # I02: read back session cumulative total after update
+        session_row = conn.execute(
+            "SELECT tokens_saved FROM sessions WHERE id=?", (session_id,)
+        ).fetchone()
+        session_total_saved = session_row["tokens_saved"] if session_row else tokens_saved
+
+        # I07: 컨텍스트 압박 수준 (upsert 후, commit 전 — 동일 트랜잭션 내 COUNT 반영)
+        context_pressure = _compute_context_pressure(conn, session_id)
+
         conn.commit()
 
     result: dict = {
@@ -369,8 +471,10 @@ def _action_think(
         "ccr_hash": hash_val,
         "compression": {
             "tokens_saved": tokens_saved,
+            "session_total_saved": session_total_saved,  # I02: PLAN.md 명세 준수
         },
-        "next_hint": "Add Evidence/Critique or call status() to close.",
+        "next_hint": _NEXT_HINTS.get(thought_type, "Call status() to review DAG."),  # I05
+        "context_pressure": context_pressure,  # I07: 사전 예방적 컨텍스트 압박 경보
     }
 
     if parent_context:
@@ -388,7 +492,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
         _ensure_session(conn, session_id)
 
         node_rows = conn.execute(
-            "SELECT name, thought_type, ccr_hash, status FROM nodes "
+            "SELECT name, thought_type, ccr_hash, status, created_at FROM nodes "
             "WHERE session_id=? ORDER BY id",
             (session_id,),
         ).fetchall()
@@ -407,6 +511,9 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
             "SELECT tokens_saved FROM sessions WHERE id=?",
             (session_id,),
         ).fetchone()
+
+    # I08: DAG 수렴 상태 진단 (DB 연결 닫힌 후 — 이미 fetch된 Row 객체로 계산)
+    dag_health = _compute_dag_health(node_rows, edge_rows)
 
     # metrics
     tokens_original = sum(estimate_tokens(r["payload"]) for r in payload_rows)
@@ -436,7 +543,12 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
         "session_id": session_id,
         "dag": {
             "nodes": [
-                {"name": r["name"], "thought_type": r["thought_type"], "status": r["status"]}
+                {
+                    "name": r["name"],
+                    "thought_type": r["thought_type"],
+                    "status": r["status"],
+                    "created_at": r["created_at"],  # I04
+                }
                 for r in node_rows
             ],
             "edges": [{"parent": r["parent"], "child": r["child"]} for r in edge_rows],
@@ -453,6 +565,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
             ),
             "nodes": manifest_nodes,
         },
+        "dag_health": dag_health,  # I08: 수렴 상태 진단
     }
 
 
@@ -468,6 +581,18 @@ def _action_invalidate(
 
     with _db(db_path) as conn:
         _ensure_session(conn, session_id)
+
+        # I03: target_node 존재 여부 검증
+        exists = conn.execute(
+            "SELECT id FROM nodes WHERE session_id=? AND name=?",
+            (session_id, target_node),
+        ).fetchone()
+        if exists is None:
+            raise ValueError(
+                f"Node '{target_node}' not found in session '{session_id}'. "
+                "Use action='status' to see available nodes."
+            )
+
         affected = _cascade_invalidate(conn, session_id, target_node)
         conn.commit()
 
@@ -554,7 +679,7 @@ def dag_headroom(
         "Evidence", "Critique", "Synthesis", "Action"
     ]] = None,
     payload: Optional[str] = None,
-    depends_on: list[str] = [],
+    depends_on: Optional[list[str]] = None,  # REFACTOR: mutable default → None
     note: str = "",
     target_node: Optional[str] = None,
     reason: str = "",

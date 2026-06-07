@@ -1,0 +1,1231 @@
+
+/context
+
+
+컨텍스트 창
+22.0k / 200.0k (11%)
+System tools
+10.6k
+5.3%
+System prompt
+6.7k
+3.4%
+Skills
+3.3k
+1.7%
+MCP tools
+1.4k
+0.7%
+Messages
+8
+0.0%
+MCP tools (deferred)
+24.0k
+12.0%
+System tools (deferred)
+11.8k
+5.9%
+Autocompact buffer
+33.0k
+16.5%
+Free space
+145.0k
+72.5%
+
+MCP 도구
+25.4k
+92
+ccd_directory · mcp__ccd_directory__request_directory
+179
+ccd_session · mcp__ccd_session__dismiss_task
+301
+ccd_session · mcp__ccd_session__mark_chapter
+339
+ccd_session · mcp__ccd_session__spawn_task
+801
+ccd_session_mgmt · mcp__ccd_session_mgmt__archive_session
+311
+ccd_session_mgmt · mcp__ccd_session_mgmt__list_sessions
+220
+ccd_session_mgmt · mcp__ccd_session_mgmt__search_session_transcripts
+215
+ccd_session_mgmt · mcp__ccd_session_mgmt__send_message
+268
+Claude_in_Chrome · mcp__Claude_in_Chrome__browser_batch
+483
+Claude_in_Chrome · mcp__Claude_in_Chrome__computer
+1.4k
+Claude_in_Chrome · mcp__Claude_in_Chrome__file_upload
+358
+Claude_in_Chrome · mcp__Claude_in_Chrome__find
+279
+Claude_in_Chrome · mcp__Claude_in_Chrome__form_input
+234
+Claude_in_Chrome · mcp__Claude_in_Chrome__get_page_text
+185
+Claude_in_Chrome · mcp__Claude_in_Chrome__gif_creator
+722
+Claude_in_Chrome · mcp__Claude_in_Chrome__javascript_tool
+347
+Claude_in_Chrome · mcp__Claude_in_Chrome__list_connected_browsers
+122
+Claude_in_Chrome · mcp__Claude_in_Chrome__navigate
+205
+Claude_in_Chrome · mcp__Claude_in_Chrome__read_console_messages
+462
+Claude_in_Chrome · mcp__Claude_in_Chrome__read_network_requests
+387
+Claude_in_Chrome · mcp__Claude_in_Chrome__read_page
+440
+Claude_in_Chrome · mcp__Claude_in_Chrome__resize_window
+218
+Claude_in_Chrome · mcp__Claude_in_Chrome__select_browser
+141
+Claude_in_Chrome · mcp__Claude_in_Chrome__shortcuts_execute
+257
+Claude_in_Chrome · mcp__Claude_in_Chrome__shortcuts_list
+174
+Claude_in_Chrome · mcp__Claude_in_Chrome__switch_browser
+156
+Claude_in_Chrome · mcp__Claude_in_Chrome__tabs_close_mcp
+188
+Claude_in_Chrome · mcp__Claude_in_Chrome__tabs_context_mcp
+245
+Claude_in_Chrome · mcp__Claude_in_Chrome__tabs_create_mcp
+101
+Claude_in_Chrome · mcp__Claude_in_Chrome__upload_image
+400
+Claude_Preview · mcp__Claude_Preview__preview_click
+152
+Claude_Preview · mcp__Claude_Preview__preview_console_logs
+198
+Claude_Preview · mcp__Claude_Preview__preview_eval
+226
+Claude_Preview · mcp__Claude_Preview__preview_fill
+150
+Claude_Preview · mcp__Claude_Preview__preview_inspect
+218
+Claude_Preview · mcp__Claude_Preview__preview_list
+73
+Claude_Preview · mcp__Claude_Preview__preview_logs
+243
+Claude_Preview · mcp__Claude_Preview__preview_network
+254
+Claude_Preview · mcp__Claude_Preview__preview_resize
+252
+Claude_Preview · mcp__Claude_Preview__preview_screenshot
+148
+Claude_Preview · mcp__Claude_Preview__preview_snapshot
+139
+Claude_Preview · mcp__Claude_Preview__preview_start
+264
+Claude_Preview · mcp__Claude_Preview__preview_stop
+91
+computer-use · mcp__computer-use__computer_batch
+832
+computer-use · mcp__computer-use__cursor_position
+92
+computer-use · mcp__computer-use__double_click
+228
+computer-use · mcp__computer-use__hold_key
+187
+computer-use · mcp__computer-use__key
+226
+computer-use · mcp__computer-use__left_click
+215
+computer-use · mcp__computer-use__left_click_drag
+257
+computer-use · mcp__computer-use__left_mouse_down
+139
+computer-use · mcp__computer-use__left_mouse_up
+125
+computer-use · mcp__computer-use__list_granted_applications
+84
+computer-use · mcp__computer-use__middle_click
+223
+computer-use · mcp__computer-use__mouse_move
+182
+computer-use · mcp__computer-use__open_application
+148
+computer-use · mcp__computer-use__read_clipboard
+69
+computer-use · mcp__computer-use__request_access
+583
+computer-use · mcp__computer-use__request_teach_access
+411
+computer-use · mcp__computer-use__right_click
+229
+computer-use · mcp__computer-use__screenshot
+223
+computer-use · mcp__computer-use__scroll
+239
+computer-use · mcp__computer-use__switch_display
+221
+computer-use · mcp__computer-use__teach_batch
+1.1k
+computer-use · mcp__computer-use__teach_step
+971
+computer-use · mcp__computer-use__triple_click
+228
+computer-use · mcp__computer-use__type
+145
+computer-use · mcp__computer-use__wait
+88
+computer-use · mcp__computer-use__write_clipboard
+85
+computer-use · mcp__computer-use__zoom
+292
+mcp-registry · mcp__mcp-registry__list_connectors
+156
+mcp-registry · mcp__mcp-registry__search_mcp_registry
+308
+mcp-registry · mcp__mcp-registry__suggest_connectors
+416
+plugin_engineering_asana · mcp__plugin_engineering_asana__authenticate
+122
+plugin_engineering_asana · mcp__plugin_engineering_asana__complete_authentication
+167
+plugin_engineering_atlassian · mcp__plugin_engineering_atlassian__authenticate
+125
+plugin_engineering_atlassian · mcp__plugin_engineering_atlassian__complete_authentication
+171
+plugin_engineering_datadog · mcp__plugin_engineering_datadog__authenticate
+131
+plugin_engineering_datadog · mcp__plugin_engineering_datadog__complete_authentication
+169
+plugin_engineering_github · mcp__plugin_engineering_github__authenticate
+124
+plugin_engineering_github · mcp__plugin_engineering_github__complete_authentication
+169
+plugin_engineering_linear · mcp__plugin_engineering_linear__authenticate
+122
+plugin_engineering_linear · mcp__plugin_engineering_linear__complete_authentication
+169
+plugin_engineering_notion · mcp__plugin_engineering_notion__authenticate
+122
+plugin_engineering_notion · mcp__plugin_engineering_notion__complete_authentication
+169
+plugin_engineering_pagerduty · mcp__plugin_engineering_pagerduty__authenticate
+125
+plugin_engineering_pagerduty · mcp__plugin_engineering_pagerduty__complete_authentication
+171
+plugin_engineering_slack · mcp__plugin_engineering_slack__authenticate
+122
+plugin_engineering_slack · mcp__plugin_engineering_slack__complete_authentication
+167
+scheduled-tasks · mcp__scheduled-tasks__create_scheduled_task
+999
+scheduled-tasks · mcp__scheduled-tasks__list_scheduled_tasks
+166
+scheduled-tasks · mcp__scheduled-tasks__update_scheduled_task
+647
+Django와 Spring Framework를 분석하고 특징/차이점/장점/단점을 정리하고 요약 내용을 표로 만들어서 deep dive 보고서 만들어줘.
+작성한 내용 markdown으로 저장해줘(파일 이름에는 버전 매겨야 함). 기존 파일 덮어쓰지 말고.
+headroom 사용
+
+먼저 기존 파일을 확인하고 headroom 도구를 살펴보겠습니다.
+
+
+발견됨 파일, 사용함 도구 1개
+검색됨
+*.md
+ToolSearch 사용함
+query: select:mcp__headroom__headroom_compress,mcp__headroom__headroom_retrieve,mcp__headroom__headroom_stats
+max_results: 3
+프로젝트 루트의 기존 보고서 파일을 확인한 다음 보고서를 작성하겠습니다.
+
+
+발견됨 파일
+검색됨
+django*spring*.md
+검색됨
+framework-comparison*.md
+기존 파일 없음. v1으로 보고서를 작성하고 headroom으로 압축 저장합니다.
+
+headroom: headroom compress 사용함
+content: # Django vs Spring Framework Deep Dive 보고서
+
+> 작성일: 2026-06-07  
+> 버전: v1
+
+---
+
+## 목차
+
+1. [개요](#1-개요)
+2. [Django 심층 분석](#2-django-심층-분석)
+   - 2.1 아키텍처
+   - 2.2 핵심 구성 요소
+   - 2.3 ORM & 데이터베이스
+   - 2.4 보안
+   - 2.5 성능
+3. [Spring Framework 심층 분석](#3-spring-framework-심층-분석)
+   - 3.1 아키텍처
+   - 3.2 핵심 구성 요소
+   - 3.3 ORM & 데이터베이스
+   - 3.4 보안
+   - 3.5 성능
+4. [상세 비교 분석](#4-상세-비교-분석)
+5. [요약 비교표](#5-요약-비교표)
+6. [선택 가이드](#6-선택-가이드)
+7. [결론](#7-결론)
+
+---
+
+## 1. 개요
+
+### Django
+
+**Django**는 2005년 공개된 Python 기반의 풀스택 웹 프레임워크다. "빠른 개발(rapid development)"과 "깔끔하고 실용적인 설계(clean, pragmatic design)"를 모토로 한다. Instagram, Pinterest, Disqus, Mozilla 등이 주요 사용 사례다.
+
+- **언어**: Python
+- **최신 버전**: Django 5.x (2024)
+- **라이선스**: BSD
+- **패러다임**: MVT(Model-View-Template), 배터리 포함(Batteries Included)
+
+### Spring Framework
+
+**Spring Framework**는 2003년 Rod Johnson이 공개한 Java 기반의 엔터프라이즈급 애플리케이션 프레임워크다. 경량 컨테이너, DI(Dependency Injection), AOP(Aspect-Oriented Programming)를 핵심으로 한다. Netflix, Amazon, eBay 등 대형 엔터프라이즈 환경에서 광범위하게 사용된다.
+
+- **언어**: Java (Kotlin, Groovy 지원)
+- **최신 버전**: Spring Framework 6.x / Spring Boot 3.x (2024)
+- **라이선스**: Apache 2.0
+- **패러다임**: IoC(Inversion of Control), DI, AOP, POJO 기반
+
+---
+
+## 2. Django 심층 분석
+
+### 2.1 아키텍처
+
+Django는 **MVT(Model-View-Template)** 패턴을 사용한다. 이는 전통적인 MVC와 유사하지만, Controller 역할을 Django 자체 URL 디스패처가 담당한다.
+
+```
+요청(Request)
+    ↓
+URL 디스패처 (urls.py) ← Controller 역할
+    ↓
+View (views.py) ← 비즈니스 로직
+    ↓
+Model (models.py) ← 데이터 레이어
+    ↓
+Template (*.html) ← 프레젠테이션 레이어
+    ↓
+응답(Response)
+```
+
+**모놀리식 설계**: Django는 기본적으로 "모든 것이 포함된" 단일 프레임워크로, 설정 파일(`settings.py`)에서 전체 앱을 중앙 관리한다.
+
+**앱(App) 단위 모듈화**: 프로젝트를 여러 앱으로 분리해 재사용성을 높인다.
+
+```python
+# settings.py
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'myapp.users',
+    'myapp.products',
+]
+```
+
+### 2.2 핵심 구성 요소
+
+#### Django ORM
+```python
+# models.py
+from django.db import models
+
+class Product(models.Model):
+    name = models.CharField(max_length=200)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+# 쿼리 예시
+products = Product.objects.filter(price__lt=100).select_related('category')
+```
+
+#### URL 라우팅
+```python
+# urls.py
+from django.urls import path, include
+from . import views
+
+urlpatterns = [
+    path('products/', views.ProductListView.as_view(), name='product-list'),
+    path('products/<int:pk>/', views.ProductDetailView.as_view(), name='product-detail'),
+]
+```
+
+#### Class-Based Views (CBV)
+```python
+# views.py
+from django.views.generic import ListView, DetailView
+from .models import Product
+
+class ProductListView(ListView):
+    model = Product
+    template_name = 'products/list.html'
+    paginate_by = 20
+    
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+```
+
+#### Django REST Framework (DRF)
+```python
+# serializers.py
+from rest_framework import serializers
+from .models import Product
+
+class ProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'name', 'price', 'created_at']
+
+# views.py (API)
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+
+class ProductViewSet(viewsets.ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    permission_classes = [IsAuthenticated]
+```
+
+#### Django Admin
+Django Admin은 모델을 기반으로 자동 생성되는 관리자 인터페이스로, 추가 코드 없이 CRUD 기능을 제공한다.
+
+```python
+# admin.py
+from django.contrib import admin
+from .models import Product
+
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ['name', 'price', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['name']
+```
+
+### 2.3 ORM & 데이터베이스
+
+Django ORM은 Active Record 패턴 기반이다.
+
+**마이그레이션 시스템**:
+```bash
+python manage.py makemigrations  # 변경 사항 감지 → 마이그레이션 파일 생성
+python manage.py migrate         # DB에 적용
+```
+
+**지원 DB**: PostgreSQL, MySQL, SQLite, Oracle  
+**QuerySet Lazy Evaluation**: 실제 데이터 접근 시점까지 SQL 실행을 지연  
+**N+1 문제 해결**: `select_related()` (JOIN), `prefetch_related()` (별도 쿼리)
+
+### 2.4 보안
+
+Django는 기본적으로 다양한 보안 기능을 내장한다:
+
+| 보안 기능 | Django 기본 지원 |
+|-----------|-----------------|
+| CSRF 보호 | ✅ CsrfViewMiddleware |
+| XSS 방어 | ✅ Template 자동 이스케이핑 |
+| SQL Injection | ✅ ORM 파라미터 바인딩 |
+| Clickjacking | ✅ X-Frame-Options 헤더 |
+| HTTPS 강제 | ✅ SECURE_SSL_REDIRECT |
+| 비밀번호 해싱 | ✅ PBKDF2, Argon2 등 |
+
+### 2.5 성능
+
+- **동기(Synchronous) 기본**: WSGI 기반, 기본적으로 동기 처리
+- **ASGI 지원**: Django 3.1+에서 비동기 뷰 지원 (`async def view(request)`)
+- **캐싱**: 메모리, 파일, Memcached, Redis 백엔드 지원
+- **처리량**: Gunicorn + Nginx 조합으로 중간 수준의 동시 처리
+
+---
+
+## 3. Spring Framework 심층 분석
+
+### 3.1 아키텍처
+
+Spring은 **IoC 컨테이너**를 중심으로 한 레이어드 아키텍처를 사용한다.
+
+```
+클라이언트 요청
+    ↓
+DispatcherServlet (Front Controller)
+    ↓
+HandlerMapping → Controller (@RestController)
+    ↓
+Service Layer (@Service) ← 비즈니스 로직
+    ↓
+Repository Layer (@Repository) ← 데이터 접근
+    ↓
+Database
+```
+
+**Spring 생태계**:
+```
+Spring Framework (Core)
+├── Spring Boot        ← 자동 설정, 임베디드 서버
+├── Spring MVC         ← 웹 MVC
+├── Spring Data        ← JPA, Redis, MongoDB 추상화
+├── Spring Security    ← 인증/인가
+├── Spring Cloud       ← 마이크로서비스
+├── Spring Batch       ← 배치 처리
+└── Spring WebFlux     ← 리액티브 프로그래밍
+```
+
+### 3.2 핵심 구성 요소
+
+#### IoC & Dependency Injection
+```java
+// 전통적인 방식 (강결합)
+public class OrderService {
+    private PaymentService paymentService = new PaymentService(); // 직접 생성
+}
+
+// Spring DI 방식 (느슨한 결합)
+@Service
+public class OrderService {
+    private final PaymentService paymentService;
+    
+    @Autowired // 생성자 주입 (권장)
+    public OrderService(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+}
+```
+
+#### AOP (Aspect-Oriented Programming)
+```java
+@Aspect
+@Component
+public class LoggingAspect {
+    
+    @Around("@annotation(Loggable)")
+    public Object logExecution(ProceedingJoinPoint joinPoint) throws Throwable {
+        long start = System.currentTimeMillis();
+        Object result = joinPoint.proceed();
+        long elapsed = System.currentTimeMillis() - start;
+        log.info("{} executed in {}ms", joinPoint.getSignature(), elapsed);
+        return result;
+    }
+}
+```
+
+#### Spring MVC Controller
+```java
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+    
+    private final ProductService productService;
+    
+    public ProductController(ProductService productService) {
+        this.productService = productService;
+    }
+    
+    @GetMapping
+    public ResponseEntity<Page<ProductDto>> getProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return ResponseEntity.ok(productService.findAll(pageable));
+    }
+    
+    @PostMapping
+    public ResponseEntity<ProductDto> createProduct(
+            @Valid @RequestBody ProductCreateRequest request) {
+        ProductDto created = productService.create(request);
+        URI location = URI.create("/api/products/" + created.getId());
+        return ResponseEntity.created(location).body(created);
+    }
+}
+```
+
+#### Spring Data JPA
+```java
+// Entity
+@Entity
+@Table(name = "products")
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false, length = 200)
+    private String name;
+    
+    @Column(precision = 10, scale = 2)
+    private BigDecimal price;
+    
+    @CreationTimestamp
+    private LocalDateTime createdAt;
+}
+
+// Repository
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    Page<Product> findByPriceLessThan(BigDecimal price, Pageable pageable);
+    
+    @Query("SELECT p FROM Product p WHERE p.name LIKE %:keyword%")
+    List<Product> searchByName(@Param("keyword") String keyword);
+}
+```
+
+#### Spring Boot 자동 설정
+```yaml
+# application.yml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/mydb
+    username: user
+    password: password
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  cache:
+    type: redis
+```
+
+### 3.3 ORM & 데이터베이스
+
+Spring은 주로 **JPA(Java Persistence API)** + **Hibernate** 조합을 사용한다.
+
+**지원 전략**:
+- **JPA/Hibernate**: 표준 ORM, 엔터프라이즈급
+- **MyBatis**: SQL Mapper, SQL 직접 제어
+- **Spring Data JDBC**: 경량 대안
+- **R2DBC**: 리액티브 DB 접근
+
+**N+1 문제 해결**:
+```java
+// FetchType.LAZY + @EntityGraph
+@EntityGraph(attributePaths = {"category", "tags"})
+Page<Product> findAll(Pageable pageable);
+
+// JPQL JOIN FETCH
+@Query("SELECT p FROM Product p JOIN FETCH p.category WHERE p.price < :price")
+List<Product> findCheapProductsWithCategory(@Param("price") BigDecimal price);
+```
+
+### 3.4 보안
+
+Spring Security는 별도 모듈로 제공되며, 매우 세밀한 제어가 가능하다.
+
+```java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> 
+                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/public/**").permitAll()
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .anyRequest().authenticated())
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .build();
+    }
+}
+```
+
+### 3.5 성능
+
+- **동기(Synchronous) 기본**: Servlet 기반 동기 처리
+- **Spring WebFlux**: Project Reactor 기반 완전 비동기/논블로킹
+- **JVM JIT 컴파일**: 장기 실행 시 JIT 최적화로 높은 처리량
+- **GraalVM Native Image**: Spring Boot 3.x에서 Native 컴파일 지원 (시작 시간 대폭 단축)
+
+---
+
+## 4. 상세 비교 분석
+
+### 4.1 언어 및 생태계
+
+**Python (Django)**
+- 간결한 문법, 빠른 프로토타이핑
+- 데이터 과학/ML 생태계와 통합 용이 (NumPy, Pandas, scikit-learn)
+- GIL(Global Interpreter Lock)로 인한 CPU 병렬성 제한
+- 동적 타이핑 (타입 힌트로 보완 가능)
+
+**Java (Spring)**
+- 강한 정적 타이핑, 컴파일 타임 오류 검출
+- 수십 년의 엔터프라이즈 생태계 (Maven/Gradle, 방대한 라이브러리)
+- JVM 기반, 멀티스레드 진정한 병렬 처리
+- 보일러플레이트 코드가 많으나 Lombok, Kotlin으로 완화
+
+### 4.2 학습 곡선
+
+| 단계 | Django | Spring |
+|------|--------|--------|
+| 초기 진입 | 낮음 (Python 친화적) | 높음 (DI/IoC 개념 이해 필요) |
+| 기본 앱 구축 | 1~2일 | 1~2주 |
+| 프로덕션 수준 | 수주 | 수개월 |
+| 고급 기능 마스터 | 수개월 | 6개월~1년+ |
+
+### 4.3 개발 속도
+
+**Django가 빠른 이유**:
+- `startproject`, `startapp` 명령으로 즉시 구조 생성
+- Admin 자동 생성
+- ORM 마이그레이션 자동화
+- DRF로 RESTful API 최소 코드 구현
+
+**Spring이 느린 이유**:
+- XML 또는 Java Config 설정 (Spring Boot로 많이 완화)
+- 타입 안전성을 위한 상용구(boilerplate) 코드
+- 빌드 도구(Maven/Gradle) 설정 필요
+- Spring Boot Initializr로 개선되었으나 여전히 Django보다 복잡
+
+### 4.4 확장성 (Scalability)
+
+**수직 확장(Scale-up)**:
+- Django: GIL로 인해 CPU 집약적 작업에서 한계
+- Spring: JVM 멀티스레딩, 진정한 CPU 병렬 활용
+
+**수평 확장(Scale-out)**:
+- Django: 무상태(stateless) 설계로 수평 확장 용이, Celery로 비동기 태스크
+- Spring: 마이크로서비스 (Spring Cloud), 리액티브 (WebFlux), Kubernetes 최적화
+
+**실제 사례**:
+- Instagram (Django): 초기 성장을 Django로 견인, 이후 일부 서비스 분리
+- Netflix (Spring): 수천만 동시 스트리밍, 마이크로서비스 아키텍처
+
+### 4.5 테스트
+
+**Django**:
+```python
+from django.test import TestCase, Client
+from .models import Product
+
+class ProductTest(TestCase):
+    def setUp(self):
+        self.product = Product.objects.create(name="Test", price=99.99)
+    
+    def test_product_list(self):
+        response = self.client.get('/api/products/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()), 1)
+```
+
+**Spring**:
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class ProductControllerTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @MockBean
+    private ProductService productService;
+    
+    @Test
+    void getProducts_ShouldReturn200() throws Exception {
+        when(productService.findAll(any())).thenReturn(Page.empty());
+        
+        mockMvc.perform(get("/api/products"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.content").isArray());
+    }
+}
+```
+
+### 4.6 배포 및 운영
+
+| 항목 | Django | Spring |
+|------|--------|--------|
+| 컨테이너화 | Docker 이미지 소형 (Python 베이스) | Docker 이미지 대형 (JDK 베이스) |
+| 시작 시간 | 빠름 (수초 이내) | 느림 (수십초, Native 빌드로 개선) |
+| 메모리 사용 | 낮음 (~100MB) | 높음 (~300MB~1GB) |
+| Cold Start | 빠름 | 느림 (Lambda/FaaS에서 불리) |
+| Native 컴파일 | 제한적 | GraalVM Native Image 지원 |
+
+### 4.7 커뮤니티 및 생태계
+
+| 항목 | Django | Spring |
+|------|--------|--------|
+| GitHub Stars | ~80k | ~55k (Spring Boot) |
+| PyPI/Maven 패키지 | PyPI 45만+ 패키지 | Maven Central 800만+ artifacts |
+| 취업 시장 (한국) | 중간 | 압도적 (SI, 금융, 대기업) |
+| 취업 시장 (글로벌) | 활발 (스타트업) | 매우 활발 (엔터프라이즈) |
+| 공식 문서 | 우수 | 방대하나 복잡 |
+
+---
+
+## 5. 요약 비교표
+
+### 5.1 핵심 특성 비교
+
+| 항목 | Django | Spring Framework |
+|------|--------|-----------------|
+| **언어** | Python | Java (+ Kotlin, Groovy) |
+| **패러다임** | MVT, Batteries Included | IoC/DI, AOP, POJO |
+| **아키텍처** | 모놀리식 친화 | 모놀리식/마이크로서비스 모두 |
+| **학습 곡선** | 완만함 | 가파름 |
+| **개발 속도** | 빠름 | 중간~느림 |
+| **성능** | 중간 | 높음 |
+| **확장성** | 중간~높음 | 높음 |
+| **타입 안전성** | 동적 (타입힌트 선택) | 정적 (컴파일 타임 검증) |
+| **메모리 사용량** | 낮음 | 높음 |
+| **시작 시간** | 빠름 | 느림 (Native 시 빠름) |
+
+### 5.2 기능별 비교
+
+| 기능 | Django | Spring |
+|------|--------|--------|
+| **ORM** | 내장 Django ORM | JPA/Hibernate, MyBatis |
+| **인증/보안** | 내장 Auth + Middleware | Spring Security (별도 모듈) |
+| **관리자 UI** | ✅ Admin 자동 생성 | ❌ 직접 구현 필요 |
+| **마이그레이션** | ✅ 자동 감지 | 수동 (Flyway/Liquibase 추천) |
+| **비동기** | ASGI (부분 지원) | WebFlux (완전 리액티브) |
+| **캐싱** | 내장 (Redis/Memcached) | Spring Cache (Redis 등) |
+| **배치처리** | Celery 연동 | Spring Batch (내장) |
+| **마이크로서비스** | 제한적 | Spring Cloud (풍부) |
+| **REST API** | DRF (별도 패키지) | Spring MVC/WebFlux (내장) |
+| **테스트** | TestCase (내장) | JUnit + Mockito (별도) |
+
+### 5.3 장단점 요약
+
+| 구분 | Django | Spring Framework |
+|------|--------|-----------------|
+| **장점** | • 빠른 개발 속도<br>• 낮은 학습 곡선<br>• 강력한 Admin<br>• Python 생태계 연계<br>• 내장 보안 기능<br>• 간결한 코드 | • 강한 타입 안전성<br>• 높은 성능<br>• 풍부한 엔터프라이즈 기능<br>• 마이크로서비스 최적<br>• JVM 성숙 생태계<br>• WebFlux 완전 비동기 |
+| **단점** | • GIL 병렬성 제한<br>• 대규모 마이크로서비스 미흡<br>• 동적 타이핑 런타임 오류<br>• 완전 비동기 지원 미흡<br>• 모바일/Native 미지원 | • 높은 학습 곡선<br>• 느린 개발 속도<br>• 높은 메모리 사용<br>• 느린 시작 시간<br>• 설정 복잡성<br>• 보일러플레이트 코드 |
+
+### 5.4 사용 사례 적합성
+
+| 사용 사례 | Django 적합도 | Spring 적합도 |
+|-----------|:------------:|:------------:|
+| 스타트업 MVP | ★★★★★ | ★★★☆☆ |
+| 콘텐츠 관리 시스템 | ★★★★★ | ★★★☆☆ |
+| 데이터 분석 플랫폼 | ★★★★★ | ★★★☆☆ |
+| 전자상거래 (중소) | ★★★★☆ | ★★★★☆ |
+| 금융 시스템 | ★★★☆☆ | ★★★★★ |
+| 대규모 엔터프라이즈 | ★★★☆☆ | ★★★★★ |
+| 마이크로서비스 | ★★★☆☆ | ★★★★★ |
+| 실시간 스트리밍 | ★★★☆☆ | ★★★★★ |
+| ML/AI 서비스 백엔드 | ★★★★★ | ★★★☆☆ |
+| 공공기관/SI 프로젝트 (한국) | ★★★☆☆ | ★★★★★ |
+
+---
+
+## 6. 선택 가이드
+
+### Django를 선택해야 할 때
+
+```
+✅ 팀의 주력 언어가 Python인 경우
+✅ 빠른 프로토타이핑/MVP 개발이 필요한 경우
+✅ 데이터 과학/ML 파이프라인과 연동이 필요한 경우
+✅ 콘텐츠 중심 웹사이트 (블로그, 뉴스, 포럼)
+✅ 소규모~중규모 서비스
+✅ 스타트업 환경에서 빠른 이터레이션이 필요한 경우
+✅ 개발자 수가 적고 풀스택을 다루는 경우
+```
+
+### Spring Framework를 선택해야 할 때
+
+```
+✅ 팀의 주력 언어가 Java/Kotlin인 경우
+✅ 대규모 엔터프라이즈 시스템 개발
+✅ 금융, 보험, 공공기관 등 강한 타입 안전성이 필요한 경우
+✅ 마이크로서비스 아키텍처 도입
+✅ 높은 동시성과 처리량이 요구되는 경우
+✅ 복잡한 트랜잭션 관리가 필요한 경우
+✅ 한국 SI/대기업 환경 (표준 스택)
+✅ 기존 레거시 Java 시스템과 통합이 필요한 경우
+```
+
+---
+
+## 7. 결론
+
+Django와 Spring은 서로 다른 철학과 목표를 가진 프레임워크다.
+
+**Django**는 "마법처럼 편리한" 개발 경험을 제공한다. Python의 간결함과 "배터리 포함" 철학 덕분에 적은 코드로 빠르게 완성도 높은 웹 애플리케이션을 만들 수 있다. 특히 데이터 집약적인 서비스나 ML/AI와 연동되는 백엔드, 빠른 프로토타이핑이 필요한 스타트업에 최적이다.
+
+**Spring Framework**는 "견고하고 확장 가능한" 엔터프라이즈 아키텍처의 표준이다. DI/AOP 기반의 느슨한 결합, JVM의 강력한 성능, Spring Cloud의 마이크로서비스 생태계는 수백만 사용자를 처리하는 대규모 시스템에서 진가를 발휘한다.
+
+결국 **"어느 것이 더 좋은가?"** 보다 **"어느 것이 이 프로젝트/팀에 더 적합한가?"** 를 판단하는 것이 중요하다. 두 프레임워크 모두 수십 년간 검증된 성숙한 기술이며, 선택은 팀 역량, 프로젝트 규모, 비즈니스 요구사항에 따라 달라진다.
+
+---
+
+*본 보고서는 Django 5.x 및 Spring Boot 3.x 기준으로 작성되었습니다.*
+{
+  "compressed": "# Django vs Spring Framework Deep Dive \ubcf4\uace0\uc11c > \uc791\uc131\uc77c: 2026-06-07 > \ubc84\uc804: v1 1. [\uac1c\uc694](#1-\uac1c\uc694) 2. [Django \uc2ec\uce35 2.1 \uc544\ud0a4\ud14d\ucc98 - 2.2 \uad6c\uc131 \uc694\uc18c 2.3 ORM & \ub370\uc774\ud130\ubca0\uc774\uc2a4 2.4 \ubcf4\uc548 2.5 \uc131\ub2a5 3. [Spring Framework \ubd84\uc11d](#3-spring-framework-\uc2ec\uce35-\ubd84\uc11d) - 3.1 \uc544\ud0a4\ud14d\ucc98 - 3.2 \ud575\uc2ec \uad6c\uc131 \uc694\uc18c 3.3 ORM & \ub370\uc774\ud130\ubca0\uc774\uc2a4 - 3.4 \ubcf4\uc548 3.5 \uc131\ub2a5 4. Django **Django**\ub294 2005\ub144 \uacf5\uac1c\ub41c Python \uae30\ubc18\uc758 \ud480\uc2a4\ud0dd \uc6f9 \ud504\ub808\uc784\uc6cc\ud06c\ub2e4. \uac1c\ubc1c(rapid \ubaa8\ud1a0\ub85c Instagram, Pinterest, Disqus, Mozilla \ub4f1\uc774 \uc8fc\uc694 \uc0ac\uc6a9\n[213 items compressed to 73. Retrieve more: hash=d6f7aa92e174599bf6b1b039]\n\n```unknown\n\uc694\uccad(Request) \u2193 URL \ub514\uc2a4\ud328\ucc98 (urls.py) \u2190 Controller \uc5ed\ud560 \u2193 View (views.py) \u2190 \ube44\uc988\ub2c8\uc2a4 \ub85c\uc9c1 \u2193 Model (models.py) \u2190 \ub370\uc774\ud130 \ub808\uc774\uc5b4 \u2193 Template (*.html) \u2190 \ud504\ub808\uc820\ud14c\uc774\uc158 \ub808\uc774\uc5b4 \u2193 \uc751\ub2f5(Response)\n```\n\n**\ubaa8\ub180\ub9ac\uc2dd \uc124\uacc4**: Django\ub294 \uae30\ubcf8\uc801\uc73c\ub85c \"\ubaa8\ub4e0 \uac83\uc774 \ud3ec\ud568\ub41c\" \ub2e8\uc77c \ud504\ub808\uc784\uc6cc\ud06c\ub85c, \uc124\uc815 \ud30c\uc77c(`settings.py`)\uc5d0\uc11c \uc804\uccb4 \uc571\uc744 \uc911\uc559 \uad00\ub9ac\ud55c\ub2e4. **\uc571(App) \ub2e8\uc704 \ubaa8\ub4c8\ud654**: \ud504\ub85c\uc81d\ud2b8\ub97c \uc5ec\ub7ec \uc571\uc73c\ub85c \ubd84\ub9ac\ud574 \uc7ac\uc0ac\uc6a9\uc131\uc744 \ub192\uc778\ub2e4.\n\n```python\n# settings.py INSTALLED_APPS = [ 'django.contrib.admin', 'django.contrib.auth', 'myapp.users', 'myapp.products', ]\n```\n\n\n### 2.2 \ud575\uc2ec \uad6c\uc131 \uc694\uc18c\n\n#### Django ORM\n\n```python\n# models.py from django.db import models class Product(models.Model): name = models.CharField(max_length=200) price = models.DecimalField(max_digits=10, decimal_places=2) created_at = models.DateTimeField(auto_now_add=True) class Meta: ordering = ['-created_at'] products = Product.objects.filter(price__lt=100).select_related('category')\n```\n\n\n#### URL \ub77c\uc6b0\ud305\n\n```python\n# urls.py from django.urls import path, include from . import views urlpatterns = [ path('products/', views.ProductListView.as_view(), name='product-list'), path('products/<int:pk>/', views.ProductDetailView.as_view(), name='product-detail'), ]\n```\n\n\n#### Class-Based Views (CBV)\n\n```python\n# views.py from django.views.generic import ListView, DetailView from .models import Product class ProductListView(ListView): model = Product template_name = 'products/list.html' paginate_by = 20 def get_queryset(self): return super().get_queryset().filter(is_active=True)\n```\n\n\n#### Django REST Framework (DRF)\n\n```python\n# serializers.py from rest_framework import serializers from .models import Product class ProductSerializer(serializers.ModelSerializer): class Meta: model = Product fields = ['id', 'name', 'price', 'created_at'] # views.py (API) from rest_framework import viewsets from rest_framework.permissions import IsAuthenticated class ProductViewSet(viewsets.ModelViewSet): queryset = Product.objects.all() serializer_class = ProductSerializer permission_classes = [IsAuthenticated]\n```\n\nDjango Admin Django Admin\uc740 \ubaa8\ub378\uc744 \uae30\ubc18\uc73c\ub85c \uc790\ub3d9 \uc0dd\uc131\ub418\ub294 \uad00\ub9ac\uc790 \uc778\ud130\ud398\uc774\uc2a4\ub85c, \ucd94\uac00 \ucf54\ub4dc \uc5c6\uc774 CRUD \uae30\ub2a5\uc744 \uc81c\uacf5\ud55c\ub2e4.\n\n```python\n# admin.py from django.contrib import admin from .models import Product @admin.register(Product) class ProductAdmin(admin.ModelAdmin): list_display = ['name', 'price', 'created_at'] list_filter = ['created_at'] search_fields = ['name']\n```\n\n2.3 ORM & \ub370\uc774\ud130\ubca0\uc774\uc2a4 Django ORM\uc740 Active Record \ud328\ud134 \uae30\ubc18\uc774\ub2e4. **\ub9c8\uc774\uadf8\ub808\uc774\uc158 \uc2dc\uc2a4\ud15c**:\n\n```bash\npython manage.py makemigrations # \ubcc0\uacbd \uc0ac\ud56d \uac10\uc9c0 \u2192 \ub9c8\uc774\uadf8\ub808\uc774\uc158 \ud30c\uc77c \uc0dd\uc131 python manage.py migrate # DB\uc5d0 \uc801\uc6a9\n```\n\n**\uc9c0\uc6d0 DB**: PostgreSQL, MySQL, SQLite, Oracle **N+1 \ubb38\uc81c \ud574\uacb0**: `select_related()` (JOIN), `prefetch_related()` (\ubcc4\ub3c4 \ucffc\ub9ac) 2.4 \ubcf4\uc548 Django\ub294 \uae30\ubcf8\uc801\uc73c\ub85c \ubcf4\uc548 \uae30\ub2a5 Django \uae30\ubcf8 \uc9c0\uc6d0 CSRF \ubcf4\ud638 CsrfViewMiddleware XSS \ubc29\uc5b4 \uc790\ub3d9 SQL Injection **\ub3d9\uae30(Synchronous) \uae30\ubcf8**: WSGI \uae30\ubc18, **ASGI \uc9c0\uc6d0**: Django 3.1+\uc5d0\uc11c \ube44\ub3d9\uae30 \ubdf0 \uc9c0\uc6d0 3.1 \uc544\ud0a4\ud14d\ucc98 Spring\uc740 **IoC\n[148 items compressed to 46. Retrieve more: hash=cc368085f89871072a1b1db7]\n\n```unknown\n\ud074\ub77c\uc774\uc5b8\ud2b8 \uc694\uccad \u2193 DispatcherServlet (Front Controller) \u2193 HandlerMapping \u2192 Controller (@RestController) \u2193 Service Layer (@Service) \u2190 \ube44\uc988\ub2c8\uc2a4 \ub85c\uc9c1 \u2193 Repository Layer (@Repository) \u2190 \ub370\uc774\ud130 \uc811\uadfc \u2193 Database\n```\n\n\n**Spring \uc0dd\ud0dc\uacc4**:\n\n```unknown\nSpring Framework (Core) \u251c\u2500\u2500 Spring Boot \u2190 \uc790\ub3d9 \uc124\uc815, \uc784\ubca0\ub514\ub4dc \uc11c\ubc84 \u251c\u2500\u2500 Spring MVC \u2190 \uc6f9 MVC \u251c\u2500\u2500 Spring Data \u2190 JPA, Redis, MongoDB \ucd94\uc0c1\ud654 \u251c\u2500\u2500 Spring Security \u2190 \uc778\uc99d/\uc778\uac00 \u251c\u2500\u2500 Spring Cloud \u2190 \ub9c8\uc774\ud06c\ub85c\uc11c\ube44\uc2a4 \u251c\u2500\u2500 Spring Batch \u2190 \ubc30\uce58 \ucc98\ub9ac \u2514\u2500\u2500 Spring WebFlux \u2190 \ub9ac\uc561\ud2f0\ube0c \ud504\ub85c\uadf8\ub798\ubc0d\n```\n\n3.2 \ud575\uc2ec \uad6c\uc131 \uc694\uc18c #### IoC & Dependency Injection\n\n```java\n// \uc804\ud1b5\uc801\uc778 \ubc29\uc2dd (\uac15\uacb0\ud569) public class OrderService { private PaymentService paymentService = new PaymentService(); // \uc9c1\uc811 \uc0dd\uc131 } Spring DI @Service public class OrderService { private final PaymentService paymentService; @Autowired // \uc0dd\uc131\uc790 \uc8fc\uc785 (\uad8c\uc7a5) public OrderService(PaymentService paymentService) { this.paymentService = paymentService;\n```\n\n\n#### AOP (Aspect-Oriented Programming)\n\n```java\n@Aspect @Component public class LoggingAspect { @Around(\"@annotation(Loggable)\") public Object logExecution(ProceedingJoinPoint joinPoint) throws Throwable { long start = System.currentTimeMillis(); Object result = joinPoint.proceed(); long elapsed = System.currentTimeMillis() - start; log.info(\"{} executed in {}ms\", joinPoint.getSignature(), elapsed); return result;\n```\n\n\n#### Spring MVC Controller\n\n```java\n@RestController @RequestMapping(\"/api/products\") public class ProductController { private final ProductService productService; public ProductController(ProductService productService) this.productService = productService; @GetMapping public ResponseEntity<Page<ProductDto>> getProducts( @RequestParam(defaultValue = \"0\") int page, @RequestParam(defaultValue = \"20\") int size) { Pageable pageable = PageRequest.of(page, size); return ResponseEntity.ok(productService.findAll(pageable)); @PostMapping public ResponseEntity<ProductDto> createProduct( @Valid @RequestBody ProductCreateRequest request) ProductDto created = productService.create(request); URI location = URI.create(\"/api/products/\" + created.getId()); return ResponseEntity.created(location).body(created);\n```\n\n\n#### Spring Data JPA\n\n```java\n// Entity @Entity @Table(name = \"products\") public class Product { @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id; @Column(nullable = false, length = 200) private String name; @Column(precision = 10, scale = 2) private BigDecimal price; @CreationTimestamp private LocalDateTime createdAt; // Repository public interface ProductRepository extends JpaRepository<Product, Long> { Page<Product> findByPriceLessThan(BigDecimal price, Pageable pageable); @Query(\"SELECT p FROM Product p WHERE p.name LIKE %:keyword%\") List<Product> searchByName(@Param(\"keyword\") String keyword);\n```\n\n\n#### Spring Boot \uc790\ub3d9 \uc124\uc815\n\n```yaml\n# application.yml spring: datasource: url: jdbc:postgresql://localhost:5432/mydb username: user password: password jpa: hibernate: ddl-auto: validate show-sql: false cache: type: redis\n```\n\n### 3.3 ORM & \ub370\uc774\ud130\ubca0\uc774\uc2a4 Spring\uc740 \uc8fc\ub85c **JPA(Java Persistence API)** + **Hibernate** \uc870\ud569\uc744 \uc0ac\uc6a9\ud55c\ub2e4. \uc804\ub7b5**: - **JPA/Hibernate**: \ud45c\uc900 ORM, \uc5d4\ud130\ud504\ub77c\uc774\uc988\uae09 - **MyBatis**: SQL Mapper, SQL \uc9c1\uc811 \uc81c\uc5b4 - **Spring Data JDBC**: \uacbd\ub7c9 \ub300\uc548 - **R2DBC**: \ub9ac\uc561\ud2f0\ube0c DB \uc811\uadfc **N+1 \ubb38\uc81c \ud574\uacb0**:\n\n```java\n// FetchType.LAZY + @EntityGraph @EntityGraph(attributePaths = {\"category\", \"tags\"}) Page<Product> findAll(Pageable pageable); // JPQL JOIN FETCH @Query(\"SELECT p FROM Product p JOIN FETCH p.category WHERE p.price < :price\") List<Product> findCheapProductsWithCategory(@Param(\"price\") BigDecimal price);\n```\n\n### 3.4 \ubcf4\uc548 Spring Security\ub294 \ubcc4\ub3c4 \ubaa8\ub4c8\ub85c \uc81c\uacf5\ub418\uba70, \ub9e4\uc6b0 \uc138\ubc00\ud55c \uc81c\uc5b4\uac00 \uac00\ub2a5\ud558\ub2e4.\n\n```java\n@Configuration @EnableWebSecurity public class SecurityConfig { @Bean public SecurityFilterChain filterChain(HttpSecurity http) throws Exception { return http .csrf(csrf -> csrf.disable()) .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) .authorizeHttpRequests(auth -> auth .requestMatchers(\"/api/public/**\").permitAll() .requestMatchers(\"/api/admin/**\").hasRole(\"ADMIN\") .anyRequest().authenticated()) .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class) .build();\n```\n\n### 3.5 \uc131\ub2a5 - **\ub3d9\uae30(Synchronous) \uae30\ubcf8**: \uae30\ubc18 Reactor \uae30\ubc18 \uc644\uc804 \ube44\ub3d9\uae30/\ub17c\ube14\ub85c\ud0b9 **JVM JIT \ucef4\ud30c\uc77c**: **Python (Django)** GIL(Global **Java (Spring)** JVM\n[298 items compressed to 20. Retrieve more: hash=7b047087bed99647bbc20945]\n\n```python\nfrom django.test import TestCase, Client from .models import Product class ProductTest(TestCase): def setUp(self): self.product = Product.objects.create(name=\"Test\", price=99.99) def test_product_list(self): response = self.client.get('/api/products/') self.assertEqual(response.status_code, 200) self.assertEqual(len(response.json()), 1)\n```\n\n\n**Spring**:\n\n```java\n@SpringBootTest @AutoConfigureMockMvc class ProductControllerTest { @Autowired private MockMvc mockMvc; @MockBean private ProductService productService; @Test void getProducts_ShouldReturn200() throws Exception { when(productService.findAll(any())).thenReturn(Page.empty()); mockMvc.perform(get(\"/api/products\")) .andExpect(status().isOk()) .andExpect(jsonPath(\"$.content\").isArray());\n```\n\n4.6 \ubc30\ud3ec \ubc0f \uc6b4\uc601 | \ud56d\ubaa9 | Django | Spring | \ucee8\ud14c\uc774\ub108\ud654 | Docker \uc774\ubbf8\uc9c0 \uc18c\ud615 (Python \ubca0\uc774\uc2a4) | Docker \uc774\ubbf8\uc9c0 \ub300\ud615 (JDK \ubca0\uc774\uc2a4) \ube60\ub984 (\uc218\ucd08 \uba54\ubaa8\ub9ac \uc0ac\uc6a9 | \ub0ae\uc74c (~100MB) \ub192\uc74c (~300MB~1GB) 4.7 \ucee4\ubba4\ub2c8\ud2f0 \ubc0f \uc0dd\ud0dc\uacc4 | \ud56d\ubaa9 | Django | Spring | GitHub Stars | ~80k | ~55k (Spring Boot) | PyPI/Maven \ud328\ud0a4\uc9c0 | PyPI 45\ub9cc+ \ud328\ud0a4\uc9c0 | Maven Central 800\ub9cc+ artifacts | (\uae00\ub85c\ubc8c) \ud65c\ubc1c \ub9e4\uc6b0 \ud65c\ubc1c 5. \uc694\uc57d \ube44\uad50\ud45c ### 5.1 \ud575\uc2ec \ud2b9\uc131 Spring Cloud (\ud48d\ubd80) **REST API** DRF Spring MVC/WebFlux **\ud14c\uc2a4\ud2b8** | TestCase JUnit + Mockito \uad6c\ubd84 Django Spring Framework **\uc7a5\uc810** \ube60\ub978 \uac1c\ubc1c \uc18d\ub3c4<br>\u2022 \ub0ae\uc740 \ud559\uc2b5 \uace1\uc120<br>\u2022 Python \uc0dd\ud0dc\uacc4\n[577 items compressed to 103. Retrieve more: hash=2b312a85a7826bd1d2334695]\n\n```unknown\n\u2705 \ud300\uc758 \uc8fc\ub825 \uc5b8\uc5b4\uac00 Python\uc778 \uacbd\uc6b0 \u2705 \ube60\ub978 \ud504\ub85c\ud1a0\ud0c0\uc774\ud551/MVP \uac1c\ubc1c\uc774 \ud544\uc694\ud55c \uacbd\uc6b0 \u2705 \ub370\uc774\ud130 \uacfc\ud559/ML \ud30c\uc774\ud504\ub77c\uc778\uacfc \uc5f0\ub3d9\uc774 \ud544\uc694\ud55c \uacbd\uc6b0 \u2705 \ucf58\ud150\uce20 \uc911\uc2ec \uc6f9\uc0ac\uc774\ud2b8 (\ube14\ub85c\uadf8, \ub274\uc2a4, \ud3ec\ub7fc) \u2705 \uc18c\uaddc\ubaa8~\uc911\uaddc\ubaa8 \uc11c\ube44\uc2a4 \u2705 \uc2a4\ud0c0\ud2b8\uc5c5 \ud658\uacbd\uc5d0\uc11c \ube60\ub978 \uc774\ud130\ub808\uc774\uc158\uc774 \ud544\uc694\ud55c \uacbd\uc6b0 \u2705 \uac1c\ubc1c\uc790 \uc218\uac00 \uc801\uace0 \ud480\uc2a4\ud0dd\uc744 \ub2e4\ub8e8\ub294 \uacbd\uc6b0\n```\n\n\n### Spring Framework\ub97c \uc120\ud0dd\ud574\uc57c \ud560 \ub54c\n\n\n```unknown\n\u2705 \ud300\uc758 \uc8fc\ub825 \uc5b8\uc5b4\uac00 Java/Kotlin\uc778 \uacbd\uc6b0 \u2705 \ub300\uaddc\ubaa8 \uc5d4\ud130\ud504\ub77c\uc774\uc988 \uc2dc\uc2a4\ud15c \uac1c\ubc1c \u2705 \uae08\uc735, \ubcf4\ud5d8, \uacf5\uacf5\uae30\uad00 \ub4f1 \uac15\ud55c \ud0c0\uc785 \uc548\uc804\uc131\uc774 \ud544\uc694\ud55c \uacbd\uc6b0 \u2705 \ub9c8\uc774\ud06c\ub85c\uc11c\ube44\uc2a4 \uc544\ud0a4\ud14d\ucc98 \ub3c4\uc785 \u2705 \ub192\uc740 \ub3d9\uc2dc\uc131\uacfc \ucc98\ub9ac\ub7c9\uc774 \uc694\uad6c\ub418\ub294 \uacbd\uc6b0 \u2705 \ubcf5\uc7a1\ud55c \ud2b8\ub79c\uc7ad\uc158 \uad00\ub9ac\uac00 \ud544\uc694\ud55c \uacbd\uc6b0 \u2705 \ud55c\uad6d SI/\ub300\uae30\uc5c5 \ud658\uacbd (\ud45c\uc900 \uc2a4\ud0dd) \u2705 \uae30\uc874 \ub808\uac70\uc2dc Java \uc2dc\uc2a4\ud15c\uacfc \ud1b5\ud569\uc774 \ud544\uc694\ud55c \uacbd\uc6b0\n```\n\n## 7. \uacb0\ub860 Django\uc640 Spring\uc740 \uc11c\ub85c \ub2e4\ub978 \ucca0\ud559\uacfc \ubaa9\ud45c\ub97c \uac00\uc9c4 \ud504\ub808\uc784\uc6cc\ud06c\ub2e4. **Django**\ub294 \"\ub9c8\ubc95\ucc98\ub7fc \uac1c\ubc1c \uacbd\ud5d8\uc744 \uc81c\uacf5\ud55c\ub2e4. Python\uc758 \uac04\uacb0\ud568\uacfc \"\ubc30\ud130\ub9ac \ud3ec\ud568\" \ucca0\ud559 \ub355\ubd84\uc5d0 \uc801\uc740 \ucf54\ub4dc\ub85c \ube60\ub974\uac8c \uc644\uc131\ub3c4 \ub192\uc740 \uc6f9 \uc560\ud50c\ub9ac\ucf00\uc774\uc158\uc744 \ub9cc\ub4e4 \uc218 \uc788\ub2e4. \ud2b9\ud788 \ub370\uc774\ud130 \uc9d1\uc57d\uc801\uc778 \uc11c\ube44\uc2a4\ub098 ML/AI\uc640 \uc5f0\ub3d9\ub418\ub294 \ubc31\uc5d4\ub4dc, \ube60\ub978 \ud504\ub85c\ud1a0\ud0c0\uc774\ud551\uc774 \ud544\uc694\ud55c \uc2a4\ud0c0\ud2b8\uc5c5\uc5d0 \ucd5c\uc801\uc774\ub2e4. **Spring Framework**\ub294 \"\uacac\uace0\ud558\uace0 \ud655\uc7a5 \uac00\ub2a5\ud55c\" \uc5d4\ud130\ud504\ub77c\uc774\uc988 \uc544\ud0a4\ud14d\ucc98\uc758 \ud45c\uc900\uc774\ub2e4. DI/AOP \uae30\ubc18\uc758 \ub290\uc2a8\ud55c \uacb0\ud569, JVM\uc758 \uac15\ub825\ud55c \uc131\ub2a5, Spring Cloud\uc758 \ub9c8\uc774\ud06c\ub85c\uc11c\ube44\uc2a4 \uc0dd\ud0dc\uacc4\ub294 \uc218\ubc31\ub9cc \uc0ac\uc6a9\uc790\ub97c \ucc98\ub9ac\ud558\ub294 \ub300\uaddc\ubaa8 \uc2dc\uc2a4\ud15c\uc5d0\uc11c \uc9c4\uac00\ub97c \ubc1c\ud718\ud55c\ub2e4. \uacb0\uad6d **\"\uc5b4\ub290 \uac83\uc774 \ub354 \uc88b\uc740\uac00?\"** \ubcf4\ub2e4 **\"\uc5b4\ub290 \uac83\uc774 \uc774 \ud504\ub85c\uc81d\ud2b8/\ud300\uc5d0 \ub354 \uc801\ud569\ud55c\uac00?\"** \ub97c \ud310\ub2e8\ud558\ub294 \uac83\uc774\n[116 items compressed to 85. Retrieve more: hash=9dc98a278942907a15bebbc2]",
+  "hash": "eb5e3b5de0204a304e4702a8",
+  "original_tokens": 4408,
+  "compressed_tokens": 2827,
+  "tokens_saved": 1581,
+  "savings_percent": 64.1,
+  "transforms": [
+    "router:mixed:0.53"
+  ],
+  "note": "Original stored with hash=eb5e3b5de0204a304e4702a8. Use mcp__headroom__headroom_retrieve to get full content later."
+}
+headroom으로 원본이 저장됐습니다 (hash: eb5e3b5de0204a304e4702a8). 이제 markdown 파일로 저장합니다.
+
+생성됨
+django-spring-comparison-v1.md
++617
+-0
+django-spring-comparison-v1.md 파일이 생성됐습니다.
+
+headroom 압축 통계를 확인합니다.
+
+headroom: headroom stats 사용함
+{
+  "session_duration_seconds": 248,
+  "compressions": 1,
+  "retrievals": 0,
+  "total_input_tokens": 4408,
+  "total_output_tokens": 2827,
+  "total_tokens_saved": 1581,
+  "savings_percent": 35.9,
+  "estimated_cost_saved_usd": 0.0047,
+  "recent_events": [
+    {
+      "type": "compress",
+      "input_tokens": 4408,
+      "output_tokens": 2827,
+      "savings_percent": 35.9,
+      "strategy": "router:mixed:0.53",
+      "timestamp": 1780809580.1909378,
+      "pid": 811
+    }
+  ],
+  "store": {
+    "entries": 1,
+    "max_entries": 500
+  },
+  "sub_agents": {
+    "compressions": 3,
+    "retrievals": 0,
+    "tokens_saved": 97,
+    "total_input_tokens": 4363,
+    "total_output_tokens": 4266
+  },
+  "combined": {
+    "total_compressions": 4,
+    "total_tokens_saved": 1678,
+    "savings_percent": 19.1,
+    "estimated_cost_saved_usd": 0.005
+  }
+}
+완료됐습니다.
+
+django-spring-comparison-v1.md 저장 완료.
+
+보고서 구성 요약
+섹션	내용
+개요	각 프레임워크의 배경, 언어, 버전, 패러다임
+Django 심층 분석	MVT 아키텍처, ORM, DRF, Admin, 보안, 성능
+Spring 심층 분석	IoC/DI/AOP, MVC Controller, JPA, Security, WebFlux
+상세 비교	언어 생태계, 학습 곡선, 개발 속도, 확장성, 테스트, 배포
+요약 비교표 (5절)	핵심 특성표 / 기능별 표 / 장단점 표 / 사용 사례 적합도(★)
+선택 가이드	Django vs Spring 선택 기준 체크리스트
+결론	철학 비교 및 판단 기준
+headroom 사용 결과: 원본 4,408 토큰 → 2,827 토큰으로 압축 (약 36% 절감, hash: eb5e3b5de0204a304e4702a8으로 언제든 원본 복원 가능).
+
+/context
+
+
+컨텍스트 창
+56.3k / 200.0k (28%)
+Messages
+34.5k
+17.3%
+System tools
+10.6k
+5.3%
+System prompt
+6.7k
+3.4%
+Skills
+3.3k
+1.7%
+MCP tools
+1.7k
+0.9%
+MCP tools (deferred)
+25.0k
+12.5%
+System tools (deferred)
+11.8k
+5.9%
+Autocompact buffer
+33.0k
+16.5%
+Free space
+110.3k
+55.1%
+
+MCP 도구
+26.7k
+96
+ccd_directory · mcp__ccd_directory__request_directory
+178
+ccd_session · mcp__ccd_session__dismiss_task
+300
+ccd_session · mcp__ccd_session__mark_chapter
+338
+ccd_session · mcp__ccd_session__spawn_task
+798
+ccd_session_mgmt · mcp__ccd_session_mgmt__archive_session
+310
+ccd_session_mgmt · mcp__ccd_session_mgmt__list_sessions
+219
+ccd_session_mgmt · mcp__ccd_session_mgmt__search_session_transcripts
+214
+ccd_session_mgmt · mcp__ccd_session_mgmt__send_message
+267
+Claude_in_Chrome · mcp__Claude_in_Chrome__browser_batch
+481
+Claude_in_Chrome · mcp__Claude_in_Chrome__computer
+1.4k
+Claude_in_Chrome · mcp__Claude_in_Chrome__file_upload
+356
+Claude_in_Chrome · mcp__Claude_in_Chrome__find
+278
+Claude_in_Chrome · mcp__Claude_in_Chrome__form_input
+233
+Claude_in_Chrome · mcp__Claude_in_Chrome__get_page_text
+184
+Claude_in_Chrome · mcp__Claude_in_Chrome__gif_creator
+720
+Claude_in_Chrome · mcp__Claude_in_Chrome__javascript_tool
+346
+Claude_in_Chrome · mcp__Claude_in_Chrome__list_connected_browsers
+121
+Claude_in_Chrome · mcp__Claude_in_Chrome__navigate
+204
+Claude_in_Chrome · mcp__Claude_in_Chrome__read_console_messages
+461
+Claude_in_Chrome · mcp__Claude_in_Chrome__read_network_requests
+386
+Claude_in_Chrome · mcp__Claude_in_Chrome__read_page
+438
+Claude_in_Chrome · mcp__Claude_in_Chrome__resize_window
+217
+Claude_in_Chrome · mcp__Claude_in_Chrome__select_browser
+141
+Claude_in_Chrome · mcp__Claude_in_Chrome__shortcuts_execute
+256
+Claude_in_Chrome · mcp__Claude_in_Chrome__shortcuts_list
+174
+Claude_in_Chrome · mcp__Claude_in_Chrome__switch_browser
+155
+Claude_in_Chrome · mcp__Claude_in_Chrome__tabs_close_mcp
+187
+Claude_in_Chrome · mcp__Claude_in_Chrome__tabs_context_mcp
+244
+Claude_in_Chrome · mcp__Claude_in_Chrome__tabs_create_mcp
+101
+Claude_in_Chrome · mcp__Claude_in_Chrome__upload_image
+398
+Claude_Preview · mcp__Claude_Preview__preview_click
+151
+Claude_Preview · mcp__Claude_Preview__preview_console_logs
+197
+Claude_Preview · mcp__Claude_Preview__preview_eval
+225
+Claude_Preview · mcp__Claude_Preview__preview_fill
+150
+Claude_Preview · mcp__Claude_Preview__preview_inspect
+217
+Claude_Preview · mcp__Claude_Preview__preview_list
+73
+Claude_Preview · mcp__Claude_Preview__preview_logs
+242
+Claude_Preview · mcp__Claude_Preview__preview_network
+253
+Claude_Preview · mcp__Claude_Preview__preview_resize
+251
+Claude_Preview · mcp__Claude_Preview__preview_screenshot
+148
+Claude_Preview · mcp__Claude_Preview__preview_snapshot
+138
+Claude_Preview · mcp__Claude_Preview__preview_start
+263
+Claude_Preview · mcp__Claude_Preview__preview_stop
+91
+computer-use · mcp__computer-use__computer_batch
+828
+computer-use · mcp__computer-use__cursor_position
+92
+computer-use · mcp__computer-use__double_click
+227
+computer-use · mcp__computer-use__hold_key
+186
+computer-use · mcp__computer-use__key
+225
+computer-use · mcp__computer-use__left_click
+214
+computer-use · mcp__computer-use__left_click_drag
+256
+computer-use · mcp__computer-use__left_mouse_down
+138
+computer-use · mcp__computer-use__left_mouse_up
+125
+computer-use · mcp__computer-use__list_granted_applications
+84
+computer-use · mcp__computer-use__middle_click
+222
+computer-use · mcp__computer-use__mouse_move
+182
+computer-use · mcp__computer-use__open_application
+148
+computer-use · mcp__computer-use__read_clipboard
+69
+computer-use · mcp__computer-use__request_access
+581
+computer-use · mcp__computer-use__request_teach_access
+410
+computer-use · mcp__computer-use__right_click
+228
+computer-use · mcp__computer-use__screenshot
+222
+computer-use · mcp__computer-use__scroll
+238
+computer-use · mcp__computer-use__switch_display
+220
+computer-use · mcp__computer-use__teach_batch
+1.1k
+computer-use · mcp__computer-use__teach_step
+967
+computer-use · mcp__computer-use__triple_click
+227
+computer-use · mcp__computer-use__type
+144
+computer-use · mcp__computer-use__wait
+87
+computer-use · mcp__computer-use__write_clipboard
+85
+computer-use · mcp__computer-use__zoom
+291
+headroom · mcp__headroom__headroom_compress
+163
+headroom · mcp__headroom__headroom_retrieve
+170
+headroom · mcp__headroom__headroom_stats
+68
+mcp-registry · mcp__mcp-registry__list_connectors
+155
+mcp-registry · mcp__mcp-registry__search_mcp_registry
+306
+mcp-registry · mcp__mcp-registry__suggest_connectors
+414
+plugin_engineering_asana · mcp__plugin_engineering_asana__authenticate
+121
+plugin_engineering_asana · mcp__plugin_engineering_asana__complete_authentication
+167
+plugin_engineering_atlassian · mcp__plugin_engineering_atlassian__authenticate
+125
+plugin_engineering_atlassian · mcp__plugin_engineering_atlassian__complete_authentication
+170
+plugin_engineering_datadog · mcp__plugin_engineering_datadog__authenticate
+131
+plugin_engineering_datadog · mcp__plugin_engineering_datadog__complete_authentication
+168
+plugin_engineering_github · mcp__plugin_engineering_github__authenticate
+124
+plugin_engineering_github · mcp__plugin_engineering_github__complete_authentication
+168
+plugin_engineering_linear · mcp__plugin_engineering_linear__authenticate
+121
+plugin_engineering_linear · mcp__plugin_engineering_linear__complete_authentication
+168
+plugin_engineering_notion · mcp__plugin_engineering_notion__authenticate
+121
+plugin_engineering_notion · mcp__plugin_engineering_notion__complete_authentication
+168
+plugin_engineering_pagerduty · mcp__plugin_engineering_pagerduty__authenticate
+125
+plugin_engineering_pagerduty · mcp__plugin_engineering_pagerduty__complete_authentication
+170
+plugin_engineering_slack · mcp__plugin_engineering_slack__authenticate
+121
+plugin_engineering_slack · mcp__plugin_engineering_slack__complete_authentication
+167
+scheduled-tasks · mcp__scheduled-tasks__create_scheduled_task
+995
+scheduled-tasks · mcp__scheduled-tasks__list_scheduled_tasks
+166
+scheduled-tasks · mcp__scheduled-tasks__update_scheduled_task
+645
+sequential-thinking · mcp__sequential-thinking__sequentialthinking
+934
+headroom의 metric 출력
+
+headroom: headroom stats 사용함
+{
+  "session_duration_seconds": 336,
+  "compressions": 1,
+  "retrievals": 0,
+  "total_input_tokens": 4408,
+  "total_output_tokens": 2827,
+  "total_tokens_saved": 1581,
+  "savings_percent": 35.9,
+  "estimated_cost_saved_usd": 0.0047,
+  "recent_events": [
+    {
+      "type": "compress",
+      "input_tokens": 4408,
+      "output_tokens": 2827,
+      "savings_percent": 35.9,
+      "strategy": "router:mixed:0.53",
+      "timestamp": 1780809580.1909378,
+      "pid": 811
+    }
+  ],
+  "store": {
+    "entries": 1,
+    "max_entries": 500
+  },
+  "sub_agents": {
+    "compressions": 3,
+    "retrievals": 0,
+    "tokens_saved": 97,
+    "total_input_tokens": 4363,
+    "total_output_tokens": 4266
+  },
+  "combined": {
+    "total_compressions": 4,
+    "total_tokens_saved": 1678,
+    "savings_percent": 19.1,
+    "estimated_cost_saved_usd": 0.005
+  }
+}
+Headroom 세션 메트릭
+항목	값
+세션 지속 시간	336초 (약 5.6분)
+압축 횟수	1회 (메인) + 3회 (서브 에이전트) = 총 4회
+복원 횟수	0회
+메인 에이전트 압축
+항목	값
+입력 토큰	4,408
+출력 토큰	2,827
+절감 토큰	1,581
+절감률	35.9%
+적용 전략	router:mixed:0.53
+절감 비용	$0.0047
+전체 (메인 + 서브 에이전트) 합산
+항목	값
+총 압축 횟수	4회
+총 절감 토큰	1,678
+전체 절감률	19.1%
+절감 비용	$0.005
+저장소 상태
+현재 저장 엔트리: 1개 / 최대 500개
+보고서 작성 시 compress 1회로 4,408 토큰 → 2,827 토큰으로 압축됐고, 원본은 hash eb5e3b5de0204a304e4702a8으로 언제든 retrieve 가능합니다.
+
+
+

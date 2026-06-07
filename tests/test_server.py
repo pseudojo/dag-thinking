@@ -81,6 +81,7 @@ class TestThinkStatusRestoreRoundtrip:
     )
 
     def test_think_returns_node_and_hash(self, db_path):
+        """C01/T13: think 응답에 status, node, ccr_hash(24자) 포함"""
         result = think(db_path, "s1", "define_problem", "Objective", self.LONG_PAYLOAD)
         assert result["status"] in ("created", "updated")
         assert result["node"] == "define_problem"
@@ -88,6 +89,7 @@ class TestThinkStatusRestoreRoundtrip:
         assert len(result["ccr_hash"]) == 24
 
     def test_status_contains_restoration_manifest(self, db_path):
+        """C14/C15/T16: status 응답에 restoration_manifest 항상 포함, restore_cmd 포맷 정확"""
         think(db_path, "s1", "define_problem", "Objective", self.LONG_PAYLOAD)
         s = status(db_path, "s1")
         assert "restoration_manifest" in s
@@ -102,6 +104,7 @@ class TestThinkStatusRestoreRoundtrip:
         assert "ccr_hash=" in node_entry["restore_cmd"]
 
     def test_restore_returns_original_payload_byte_level(self, db_path):
+        """C17/T19: restore 후 original_payload가 원본과 byte-level 동일"""
         # C17: byte-level identity after round-trip
         result = think(db_path, "s1", "define_problem", "Objective", self.LONG_PAYLOAD)
         h = result["ccr_hash"]
@@ -109,12 +112,14 @@ class TestThinkStatusRestoreRoundtrip:
         assert r["original_payload"] == self.LONG_PAYLOAD
 
     def test_status_manifest_empty_when_no_nodes(self, db_path):
+        """C14: 노드 0개 세션에서도 restoration_manifest 포함, nodes=[]"""
         # C14: restoration_manifest always present, even with 0 nodes
         s = status(db_path, "empty_session")
         assert "restoration_manifest" in s
         assert s["restoration_manifest"]["nodes"] == []
 
     def test_status_dag_contains_node(self, db_path):
+        """T15: status().dag.nodes에 생성한 노드 이름 포함"""
         think(db_path, "s1", "define_problem", "Objective", self.LONG_PAYLOAD)
         s = status(db_path, "s1")
         names = [n["name"] for n in s["dag"]["nodes"]]
@@ -142,11 +147,13 @@ class TestDependsOnParentContext:
     )
 
     def test_no_depends_on_no_parent_context(self, db_path):
+        """C03/T13: depends_on=[] → 응답에 parent_context 없음(또는 빈 dict)"""
         # C03
         result = think(db_path, "s1", "obj_node", "Objective", self.PAYLOAD_A)
         assert result.get("parent_context", {}) == {} or "parent_context" not in result
 
     def test_depends_on_attaches_parent_context(self, db_path):
+        """C04/T14: depends_on 지정 → 응답에 parent_context.{parent}.payload 자동 첨부"""
         # C04
         think(db_path, "s1", "obj_node", "Objective", self.PAYLOAD_A)
         result = think(db_path, "s1", "hyp_node", "Hypothesis", self.PAYLOAD_B, depends_on=["obj_node"])
@@ -155,6 +162,7 @@ class TestDependsOnParentContext:
         assert "payload" in result["parent_context"]["obj_node"]
 
     def test_parent_context_payload_is_compressed_or_equal(self, db_path):
+        """C05: parent_context의 payload가 원본 이하 길이 (압축 또는 동일)"""
         # C05: compressed payload must be <= original length
         think(db_path, "s1", "obj_node", "Objective", self.PAYLOAD_A)
         result = think(db_path, "s1", "hyp_node", "Hypothesis", self.PAYLOAD_B, depends_on=["obj_node"])
@@ -162,6 +170,7 @@ class TestDependsOnParentContext:
         assert len(parent_payload) <= len(self.PAYLOAD_A)
 
     def test_invalidated_parent_triggers_warning(self, db_path):
+        """C06: INVALIDATED 부모를 depends_on → parent_context에 경고/is_invalidated 포함"""
         # C06
         think(db_path, "s1", "obj_node", "Objective", self.PAYLOAD_A)
         invalidate(db_path, "s1", "obj_node")
@@ -184,6 +193,7 @@ class TestCycleDetection:
     )
 
     def test_self_cycle_rejected(self, db_path):
+        """C09/T04: 자기 참조(A depends_on A) → ValueError, 노드 미생성"""
         # C09: cycle attempt → error, node not created
         think(db_path, "s1", "node_a", "Objective", self.PAYLOAD)
         with pytest.raises(Exception) as exc_info:
@@ -191,6 +201,7 @@ class TestCycleDetection:
         assert "cycle" in str(exc_info.value).lower() or "error" in str(exc_info.value).lower()
 
     def test_a_b_a_cycle_rejected(self, db_path):
+        """C09/T04: A→B 후 B depends_on A 시도 → 순환 감지 ValueError"""
         think(db_path, "s1", "node_a", "Objective", self.PAYLOAD)
         think(db_path, "s1", "node_b", "Hypothesis", self.PAYLOAD, depends_on=["node_a"])
         with pytest.raises(Exception):
@@ -211,6 +222,7 @@ class TestCascadeInvalidation:
     )
 
     def test_cascade_invalidates_descendants(self, db_path):
+        """C20/T05: A→B→C 구조에서 A invalidate → B,C 모두 INVALIDATED"""
         # C20: A→B→C, invalidate A → B and C also INVALIDATED
         think(db_path, "s1", "node_a", "Objective", self.PAYLOAD)
         think(db_path, "s1", "node_b", "Hypothesis", self.PAYLOAD, depends_on=["node_a"])
@@ -219,12 +231,14 @@ class TestCascadeInvalidation:
         assert set(result["invalidated"]) == {"node_a", "node_b", "node_c"}
 
     def test_single_node_invalidation(self, db_path):
+        """C19/T17: 단일 노드 invalidate → status INVALIDATED, invalidated 목록에 포함"""
         # C19
         think(db_path, "s1", "solo", "Objective", self.PAYLOAD)
         result = invalidate(db_path, "s1", "solo")
         assert "solo" in result["invalidated"]
 
     def test_re_create_invalidated_node_restores_completed(self, db_path):
+        """C21/T13: INVALIDATED 노드를 동일 이름으로 think() 재생성 → COMPLETED 복귀"""
         # C21: think() on INVALIDATED node → status=COMPLETED
         think(db_path, "s1", "node_a", "Objective", self.PAYLOAD)
         invalidate(db_path, "s1", "node_a")
@@ -248,6 +262,7 @@ class TestRestore:
     )
 
     def test_restore_without_hash_returns_node_list(self, db_path):
+        """C16/T18: restore(ccr_hash=None) → 세션 내 모든 노드 hash 목록 반환"""
         # C16
         think(db_path, "s1", "node_a", "Objective", self.PAYLOAD)
         result = restore(db_path, "s1")
@@ -259,6 +274,7 @@ class TestRestore:
         assert "restore_cmd" in entry
 
     def test_restore_with_hash_returns_original(self, db_path):
+        """C17/T19: restore(ccr_hash=X) → original_payload 원본, node_name 일치"""
         # C17
         r = think(db_path, "s1", "node_a", "Objective", self.PAYLOAD)
         h = r["ccr_hash"]
@@ -267,6 +283,7 @@ class TestRestore:
         assert result["node_name"] == "node_a"
 
     def test_restore_cross_session_rejected(self, db_path):
+        """C18: 다른 session_id로 restore 시도 → ValueError (세션 scoping 보장)"""
         # C18: different session_id → error
         r = think(db_path, "s1", "node_a", "Objective", self.PAYLOAD)
         h = r["ccr_hash"]
@@ -280,12 +297,14 @@ class TestRestore:
 
 class TestCompressionPassthrough:
     def test_short_payload_passthrough(self, db_path):
+        """C10/T12: 100자 미만 payload → tokens_saved=0, passthrough"""
         # C10: <100 chars → compressed=NULL, tokens_saved=0
         short = "This is a short payload under 280 characters. " * 2  # ~94 chars
         result = think(db_path, "s1", "short_node", "Objective", short)
         assert result["compression"]["tokens_saved"] == 0
 
     def test_short_payload_stored_as_original(self, db_path):
+        """C12: 짧은 payload도 ccr_store에 원본 저장 → restore 시 byte-level 동일"""
         short = "Key finding: the system is working correctly. No errors detected. All tests pass."
         r = think(db_path, "s1", "short_node", "Objective", short)
         restored = restore(db_path, "s1", r["ccr_hash"])
@@ -297,6 +316,7 @@ class TestCompressionPassthrough:
 # ---------------------------------------------------------------------------
 
 class TestMetrics:
+    """T27: 압축 메트릭 정확성 검증 (C22, C23)"""
     LONG_PAYLOAD = (
         "The comprehensive analysis of the distributed system performance reveals multiple critical bottlenecks. "
         "First, the key finding is that network latency between microservices accounts for 40% of total request time. "
@@ -309,6 +329,7 @@ class TestMetrics:
     )
 
     def test_tokens_saved_accurate_in_status(self, db_path):
+        """C22: status().metrics.tokens_saved == Σ(각 노드 tokens_saved) 일치"""
         # C22: status().metrics.tokens_saved == sum of per-node tokens_saved
         r1 = think(db_path, "s1", "n1", "Objective", self.LONG_PAYLOAD)
         r2 = think(db_path, "s1", "n2", "Hypothesis", self.LONG_PAYLOAD)
@@ -317,6 +338,7 @@ class TestMetrics:
         assert s["metrics"]["tokens_saved"] == expected
 
     def test_compression_ratio_formula(self, db_path):
+        """C23: ratio = 1 - tokens_compressed / tokens_original 공식 검증 (오차 <0.01)"""
         # C23: ratio = 1 - tokens_compressed / tokens_original
         think(db_path, "s1", "n1", "Objective", self.LONG_PAYLOAD)
         s = status(db_path, "s1")
@@ -332,22 +354,26 @@ class TestMetrics:
 
 class TestEdgeCases:
     def test_unknown_action_raises(self, db_path):
+        """C02/T20: 잘못된 action → 명확한 오류 메시지 ValueError"""
         # C02
         with pytest.raises(Exception) as exc_info:
             call_dag_headroom(db_path=db_path, action="unknown", session_id="s1")
         assert "action" in str(exc_info.value).lower() or "unknown" in str(exc_info.value).lower()
 
     def test_payload_too_short_raises(self, db_path):
+        """C07/T13: payload 80자 미만 → ValueError"""
         # C07: <80 chars
         with pytest.raises(Exception):
             think(db_path, "s1", "n", "Objective", "too short")
 
     def test_payload_too_long_raises(self, db_path):
+        """C08/T13: payload 1500자 초과 → ValueError"""
         # C08: >1500 chars
         with pytest.raises(Exception):
             think(db_path, "s1", "n", "Objective", "x" * 1501)
 
     def test_ccr_hash_deterministic(self):
+        """C13/T06: 동일 입력 → 동일 24자 hex hash (결정론적)"""
         # C13: same content → same hash
         text = "deterministic content for hashing test"
         h1 = ccr_hash(text)
@@ -356,6 +382,7 @@ class TestEdgeCases:
         assert len(h1) == 24
 
     def test_long_payload_compression_ratio(self):
+        """C11/T12: 700자+ payload → 75% 이하로 압축 (목표 42% 유지율 ±허용치)"""
         # C11: 700+ chars → ~42% retained (±10%)
         long_text = (
             "The comprehensive analysis of the distributed system performance reveals multiple critical bottlenecks. "
