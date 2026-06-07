@@ -1,5 +1,5 @@
 """
-dag-headroom improvement tests (I06–I08)
+dag-thinking improvement tests (I06–I08)
 TDD RED phase — written before implementation.
 
 문서 근거: LLM 프롬프트 엔지니어링 심층 탐구.md
@@ -14,7 +14,7 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.server import call_dag_headroom, init_db
+from src.server import call_dag_thinking, init_db
 from src.compressor import _score_sentence, compress
 
 
@@ -39,7 +39,7 @@ PAYLOAD = (
 
 
 def think(db, sid, name, ttype, payload=None, depends_on=None):
-    return call_dag_headroom(
+    return call_dag_thinking(
         db_path=db, action="think", session_id=sid,
         node_name=name, thought_type=ttype,
         payload=payload or PAYLOAD,
@@ -48,7 +48,7 @@ def think(db, sid, name, ttype, payload=None, depends_on=None):
 
 
 def status(db, sid):
-    return call_dag_headroom(db_path=db, action="status", session_id=sid)
+    return call_dag_thinking(db_path=db, action="status", session_id=sid)
 
 
 # ---------------------------------------------------------------------------

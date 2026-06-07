@@ -1,5 +1,5 @@
 """
-Pure-Python extractive compressor for dag-headroom CCR pattern.
+Pure-Python extractive compressor for dag-thinking CCR pattern.
 No ML dependencies — standard library only.
 """
 

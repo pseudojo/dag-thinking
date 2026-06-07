@@ -1,5 +1,5 @@
 """
-dag-headroom MCP server — single tool, single entry point.
+dag-thinking MCP server — single tool, single entry point.
 """
 
 import sqlite3
@@ -15,7 +15,7 @@ from .compressor import compress, estimate_tokens
 # DB path — default next to this file, overridable for tests
 # ---------------------------------------------------------------------------
 
-_DEFAULT_DB = os.path.join(os.path.dirname(__file__), "..", "dag_headroom.db")
+_DEFAULT_DB = os.path.join(os.path.dirname(__file__), "..", "dag_thinking.db")
 
 
 # ---------------------------------------------------------------------------
@@ -158,7 +158,7 @@ def _cascade_invalidate(conn: sqlite3.Connection, session_id: str, root: str) ->
 # Core logic — separated from FastMCP layer for testability
 # ---------------------------------------------------------------------------
 
-def call_dag_headroom(
+def call_dag_thinking(
     *,
     db_path: str = _DEFAULT_DB,
     action: str,
@@ -533,7 +533,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
             "status": row["status"],
             "ccr_hash": row["ccr_hash"],
             "restore_cmd": (
-                f"dag_headroom(action='restore', "
+                f"dag_thinking(action='restore',"
                 f"session_id='{session_id}', "
                 f"ccr_hash='{row['ccr_hash']}')"
             ),
@@ -561,7 +561,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
         },
         "restoration_manifest": {
             "how_to_restore": (
-                "dag_headroom(action='restore', session_id='<id>', ccr_hash='<hash>')"
+                "dag_thinking(action='restore',session_id='<id>', ccr_hash='<hash>')"
             ),
             "nodes": manifest_nodes,
         },
@@ -625,7 +625,7 @@ def _action_restore(
                         "name": r["name"],
                         "ccr_hash": r["ccr_hash"],
                         "restore_cmd": (
-                            f"dag_headroom(action='restore', "
+                            f"dag_thinking(action='restore',"
                             f"session_id='{session_id}', "
                             f"ccr_hash='{r['ccr_hash']}')"
                         ),
@@ -666,11 +666,11 @@ def _action_restore(
 # FastMCP tool — C01: exactly one tool exposed
 # ---------------------------------------------------------------------------
 
-mcp = FastMCP("dag-headroom")
+mcp = FastMCP("dag-thinking")
 
 
 @mcp.tool()
-def dag_headroom(
+def dag_thinking(
     action: Literal["think", "status", "invalidate", "restore"],
     session_id: str,
     node_name: Optional[str] = None,
@@ -693,7 +693,7 @@ def dag_headroom(
     action="invalidate" — cascade-invalidate a node and its descendants (target_node required)
     action="restore"    — retrieve original payload by ccr_hash; omit hash to list all restorable nodes
     """
-    return call_dag_headroom(
+    return call_dag_thinking(
         action=action,
         session_id=session_id,
         node_name=node_name,

@@ -1,4 +1,4 @@
-# dag-headroom 개선 명세
+# dag-thinking 개선 명세
 
 > TDD 흐름: 스펙 정의 → RED → GREEN → ALIGNMENT → REFACTOR
 > PLAN.md 원칙 준수: lightweight, no new deps, single entry point 유지
@@ -91,7 +91,7 @@ thought_type별 next_hint:
 
 ### 문서 근거
 "LLM 프롬프트 엔지니어링 심층 탐구" §1: ContentRouter가 입력 데이터 유형을 감지해
-적절한 압축 엔진으로 라우팅. dag-headroom에서 thought_type이 그 유형 신호 역할을 한다.
+적절한 압축 엔진으로 라우팅. dag-thinking에서 thought_type이 그 유형 신호 역할을 한다.
 
 ### 문제
 `IMPORTANCE_KEYWORDS`가 모든 thought_type에 동일하게 적용된다.

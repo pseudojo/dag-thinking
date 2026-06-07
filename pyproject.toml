@@ -1,5 +1,5 @@
 [project]
-name = "dag-headroom"
+name = "dag-thinking"
 version = "0.1.0"
 description = "Lightweight MCP server combining DAG-structured reasoning with CCR context compression"
 requires-python = ">=3.13"
@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.scripts]
-dag-headroom = "src.server:main"
+dag-thinking = "src.server:main"
 
 [build-system]
 requires = ["hatchling"]

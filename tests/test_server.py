@@ -1,5 +1,5 @@
 """
-dag-headroom integration tests (T21-T27, checks C01-C23)
+dag-thinking integration tests (T21-T27, checks C01-C23)
 RED phase: written before implementation.
 """
 
@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.compressor import compress, ccr_hash, estimate_tokens
-from src.server import call_dag_headroom, init_db
+from src.server import call_dag_thinking, init_db
 
 
 # ---------------------------------------------------------------------------
@@ -27,7 +27,7 @@ def db_path(tmp_path):
 
 
 def think(db_path, session_id, node_name, thought_type, payload, depends_on=None, note=""):
-    return call_dag_headroom(
+    return call_dag_thinking(
         db_path=db_path,
         action="think",
         session_id=session_id,
@@ -40,7 +40,7 @@ def think(db_path, session_id, node_name, thought_type, payload, depends_on=None
 
 
 def status(db_path, session_id):
-    return call_dag_headroom(
+    return call_dag_thinking(
         db_path=db_path,
         action="status",
         session_id=session_id,
@@ -48,7 +48,7 @@ def status(db_path, session_id):
 
 
 def restore(db_path, session_id, ccr_hash_val=None):
-    return call_dag_headroom(
+    return call_dag_thinking(
         db_path=db_path,
         action="restore",
         session_id=session_id,
@@ -57,7 +57,7 @@ def restore(db_path, session_id, ccr_hash_val=None):
 
 
 def invalidate(db_path, session_id, target_node, reason="test"):
-    return call_dag_headroom(
+    return call_dag_thinking(
         db_path=db_path,
         action="invalidate",
         session_id=session_id,
@@ -357,7 +357,7 @@ class TestEdgeCases:
         """C02/T20: 잘못된 action → 명확한 오류 메시지 ValueError"""
         # C02
         with pytest.raises(Exception) as exc_info:
-            call_dag_headroom(db_path=db_path, action="unknown", session_id="s1")
+            call_dag_thinking(db_path=db_path, action="unknown", session_id="s1")
         assert "action" in str(exc_info.value).lower() or "unknown" in str(exc_info.value).lower()
 
     def test_payload_too_short_raises(self, db_path):
