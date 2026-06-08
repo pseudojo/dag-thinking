@@ -2,10 +2,11 @@
 dag-thinking MCP server — single tool, single entry point.
 """
 
+import contextlib
 import sqlite3
 import os
-from datetime import datetime
-from typing import Literal, Optional
+from collections import deque
+from typing import Literal
 
 from fastmcp import FastMCP
 
@@ -23,7 +24,7 @@ _DEFAULT_DB = os.path.join(os.path.dirname(__file__), "..", "dag_thinking.db")
 # ---------------------------------------------------------------------------
 
 def init_db(path: str = _DEFAULT_DB) -> None:
-    with _db(path) as conn:
+    with contextlib.closing(_db(path)) as conn:
         conn.executescript("""
             PRAGMA journal_mode=WAL;
 
@@ -163,16 +164,17 @@ def call_dag_thinking(
     db_path: str = _DEFAULT_DB,
     action: str,
     session_id: str,
-    node_name: Optional[str] = None,
-    thought_type: Optional[str] = None,
-    payload: Optional[str] = None,
-    depends_on: Optional[list[str]] = None,
+    node_name: str | None = None,
+    thought_type: str | None = None,
+    payload: str | None = None,
+    depends_on: list[str] | None = None,
     note: str = "",
-    target_node: Optional[str] = None,
+    target_node: str | None = None,
     reason: str = "",
-    ccr_hash: Optional[str] = None,
+    ccr_hash: str | None = None,
 ) -> dict:
-    init_db(db_path)
+    if not session_id or not session_id.strip():
+        raise ValueError("session_id cannot be empty or blank")
 
     if action == "think":
         return _action_think(
@@ -220,9 +222,9 @@ _PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
 
 
 def _compute_context_pressure(conn: sqlite3.Connection, session_id: str) -> dict:
-    """I07: 세션 노드 수 기반 컨텍스트 압박 수준 계산 (upsert 후 호출)."""
+    """I07: 세션 COMPLETED 노드 수 기반 컨텍스트 압박 수준 계산 (upsert 후 호출)."""
     node_count = conn.execute(
-        "SELECT COUNT(*) FROM nodes WHERE session_id=?", (session_id,)
+        "SELECT COUNT(*) FROM nodes WHERE session_id=? AND status='COMPLETED'", (session_id,)
     ).fetchone()[0]
 
     if node_count >= _PRESSURE_HIGH:
@@ -285,10 +287,10 @@ def _compute_dag_health(node_rows, edge_rows) -> dict:
     roots = [n for n in node_names if n not in has_parent]
     max_depth = 0
     if roots:
-        queue = [(r, 0) for r in roots]
+        bfs: deque[tuple[str, int]] = deque((r, 0) for r in roots)
         visited: set[str] = set()
-        while queue:
-            node, depth = queue.pop(0)
+        while bfs:
+            node, depth = bfs.popleft()
             if node in visited:
                 continue
             visited.add(node)
@@ -296,7 +298,7 @@ def _compute_dag_health(node_rows, edge_rows) -> dict:
                 max_depth = depth
             for child in child_map.get(node, []):
                 if child not in visited:
-                    queue.append((child, depth + 1))
+                    bfs.append((child, depth + 1))
 
     # health_hint: 우선순위 — 고립 > 수렴 > 미수렴 경고 > 정상
     total_nodes = len(node_names)
@@ -342,15 +344,15 @@ def _action_think(
     *,
     db_path: str,
     session_id: str,
-    node_name: Optional[str],
-    thought_type: Optional[str],
-    payload: Optional[str],
+    node_name: str | None,
+    thought_type: str | None,
+    payload: str | None,
     depends_on: list[str],
     note: str,
 ) -> dict:
     # --- validation ---
-    if not node_name:
-        raise ValueError("node_name is required for action='think'")
+    if not node_name or not node_name.strip():
+        raise ValueError("node_name is required for action='think' and cannot be blank")
     if not thought_type or thought_type not in VALID_THOUGHT_TYPES:
         raise ValueError(f"thought_type must be one of: {sorted(VALID_THOUGHT_TYPES)}")
     if not payload:
@@ -360,7 +362,8 @@ def _action_think(
     if len(payload) > 1500:
         raise ValueError("payload must be at most 1500 characters")
 
-    with _db(db_path) as conn:
+    with contextlib.closing(_db(db_path)) as conn:
+      with conn:
         _ensure_session(conn, session_id)
 
         # --- cycle detection ---
@@ -460,10 +463,8 @@ def _action_think(
         ).fetchone()
         session_total_saved = session_row["tokens_saved"] if session_row else tokens_saved
 
-        # I07: 컨텍스트 압박 수준 (upsert 후, commit 전 — 동일 트랜잭션 내 COUNT 반영)
+        # I07: 컨텍스트 압박 수준 (upsert 후 — 동일 트랜잭션 내 COUNT 반영)
         context_pressure = _compute_context_pressure(conn, session_id)
-
-        conn.commit()
 
     result: dict = {
         "status": op_status,
@@ -488,38 +489,34 @@ def _action_think(
 # ---------------------------------------------------------------------------
 
 def _action_status(*, db_path: str, session_id: str) -> dict:
-    with _db(db_path) as conn:
-        _ensure_session(conn, session_id)
+    with contextlib.closing(_db(db_path)) as conn:
+        with conn:
+            _ensure_session(conn, session_id)
 
-        node_rows = conn.execute(
-            "SELECT name, thought_type, ccr_hash, status, created_at FROM nodes "
-            "WHERE session_id=? ORDER BY id",
-            (session_id,),
-        ).fetchall()
+            node_rows = conn.execute(
+                "SELECT name, thought_type, ccr_hash, status, created_at, payload, compressed "
+                "FROM nodes WHERE session_id=? ORDER BY id",
+                (session_id,),
+            ).fetchall()
 
-        edge_rows = conn.execute(
-            "SELECT parent, child FROM edges WHERE session_id=?",
-            (session_id,),
-        ).fetchall()
+            edge_rows = conn.execute(
+                "SELECT parent, child FROM edges WHERE session_id=?",
+                (session_id,),
+            ).fetchall()
 
-        payload_rows = conn.execute(
-            "SELECT payload, compressed FROM nodes WHERE session_id=?",
-            (session_id,),
-        ).fetchall()
-
-        session_row = conn.execute(
-            "SELECT tokens_saved FROM sessions WHERE id=?",
-            (session_id,),
-        ).fetchone()
+            session_row = conn.execute(
+                "SELECT tokens_saved FROM sessions WHERE id=?",
+                (session_id,),
+            ).fetchone()
 
     # I08: DAG 수렴 상태 진단 (DB 연결 닫힌 후 — 이미 fetch된 Row 객체로 계산)
     dag_health = _compute_dag_health(node_rows, edge_rows)
 
-    # metrics
-    tokens_original = sum(estimate_tokens(r["payload"]) for r in payload_rows)
+    # metrics — payload/compressed columns are now part of node_rows (P2-5)
+    tokens_original = sum(estimate_tokens(r["payload"]) for r in node_rows)
     tokens_compressed = sum(
         estimate_tokens(r["compressed"]) if r["compressed"] else estimate_tokens(r["payload"])
-        for r in payload_rows
+        for r in node_rows
     )
     tokens_saved = (session_row["tokens_saved"] if session_row else 0)
     ratio = (1 - tokens_compressed / tokens_original) if tokens_original > 0 else 0.0
@@ -574,27 +571,27 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
 # ---------------------------------------------------------------------------
 
 def _action_invalidate(
-    *, db_path: str, session_id: str, target_node: Optional[str], reason: str
+    *, db_path: str, session_id: str, target_node: str | None, reason: str
 ) -> dict:
     if not target_node:
         raise ValueError("target_node is required for action='invalidate'")
 
-    with _db(db_path) as conn:
-        _ensure_session(conn, session_id)
+    with contextlib.closing(_db(db_path)) as conn:
+        with conn:
+            _ensure_session(conn, session_id)
 
-        # I03: target_node 존재 여부 검증
-        exists = conn.execute(
-            "SELECT id FROM nodes WHERE session_id=? AND name=?",
-            (session_id, target_node),
-        ).fetchone()
-        if exists is None:
-            raise ValueError(
-                f"Node '{target_node}' not found in session '{session_id}'. "
-                "Use action='status' to see available nodes."
-            )
+            # I03: target_node 존재 여부 검증
+            exists = conn.execute(
+                "SELECT id FROM nodes WHERE session_id=? AND name=?",
+                (session_id, target_node),
+            ).fetchone()
+            if exists is None:
+                raise ValueError(
+                    f"Node '{target_node}' not found in session '{session_id}'. "
+                    "Use action='status' to see available nodes."
+                )
 
-        affected = _cascade_invalidate(conn, session_id, target_node)
-        conn.commit()
+            affected = _cascade_invalidate(conn, session_id, target_node)
 
     return {
         "invalidated": affected,
@@ -608,58 +605,57 @@ def _action_invalidate(
 # ---------------------------------------------------------------------------
 
 def _action_restore(
-    *, db_path: str, session_id: str, ccr_hash_val: Optional[str]
+    *, db_path: str, session_id: str, ccr_hash_val: str | None
 ) -> dict:
-    with _db(db_path) as conn:
-        _ensure_session(conn, session_id)
+    with contextlib.closing(_db(db_path)) as conn:
+        with conn:
+            _ensure_session(conn, session_id)
 
-        if ccr_hash_val is None:
-            # list all restorable nodes in this session
-            rows = conn.execute(
-                "SELECT name, ccr_hash FROM nodes WHERE session_id=? ORDER BY id",
-                (session_id,),
-            ).fetchall()
-            return {
-                "restorable_nodes": [
-                    {
-                        "name": r["name"],
-                        "ccr_hash": r["ccr_hash"],
-                        "restore_cmd": (
-                            f"dag_thinking(action='restore',"
-                            f"session_id='{session_id}', "
-                            f"ccr_hash='{r['ccr_hash']}')"
-                        ),
-                    }
-                    for r in rows
-                ]
-            }
+            if ccr_hash_val is None:
+                rows = conn.execute(
+                    "SELECT name, ccr_hash FROM nodes WHERE session_id=? ORDER BY id",
+                    (session_id,),
+                ).fetchall()
+                return {
+                    "restorable_nodes": [
+                        {
+                            "name": r["name"],
+                            "ccr_hash": r["ccr_hash"],
+                            "restore_cmd": (
+                                f"dag_thinking(action='restore',"
+                                f"session_id='{session_id}', "
+                                f"ccr_hash='{r['ccr_hash']}')"
+                            ),
+                        }
+                        for r in rows
+                    ]
+                }
 
-        # C18: session scoping — hash must belong to this session
-        row = conn.execute(
-            "SELECT node_name, original FROM ccr_store "
-            "WHERE hash=? AND session_id=?",
-            (ccr_hash_val, session_id),
-        ).fetchone()
-
-        if row is None:
-            # Check if hash exists in another session
-            other = conn.execute(
-                "SELECT session_id FROM ccr_store WHERE hash=?",
-                (ccr_hash_val,),
+            # C18: session scoping — hash must belong to this session
+            row = conn.execute(
+                "SELECT node_name, original FROM ccr_store "
+                "WHERE hash=? AND session_id=?",
+                (ccr_hash_val, session_id),
             ).fetchone()
-            if other:
-                raise ValueError(
-                    f"Hash '{ccr_hash_val}' belongs to session '{other['session_id']}', "
-                    f"not '{session_id}'"
-                )
-            raise ValueError(f"Hash '{ccr_hash_val}' not found")
 
-        tokens = estimate_tokens(row["original"])
-        return {
-            "node_name": row["node_name"],
-            "original_payload": row["original"],
-            "tokens": tokens,
-        }
+            if row is None:
+                other = conn.execute(
+                    "SELECT session_id FROM ccr_store WHERE hash=?",
+                    (ccr_hash_val,),
+                ).fetchone()
+                if other:
+                    raise ValueError(
+                        f"Hash '{ccr_hash_val}' belongs to session '{other['session_id']}', "
+                        f"not '{session_id}'"
+                    )
+                raise ValueError(f"Hash '{ccr_hash_val}' not found")
+
+            tokens = estimate_tokens(row["original"])
+            return {
+                "node_name": row["node_name"],
+                "original_payload": row["original"],
+                "tokens": tokens,
+            }
 
 
 # ---------------------------------------------------------------------------
@@ -673,17 +669,17 @@ mcp = FastMCP("dag-thinking")
 def dag_thinking(
     action: Literal["think", "status", "invalidate", "restore"],
     session_id: str,
-    node_name: Optional[str] = None,
-    thought_type: Optional[Literal[
+    node_name: str | None = None,
+    thought_type: Literal[
         "Objective", "Hypothesis", "Assumption",
         "Evidence", "Critique", "Synthesis", "Action"
-    ]] = None,
-    payload: Optional[str] = None,
-    depends_on: Optional[list[str]] = None,  # REFACTOR: mutable default → None
+    ] | None = None,
+    payload: str | None = None,
+    depends_on: list[str] | None = None,
     note: str = "",
-    target_node: Optional[str] = None,
+    target_node: str | None = None,
     reason: str = "",
-    ccr_hash: Optional[str] = None,
+    ccr_hash: str | None = None,
 ) -> dict:
     """
     Single entry point for DAG-structured reasoning with automatic CCR context compression.
@@ -708,6 +704,7 @@ def dag_thinking(
 
 
 def main():
+    init_db()
     mcp.run()
 
 

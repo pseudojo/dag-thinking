@@ -5,7 +5,6 @@ No ML dependencies — standard library only.
 
 import hashlib
 import re
-from typing import Optional, Tuple
 
 IMPORTANCE_KEYWORDS = frozenset({
     "error", "critical", "key", "conclusion", "therefore",
@@ -29,7 +28,7 @@ _TYPE_KEYWORDS: dict[str, frozenset] = {
     "Action":      frozenset({"implement", "deploy", "execute", "apply", "step", "plan", "proceed"}),
 }
 
-_PASSTHROUGH_LEN = 100       # real Claude payloads avg ~200 chars; was 280
+_PASSTHROUGH_LEN = 100
 _SAVINGS_THRESHOLD = 0.10    # skip if savings < 10%
 _RATIO_TINY = 0.70           # 100–280 chars → keep 70%
 _RATIO_SHORT = 0.58          # 280–700 chars → keep 58%
@@ -148,7 +147,7 @@ def _compress_prose(
 # T12: compress — main entry point
 # ---------------------------------------------------------------------------
 
-def compress(text: str, thought_type: Optional[str] = None) -> Tuple[str, str, int]:
+def compress(text: str, thought_type: str | None = None) -> tuple[str, str, int]:
     """
     Returns (compressed_text, ccr_hash_24char, tokens_saved).
     passthrough when: len < 100, or savings < 10%.
