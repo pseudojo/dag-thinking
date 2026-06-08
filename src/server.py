@@ -84,7 +84,7 @@ def init_db(path: str = _DEFAULT_DB) -> None:
 # T02: _db — connection helper with row_factory and busy_timeout
 # ---------------------------------------------------------------------------
 
-def _db(path: str = _DEFAULT_DB):
+def _db(path: str = _DEFAULT_DB) -> sqlite3.Connection:
     conn = sqlite3.connect(path, timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA busy_timeout=10000")
@@ -348,7 +348,10 @@ def _compute_context_pressure(conn: sqlite3.Connection, session_id: str) -> dict
     return {"level": level, "node_count": node_count, "hint": hint}
 
 
-def _compute_dag_health(node_rows, edge_rows) -> dict:
+def _compute_dag_health(
+    node_rows: list[sqlite3.Row],
+    edge_rows: list[sqlite3.Row],
+) -> dict:
     """I08: DAG 수렴 상태·고립 노드·최장 체인 깊이 진단."""
     if not node_rows:
         return {
@@ -447,6 +450,11 @@ def _action_think(
     # Q-3: 입력 유효성 검사 — 분리된 순수 함수로 위임
     _validate_think_inputs(node_name, thought_type, payload)
 
+    # PERF-1: CPU 연산을 DB 락 획득 전에 선실행 (SHA-256 + 문장 스코어링)
+    tokens_original_val = estimate_tokens(payload)
+    compressed_text, hash_val, tokens_saved = compress(payload, thought_type)
+    is_compressed = compressed_text != payload
+
     with contextlib.closing(_db(db_path)) as conn:
         with conn:
             _ensure_session(conn, session_id)
@@ -461,11 +469,6 @@ def _action_think(
 
             # R-4: 부모 컨텍스트 자동 resolve
             parent_context = _resolve_parent_context(conn, session_id, depends_on)
-
-            # I06: thought_type 전달해 압축 가중치 적용
-            tokens_original_val = estimate_tokens(payload)  # R-3: 쓰기 시점 계산
-            compressed_text, hash_val, tokens_saved = compress(payload, thought_type)
-            is_compressed = compressed_text != payload
 
             # --- upsert node ---
             existing = conn.execute(
@@ -566,27 +569,28 @@ def _action_think(
 
 def _action_status(*, db_path: str, session_id: str) -> dict:
     with contextlib.closing(_db(db_path)) as conn:
+        # PERF-2: _ensure_session 쓰기만 트랜잭션 — 읽기 쿼리는 트랜잭션 밖
         with conn:
             _ensure_session(conn, session_id)
 
-            node_rows = conn.execute(
-                "SELECT name, thought_type, ccr_hash, status, created_at "
-                "FROM nodes WHERE session_id=? ORDER BY id",
-                (session_id,),
-            ).fetchall()
+        node_rows = conn.execute(
+            "SELECT name, thought_type, ccr_hash, status, created_at "
+            "FROM nodes WHERE session_id=? ORDER BY id",
+            (session_id,),
+        ).fetchall()
 
-            edge_rows = conn.execute(
-                "SELECT parent, child FROM edges WHERE session_id=?",
-                (session_id,),
-            ).fetchall()
+        edge_rows = conn.execute(
+            "SELECT parent, child FROM edges WHERE session_id=?",
+            (session_id,),
+        ).fetchall()
 
-            # R-3: SQL SUM으로 메트릭 계산 — payload 텍스트 로딩 불필요
-            metrics_row = conn.execute(
-                "SELECT COALESCE(SUM(tokens_original), 0) AS orig, "
-                "       COALESCE(SUM(tokens_saved), 0)    AS saved "
-                "FROM nodes WHERE session_id=? AND status='COMPLETED'",
-                (session_id,),
-            ).fetchone()
+        # R-3: SQL SUM으로 메트릭 계산 — payload 텍스트 로딩 불필요
+        metrics_row = conn.execute(
+            "SELECT COALESCE(SUM(tokens_original), 0) AS orig, "
+            "       COALESCE(SUM(tokens_saved), 0)    AS saved "
+            "FROM nodes WHERE session_id=? AND status='COMPLETED'",
+            (session_id,),
+        ).fetchone()
 
     # I08: DAG 수렴 상태 진단 (DB 연결 닫힌 후 — 이미 fetch된 Row 객체로 계산)
     dag_health = _compute_dag_health(node_rows, edge_rows)
@@ -683,67 +687,62 @@ def _action_restore(
     *, db_path: str, session_id: str, ccr_hash_val: str | None
 ) -> dict:
     with contextlib.closing(_db(db_path)) as conn:
+        # PERF-2: _ensure_session 쓰기만 트랜잭션 — 읽기 쿼리는 트랜잭션 밖
         with conn:
             _ensure_session(conn, session_id)
 
-            if ccr_hash_val is None:
-                rows = conn.execute(
-                    "SELECT name, ccr_hash, status FROM nodes WHERE session_id=? ORDER BY id",
-                    (session_id,),
-                ).fetchall()
-                return {
-                    "restorable_nodes": [
-                        {
-                            "name": r["name"],
-                            "ccr_hash": r["ccr_hash"],
-                            "status": r["status"],
-                            "restore_cmd": (
-                                f"dag_thinking(action='restore', "
-                                f"session_id={repr(session_id)}, "
-                                f"ccr_hash={repr(r['ccr_hash'])})"
-                            ),
-                        }
-                        for r in rows
-                    ]
-                }
-
-            # C18: session scoping — hash must belong to this session
-            row = conn.execute(
-                "SELECT node_name, original FROM ccr_store "
-                "WHERE hash=? AND session_id=?",
-                (ccr_hash_val, session_id),
-            ).fetchone()
-
-            if row is None:
-                other = conn.execute(
-                    "SELECT session_id FROM ccr_store WHERE hash=?",
-                    (ccr_hash_val,),
-                ).fetchone()
-                if other:
-                    raise ValueError(
-                        f"Hash '{ccr_hash_val}' belongs to session '{other['session_id']}', "
-                        f"not '{session_id}'"
-                    )
-                raise ValueError(f"Hash '{ccr_hash_val}' not found")
-
-            tokens = estimate_tokens(row["original"])
-            result: dict = {
-                "node_name": row["node_name"],
-                "original_payload": row["original"],
-                "tokens": tokens,
+        if ccr_hash_val is None:
+            rows = conn.execute(
+                "SELECT name, ccr_hash, status FROM nodes WHERE session_id=? ORDER BY id",
+                (session_id,),
+            ).fetchall()
+            return {
+                "restorable_nodes": [
+                    {
+                        "name": r["name"],
+                        "ccr_hash": r["ccr_hash"],
+                        "status": r["status"],
+                        "restore_cmd": (
+                            f"dag_thinking(action='restore', "
+                            f"session_id={repr(session_id)}, "
+                            f"ccr_hash={repr(r['ccr_hash'])})"
+                        ),
+                    }
+                    for r in rows
+                ]
             }
 
-            node = conn.execute(
-                "SELECT status FROM nodes WHERE session_id=? AND name=?",
-                (session_id, row["node_name"]),
-            ).fetchone()
-            if node and node["status"] == "INVALIDATED":
-                result["warning"] = (
-                    f"Node '{row['node_name']}' is INVALIDATED. "
-                    "This payload may be stale or superseded."
-                )
+        # C18: session scoping — hash must belong to this session
+        row = conn.execute(
+            "SELECT node_name, original FROM ccr_store "
+            "WHERE hash=? AND session_id=?",
+            (ccr_hash_val, session_id),
+        ).fetchone()
 
-            return result
+        if row is None:
+            # SEC-1: 타 세션 존재 여부를 probe하지 않음 — session_id 노출 방지
+            raise ValueError(
+                f"Hash '{ccr_hash_val}' not found in session '{session_id}'"
+            )
+
+        tokens = estimate_tokens(row["original"])
+        result: dict = {
+            "node_name": row["node_name"],
+            "original_payload": row["original"],
+            "tokens": tokens,
+        }
+
+        node = conn.execute(
+            "SELECT status FROM nodes WHERE session_id=? AND name=?",
+            (session_id, row["node_name"]),
+        ).fetchone()
+        if node and node["status"] == "INVALIDATED":
+            result["warning"] = (
+                f"Node '{row['node_name']}' is INVALIDATED. "
+                "This payload may be stale or superseded."
+            )
+
+        return result
 
 
 # ---------------------------------------------------------------------------

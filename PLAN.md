@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.6
+# dag-thinking 설계 문서 v0.7
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -9,6 +9,7 @@
 | v0.4 | I06 thought_type 키워드 가중치, I07 context_pressure 경보, I08 dag_health 진단 |
 | v0.5 | Q-1 session_total_saved 공식 버그 수정, Q-2 edge 배치 조회 분리, Q-3 _validate_think_inputs SRP 추출, Q-4 import 가드 스코프 수정, Q-5 _NEXT_HINTS 직접 접근, Q-6 스테일 주석 제거 |
 | v0.6 | R-EDGE 엣지 삭제 방향 버그 수정(parent→child), R-CCR ccr_store 복합 PK + INSERT OR IGNORE, CLEAN-1 _has_cycle() 데드 코드 제거, CLEAN-2 상수 순서 정규화 |
+| v0.7 | SEC-1 세션 ID 정보 노출 차단, PERF-1 compress() 트랜잭션 밖 이동, PERF-2 status/restore 읽기 트랜잭션 축소, TYPE-1 타입 어노테이션 완성 |
 
 ---
 
@@ -371,6 +372,13 @@ dag-thinking/
 □ R-CCR.  DELETE FROM ccr_store WHERE hash=old_hash 제거 (content-addressed 원본 보존)
 □ CLEAN-1. _has_cycle() 데드 코드 30줄 삭제 (Q-2에서 대체된 이후 호출처 없음)
 □ CLEAN-2. 상수(VALID_THOUGHT_TYPES, _PRESSURE_*, _NEXT_HINTS) → 첫 사용 함수 이전으로 이동
+
+[ v0.7 성능·보안·타입 — SEC/PERF/TYPE 시리즈 ]
+□ SEC-1.  _action_restore: 타 세션 probe 쿼리 제거 + 에러 메시지 통일 (session_id 노출 방지)
+□ PERF-1. _action_think: compress() / estimate_tokens() → DB with conn: 블록 이전으로 이동
+□ PERF-2. _action_status / _action_restore: with conn: 범위를 _ensure_session 단독으로 축소
+□ TYPE-1. _db() → sqlite3.Connection 반환 타입 어노테이션 추가
+□ TYPE-1. _compute_dag_health(node_rows: list[sqlite3.Row], edge_rows: list[sqlite3.Row]) 파라미터 타입 추가
 ```
 
 ---

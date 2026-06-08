@@ -214,6 +214,15 @@ uv run ruff check src/
 
 ## 변경 이력
 
+### v0.7 (2026-06-09) — 성능 / 보안 / 타입 안전성
+
+ruthless-code-critic 감사 기반 TDD 개선 (181 tests · 0 failures):
+
+- **SEC-1** 세션 ID 정보 노출 차단 — `_action_restore`에서 타 세션 hash 조회 시 다른 세션의 ID를 에러 메시지에 포함하던 probe 쿼리 제거. `"Hash '...' not found in session '...'"` 형태로 통일
+- **PERF-1** `compress()` / `estimate_tokens()` DB 쓰기 락 밖으로 이동 — `_action_think`의 SHA-256 + 문장 스코어링 연산이 SQLite 쓰기 락을 불필요하게 점유하던 문제 해결
+- **PERF-2** `_action_status` / `_action_restore` 트랜잭션 범위 최소화 — `_ensure_session` 쓰기 1회만 `with conn:` 안에서 실행, 모든 읽기 쿼리를 트랜잭션 밖으로 이동
+- **TYPE-1** 타입 어노테이션 완성 — `_db() -> sqlite3.Connection`, `_compute_dag_health(node_rows: list[sqlite3.Row], edge_rows: list[sqlite3.Row])` 파라미터 타입 추가
+
 ### v0.6 (2026-06-09) — 버그 수정 / 구조 정리
 
 ruthless-code-critic 감사 기반 TDD 개선 (173 tests · 0 failures):
