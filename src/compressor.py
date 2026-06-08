@@ -54,7 +54,15 @@ def ccr_hash(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 def estimate_tokens(text: str) -> int:
-    return max(1, len(text) // 4)
+    cjk_count = sum(
+        1 for ch in text
+        if ('぀' <= ch <= 'ゟ'   # Hiragana
+            or '゠' <= ch <= 'ヿ'  # Katakana
+            or '一' <= ch <= '鿿'  # CJK Unified Ideographs
+            or '가' <= ch <= '힣')  # Hangul Syllables
+    )
+    non_cjk = len(text) - cjk_count
+    return max(1, cjk_count * 2 + non_cjk // 4)
 
 
 # ---------------------------------------------------------------------------

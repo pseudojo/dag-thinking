@@ -693,11 +693,23 @@ def _action_restore(
                 raise ValueError(f"Hash '{ccr_hash_val}' not found")
 
             tokens = estimate_tokens(row["original"])
-            return {
+            result: dict = {
                 "node_name": row["node_name"],
                 "original_payload": row["original"],
                 "tokens": tokens,
             }
+
+            node = conn.execute(
+                "SELECT status FROM nodes WHERE session_id=? AND name=?",
+                (session_id, row["node_name"]),
+            ).fetchone()
+            if node and node["status"] == "INVALIDATED":
+                result["warning"] = (
+                    f"Node '{row['node_name']}' is INVALIDATED. "
+                    "This payload may be stale or superseded."
+                )
+
+            return result
 
 
 # ---------------------------------------------------------------------------
