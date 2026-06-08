@@ -1,9 +1,5 @@
 """Shared pytest fixtures for dag-thinking tests."""
-import os
-import sys
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.server import init_db
 

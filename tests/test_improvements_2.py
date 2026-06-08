@@ -9,10 +9,6 @@ TDD RED phase — written before implementation.
 """
 
 import pytest
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.compressor import _score_sentence, compress
 from tests.helpers import think, status, PAYLOAD

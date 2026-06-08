@@ -3,11 +3,7 @@ dag-thinking integration tests (T21-T27, checks C01-C23)
 RED phase: written before implementation.
 """
 
-import os
-import sys
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.compressor import compress, ccr_hash, estimate_tokens
 from src.server import call_dag_thinking

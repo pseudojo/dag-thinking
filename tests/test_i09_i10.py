@@ -5,12 +5,7 @@ RED-phase tests for I09 and I10.
   I10: _action_restore INVALIDATED 노드 복원 경고
 """
 
-import sys
-import os
-
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.compressor import estimate_tokens
 from tests.helpers import think, invalidate, restore

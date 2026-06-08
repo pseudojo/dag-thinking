@@ -6,10 +6,6 @@ RED-phase tests for:
 """
 
 import pytest
-import sys
-import os
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.server import _PRESSURE_MEDIUM
 from tests.helpers import think, invalidate, status

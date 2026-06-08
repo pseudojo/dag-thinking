@@ -5,12 +5,7 @@ RED-phase tests for I11 and I12.
   I12: _compute_dag_health INVALIDATED 노드를 구조 분석에서 제외
 """
 
-import sys
-import os
-
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from tests.helpers import think, invalidate, restore, status
 

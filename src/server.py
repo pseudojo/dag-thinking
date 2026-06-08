@@ -10,7 +10,10 @@ from typing import Literal
 
 from fastmcp import FastMCP
 
-from .compressor import compress, estimate_tokens
+try:
+    from .compressor import compress, estimate_tokens
+except ImportError:
+    from compressor import compress, estimate_tokens  # type: ignore[no-redef]  # fastmcp run (top-level)
 
 # ---------------------------------------------------------------------------
 # DB path — default next to this file, overridable for tests
@@ -25,48 +28,55 @@ _DEFAULT_DB = os.path.join(os.path.dirname(__file__), "..", "dag_thinking.db")
 
 def init_db(path: str = _DEFAULT_DB) -> None:
     with contextlib.closing(_db(path)) as conn:
-        conn.executescript("""
-            PRAGMA journal_mode=WAL;
-
-            CREATE TABLE IF NOT EXISTS sessions (
-                id          TEXT PRIMARY KEY,
-                created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-                description TEXT,
-                tokens_saved INT DEFAULT 0
-            );
-
-            CREATE TABLE IF NOT EXISTS nodes (
-                id           INTEGER PRIMARY KEY AUTOINCREMENT,
-                session_id   TEXT NOT NULL,
-                name         TEXT NOT NULL,
-                thought_type TEXT NOT NULL,
-                payload      TEXT NOT NULL,
-                compressed   TEXT,
-                ccr_hash     TEXT NOT NULL,
-                note         TEXT DEFAULT '',
-                status       TEXT NOT NULL DEFAULT 'COMPLETED',
-                created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(session_id, name)
-            );
-
-            CREATE TABLE IF NOT EXISTS edges (
-                session_id TEXT NOT NULL,
-                parent     TEXT NOT NULL,
-                child      TEXT NOT NULL,
-                PRIMARY KEY (session_id, parent, child)
-            );
-
-            CREATE TABLE IF NOT EXISTS ccr_store (
-                hash       TEXT PRIMARY KEY,
-                session_id TEXT NOT NULL,
-                node_name  TEXT NOT NULL,
-                original   TEXT NOT NULL,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_nodes_session_status
-                ON nodes(session_id, status);
-        """)
+        # WAL PRAGMA must run outside a transaction
+        conn.execute("PRAGMA journal_mode=WAL")
+        with conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS sessions (
+                    id           TEXT PRIMARY KEY,
+                    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    description  TEXT,
+                    tokens_saved INT DEFAULT 0
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS nodes (
+                    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                    session_id      TEXT NOT NULL,
+                    name            TEXT NOT NULL,
+                    thought_type    TEXT NOT NULL,
+                    payload         TEXT NOT NULL,
+                    compressed      TEXT,
+                    ccr_hash        TEXT NOT NULL,
+                    note            TEXT DEFAULT '',
+                    status          TEXT NOT NULL DEFAULT 'COMPLETED',
+                    tokens_original INT NOT NULL DEFAULT 0,
+                    tokens_saved    INT NOT NULL DEFAULT 0,
+                    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(session_id, name)
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS edges (
+                    session_id TEXT NOT NULL,
+                    parent     TEXT NOT NULL,
+                    child      TEXT NOT NULL,
+                    PRIMARY KEY (session_id, parent, child)
+                )
+            """)
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS ccr_store (
+                    hash       TEXT PRIMARY KEY,
+                    session_id TEXT NOT NULL,
+                    node_name  TEXT NOT NULL,
+                    original   TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_nodes_session_status
+                ON nodes(session_id, status)
+            """)
 
 
 # ---------------------------------------------------------------------------
@@ -156,6 +166,55 @@ def _cascade_invalidate(conn: sqlite3.Connection, session_id: str, root: str) ->
         [(session_id, n) for n in affected],
     )
     return affected
+
+
+# ---------------------------------------------------------------------------
+# R-4 stub: _resolve_parent_context — extracted from _action_think (SRP)
+# Full implementation in YELLOW_3
+# ---------------------------------------------------------------------------
+
+def _resolve_parent_context(
+    conn: sqlite3.Connection,
+    session_id: str,
+    depends_on: list[str],
+) -> dict[str, dict]:
+    """R-4: 부모 노드 컨텍스트 해결 — _action_think에서 추출 (SRP)."""
+    if not depends_on:
+        return {}
+
+    placeholders = ",".join(["?"] * len(depends_on))
+    found: dict[str, sqlite3.Row] = {
+        r["name"]: r
+        for r in conn.execute(
+            f"SELECT name, thought_type, payload, compressed, ccr_hash, status "
+            f"FROM nodes WHERE session_id=? AND name IN ({placeholders})",
+            (session_id, *depends_on),
+        ).fetchall()
+    }
+
+    result: dict[str, dict] = {}
+    for parent_name in depends_on:
+        row = found.get(parent_name)
+        if row is None:
+            result[parent_name] = {"error": f"Node '{parent_name}' not found"}
+            continue
+
+        entry: dict = {
+            "thought_type": row["thought_type"],
+            "ccr_hash": row["ccr_hash"],
+            "is_compressed": row["compressed"] is not None,
+            "payload": row["compressed"] if row["compressed"] else row["payload"],
+        }
+        if row["status"] == "INVALIDATED":
+            entry["warning"] = (
+                f"Parent node '{parent_name}' is INVALIDATED"
+                " — review before proceeding"
+            )
+            entry["is_invalidated"] = True
+
+        result[parent_name] = entry
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -381,65 +440,25 @@ def _action_think(
                         f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
                     )
 
-            # --- parent_context: auto-resolve depends_on ---
-            parent_context: dict = {}
-            found: dict[str, sqlite3.Row] = (
-                {
-                    r["name"]: r
-                    for r in conn.execute(
-                        "SELECT name, thought_type, payload, compressed, ccr_hash, status "
-                        "FROM nodes WHERE session_id=? AND name IN "
-                        f"({','.join(['?'] * len(depends_on))})",
-                        (session_id, *depends_on),
-                    ).fetchall()
-                }
-                if depends_on
-                else {}
-            )
-
-            for parent_name in depends_on:
-                row = found.get(parent_name)
-                if row is None:
-                    parent_context[parent_name] = {"error": f"Node '{parent_name}' not found"}
-                    continue
-
-                entry = {
-                    "thought_type": row["thought_type"],
-                    "ccr_hash": row["ccr_hash"],
-                    "is_compressed": row["compressed"] is not None,
-                }
-                entry["payload"] = row["compressed"] if row["compressed"] else row["payload"]
-
-                if row["status"] == "INVALIDATED":
-                    entry["warning"] = (
-                        f"Parent node '{parent_name}' is INVALIDATED"
-                        " — review before proceeding"
-                    )
-                    entry["is_invalidated"] = True
-
-                parent_context[parent_name] = entry
+            # --- parent_context: auto-resolve depends_on (R-4: _resolve_parent_context) ---
+            parent_context = _resolve_parent_context(conn, session_id, depends_on)
 
             # --- compress payload (I06: thought_type 전달) ---
+            tokens_original_val = estimate_tokens(payload)  # R-3: 쓰기 시점 계산
             compressed_text, hash_val, tokens_saved = compress(payload, thought_type)
             is_compressed = compressed_text != payload
 
             # --- upsert node ---
             existing = conn.execute(
-                "SELECT id, ccr_hash, payload, compressed "
+                "SELECT id, ccr_hash, tokens_original, tokens_saved "
                 "FROM nodes WHERE session_id=? AND name=?",
                 (session_id, node_name),
             ).fetchone()
 
             if existing:
                 old_ccr_hash = existing["ccr_hash"]
-                # Compute old contribution to subtract before adding new value (BUG-1 fix)
-                old_orig = estimate_tokens(existing["payload"])
-                old_comp = (
-                    estimate_tokens(existing["compressed"])
-                    if existing["compressed"]
-                    else old_orig
-                )
-                old_contribution = old_orig - old_comp
+                # R-3: stored token counts — payload 텍스트 로딩 불필요 (BUG-1 fix 유지)
+                old_contribution = existing["tokens_original"] - existing["tokens_saved"]
 
                 # stale outgoing edges from previous version are no longer valid
                 conn.execute(
@@ -450,12 +469,14 @@ def _action_think(
                 conn.execute(
                     """UPDATE nodes
                        SET thought_type=?, payload=?, compressed=?, ccr_hash=?,
-                           note=?, status='COMPLETED', created_at=CURRENT_TIMESTAMP
+                           note=?, status='COMPLETED', created_at=CURRENT_TIMESTAMP,
+                           tokens_original=?, tokens_saved=?
                        WHERE session_id=? AND name=?""",
                     (
                         thought_type, payload,
                         compressed_text if is_compressed else None,
                         hash_val, note,
+                        tokens_original_val, tokens_saved,
                         session_id, node_name,
                     ),
                 )
@@ -468,12 +489,13 @@ def _action_think(
                 conn.execute(
                     """INSERT INTO nodes
                        (session_id, name, thought_type, payload, compressed,
-                        ccr_hash, note, status)
-                       VALUES (?,?,?,?,?,?,?,'COMPLETED')""",
+                        ccr_hash, note, status, tokens_original, tokens_saved)
+                       VALUES (?,?,?,?,?,?,?,'COMPLETED',?,?)""",
                     (
                         session_id, node_name, thought_type, payload,
                         compressed_text if is_compressed else None,
                         hash_val, note,
+                        tokens_original_val, tokens_saved,
                     ),
                 )
                 op_status = "created"
@@ -485,9 +507,9 @@ def _action_think(
                 (hash_val, session_id, node_name, payload),
             )
 
-            # --- record edges ---
+            # --- record edges (only for found parents — no error key in parent_context) ---
             for parent in depends_on:
-                if parent in found:
+                if "error" not in parent_context.get(parent, {"error": ""}):
                     conn.execute(
                         "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?,?,?)",
                         (session_id, parent, node_name),
@@ -537,7 +559,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
             _ensure_session(conn, session_id)
 
             node_rows = conn.execute(
-                "SELECT name, thought_type, ccr_hash, status, created_at, payload, compressed "
+                "SELECT name, thought_type, ccr_hash, status, created_at "
                 "FROM nodes WHERE session_id=? ORDER BY id",
                 (session_id,),
             ).fetchall()
@@ -547,21 +569,20 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
                 (session_id,),
             ).fetchall()
 
-            session_row = conn.execute(
-                "SELECT tokens_saved FROM sessions WHERE id=?",
+            # R-3: SQL SUM으로 메트릭 계산 — payload 텍스트 로딩 불필요
+            metrics_row = conn.execute(
+                "SELECT COALESCE(SUM(tokens_original), 0) AS orig, "
+                "       COALESCE(SUM(tokens_saved), 0)    AS saved "
+                "FROM nodes WHERE session_id=? AND status='COMPLETED'",
                 (session_id,),
             ).fetchone()
 
     # I08: DAG 수렴 상태 진단 (DB 연결 닫힌 후 — 이미 fetch된 Row 객체로 계산)
     dag_health = _compute_dag_health(node_rows, edge_rows)
 
-    completed_rows = [r for r in node_rows if r["status"] == "COMPLETED"]
-    tokens_original = sum(estimate_tokens(r["payload"]) for r in completed_rows)
-    tokens_compressed = sum(
-        estimate_tokens(r["compressed"]) if r["compressed"] else estimate_tokens(r["payload"])
-        for r in completed_rows
-    )
-    tokens_saved = (session_row["tokens_saved"] if session_row else 0)
+    tokens_original = metrics_row["orig"]
+    tokens_saved_val = metrics_row["saved"]
+    tokens_compressed = tokens_original - tokens_saved_val
     ratio = (1 - tokens_compressed / tokens_original) if tokens_original > 0 else 0.0
 
     # restoration manifest
@@ -596,7 +617,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
         "metrics": {
             "tokens_original": tokens_original,
             "tokens_compressed": tokens_compressed,
-            "tokens_saved": tokens_saved,
+            "tokens_saved": tokens_saved_val,
             "ratio": round(ratio, 4),
         },
         "restoration_manifest": {
