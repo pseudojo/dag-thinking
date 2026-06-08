@@ -63,6 +63,9 @@ def init_db(path: str = _DEFAULT_DB) -> None:
                 original   TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             );
+
+            CREATE INDEX IF NOT EXISTS idx_nodes_session_status
+                ON nodes(session_id, status);
         """)
 
 
@@ -262,9 +265,11 @@ def _compute_dag_health(node_rows, edge_rows) -> dict:
     is_converging = False
 
     for r in node_rows:
+        if r["status"] != "COMPLETED":
+            continue
         t = r["thought_type"]
         type_dist[t] = type_dist.get(t, 0) + 1
-        if t in ("Synthesis", "Action") and r["status"] == "COMPLETED":
+        if t in ("Synthesis", "Action"):
             is_converging = True
 
     # 엣지 정보로 연결성 분석
@@ -375,14 +380,20 @@ def _action_think(
                     f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
                 )
 
-        # --- parent_context: auto-resolve depends_on ---
+        # --- parent_context: auto-resolve depends_on (P2-5: bulk IN query) ---
         parent_context = {}
+        found: dict = {}
+        if depends_on:
+            placeholders = ",".join(["?"] * len(depends_on))
+            parent_rows = conn.execute(
+                f"SELECT name, thought_type, payload, compressed, ccr_hash, status "
+                f"FROM nodes WHERE session_id=? AND name IN ({placeholders})",
+                (session_id, *depends_on),
+            ).fetchall()
+            found = {r["name"]: r for r in parent_rows}
+
         for parent_name in depends_on:
-            row = conn.execute(
-                "SELECT thought_type, payload, compressed, ccr_hash, status "
-                "FROM nodes WHERE session_id=? AND name=?",
-                (session_id, parent_name),
-            ).fetchone()
+            row = found.get(parent_name)
             if row is None:
                 parent_context[parent_name] = {"error": f"Node '{parent_name}' not found"}
                 continue
@@ -406,11 +417,19 @@ def _action_think(
 
         # --- upsert node ---
         existing = conn.execute(
-            "SELECT id FROM nodes WHERE session_id=? AND name=?",
+            "SELECT id, ccr_hash FROM nodes WHERE session_id=? AND name=?",
             (session_id, node_name),
         ).fetchone()
 
         if existing:
+            old_ccr_hash = existing["ccr_hash"]
+
+            # P2-3: delete stale outgoing edges before re-inserting new depends_on
+            conn.execute(
+                "DELETE FROM edges WHERE session_id=? AND parent=?",
+                (session_id, node_name),
+            )
+
             conn.execute(
                 """UPDATE nodes
                    SET thought_type=?, payload=?, compressed=?, ccr_hash=?,
@@ -424,6 +443,10 @@ def _action_think(
                 ),
             )
             op_status = "updated"
+
+            # P2-2: remove orphaned ccr_store entry from previous version
+            if old_ccr_hash != hash_val:
+                conn.execute("DELETE FROM ccr_store WHERE hash=?", (old_ccr_hash,))
         else:
             conn.execute(
                 """INSERT INTO nodes
@@ -444,12 +467,13 @@ def _action_think(
             (hash_val, session_id, node_name, payload),
         )
 
-        # --- record edges ---
+        # --- record edges (P1-2: only insert if parent exists in DB) ---
         for parent in depends_on:
-            conn.execute(
-                "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?,?,?)",
-                (session_id, parent, node_name),
-            )
+            if parent in found:
+                conn.execute(
+                    "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?,?,?)",
+                    (session_id, parent, node_name),
+                )
 
         # --- update session aggregate ---
         conn.execute(
@@ -512,11 +536,12 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
     # I08: DAG 수렴 상태 진단 (DB 연결 닫힌 후 — 이미 fetch된 Row 객체로 계산)
     dag_health = _compute_dag_health(node_rows, edge_rows)
 
-    # metrics — payload/compressed columns are now part of node_rows (P2-5)
-    tokens_original = sum(estimate_tokens(r["payload"]) for r in node_rows)
+    # P2-4: metrics count only COMPLETED nodes
+    completed_rows = [r for r in node_rows if r["status"] == "COMPLETED"]
+    tokens_original = sum(estimate_tokens(r["payload"]) for r in completed_rows)
     tokens_compressed = sum(
         estimate_tokens(r["compressed"]) if r["compressed"] else estimate_tokens(r["payload"])
-        for r in node_rows
+        for r in completed_rows
     )
     tokens_saved = (session_row["tokens_saved"] if session_row else 0)
     ratio = (1 - tokens_compressed / tokens_original) if tokens_original > 0 else 0.0
@@ -530,9 +555,9 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
             "status": row["status"],
             "ccr_hash": row["ccr_hash"],
             "restore_cmd": (
-                f"dag_thinking(action='restore',"
-                f"session_id='{session_id}', "
-                f"ccr_hash='{row['ccr_hash']}')"
+                f"dag_thinking(action='restore', "
+                f"session_id={repr(session_id)}, "
+                f"ccr_hash={repr(row['ccr_hash'])})"
             ),
         })
 
@@ -622,9 +647,9 @@ def _action_restore(
                             "name": r["name"],
                             "ccr_hash": r["ccr_hash"],
                             "restore_cmd": (
-                                f"dag_thinking(action='restore',"
-                                f"session_id='{session_id}', "
-                                f"ccr_hash='{r['ccr_hash']}')"
+                                f"dag_thinking(action='restore', "
+                                f"session_id={repr(session_id)}, "
+                                f"ccr_hash={repr(r['ccr_hash'])})"
                             ),
                         }
                         for r in rows
