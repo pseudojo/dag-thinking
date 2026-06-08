@@ -280,6 +280,23 @@ class TestP26CompositeIndex:
 # P3-1: restore_cmd format — space after action='restore',
 # ---------------------------------------------------------------------------
 
+class TestP33HowToRestoreFormat:
+
+    def test_how_to_restore_has_space_after_action(self, db_path):
+        """P3-3: how_to_restore 템플릿도 restore_cmd와 동일한 공백 포맷이어야 함.
+
+        현재 how_to_restore: "action='restore',session_id=..." (공백 없음)
+        restore_cmd:          "action='restore', session_id=..." (공백 있음)
+        → 불일치 (RED).
+        """
+        think(db_path, "s1", "node_a", "Objective")
+        s = status(db_path, "s1")
+        how = s["restoration_manifest"]["how_to_restore"]
+        assert "action='restore', session_id=" in how, (
+            f"how_to_restore에 공백 누락 또는 포맷 불일치: {how!r}"
+        )
+
+
 class TestP31RestoreCmdFormat:
 
     def test_status_restore_cmd_has_space_after_action(self, db_path):

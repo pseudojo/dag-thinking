@@ -19,13 +19,19 @@ IMPORTANCE_KEYWORDS = frozenset({
 # I06: thought_type별 가중 키워드 — ContentRouter 유사 압축 특화
 # IMPORTANCE_KEYWORDS와 중복 없는 단어만 포함 (추가 정보량 확보)
 _TYPE_KEYWORDS: dict[str, frozenset] = {
-    "Objective":   frozenset({"goal", "aim", "target", "achieve", "scope", "purpose"}),
-    "Hypothesis":  frozenset({"predict", "expect", "theory", "propose", "suggest", "might", "could"}),
-    "Assumption":  frozenset({"assume", "given", "premise", "constraint", "presume", "baseline"}),
-    "Evidence":    frozenset({"data", "shows", "measured", "observed", "metric", "found", "test"}),
-    "Critique":    frozenset({"flaw", "weakness", "however", "counter", "limit", "gap", "challenge"}),
-    "Synthesis":   frozenset({"conclude", "summary", "overall", "combine", "integrate", "reconcile"}),
-    "Action":      frozenset({"implement", "deploy", "execute", "apply", "step", "plan", "proceed"}),
+    "Objective":  frozenset({"goal", "aim", "target", "achieve", "scope", "purpose"}),
+    "Hypothesis": frozenset({
+        "predict", "expect", "theory", "propose", "suggest", "might", "could",
+    }),
+    "Assumption": frozenset({"assume", "given", "premise", "constraint", "presume", "baseline"}),
+    "Evidence":   frozenset({"data", "shows", "measured", "observed", "metric", "found", "test"}),
+    "Critique":   frozenset({
+        "flaw", "weakness", "however", "counter", "limit", "gap", "challenge",
+    }),
+    "Synthesis":  frozenset({
+        "conclude", "summary", "overall", "combine", "integrate", "reconcile",
+    }),
+    "Action":     frozenset({"implement", "deploy", "execute", "apply", "step", "plan", "proceed"}),
 }
 
 _PASSTHROUGH_LEN = 100
@@ -56,12 +62,12 @@ def estimate_tokens(text: str) -> int:
 # ---------------------------------------------------------------------------
 
 def _is_list_content(text: str) -> bool:
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
     if len(lines) < 3:
         return False
     list_lines = sum(
-        1 for l in lines
-        if re.match(r"^[-*•·]\s+", l) or re.match(r"^\d+[.)]\s+", l)
+        1 for line in lines
+        if re.match(r"^[-*•·]\s+", line) or re.match(r"^\d+[.)]\s+", line)
     )
     return list_lines / len(lines) >= 0.5
 
@@ -107,11 +113,11 @@ def _compress_list(
     target_ratio: float,
     extra_keywords: frozenset = frozenset(),  # I06
 ) -> str:
-    lines = [l for l in text.splitlines() if l.strip()]
+    lines = [item for item in text.splitlines() if item.strip()]
     k = max(1, round(len(lines) * target_ratio))
     scored = [
-        (_score_sentence(l, i, len(lines), extra_keywords), i, l)
-        for i, l in enumerate(lines)
+        (_score_sentence(item, i, len(lines), extra_keywords), i, item)
+        for i, item in enumerate(lines)
     ]
     scored.sort(key=lambda x: x[0], reverse=True)
     selected = sorted(scored[:k], key=lambda x: x[1])

@@ -3,8 +3,8 @@ dag-thinking MCP server — single tool, single entry point.
 """
 
 import contextlib
-import sqlite3
 import os
+import sqlite3
 from collections import deque
 from typing import Literal
 
@@ -368,126 +368,145 @@ def _action_think(
         raise ValueError("payload must be at most 1500 characters")
 
     with contextlib.closing(_db(db_path)) as conn:
-      with conn:
-        _ensure_session(conn, session_id)
+        with conn:
+            _ensure_session(conn, session_id)
 
-        # --- cycle detection ---
-        for parent in depends_on:
-            if parent == node_name:
-                raise ValueError(f"Cycle detected: '{node_name}' cannot depend on itself")
-            if _has_cycle(conn, session_id, parent, node_name):
-                raise ValueError(
-                    f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
-                )
+            # --- cycle detection ---
+            for parent in depends_on:
+                if parent == node_name:
+                    raise ValueError(f"Cycle detected: '{node_name}' cannot depend on itself")
+                if _has_cycle(conn, session_id, parent, node_name):
+                    raise ValueError(
+                        f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
+                    )
 
-        # --- parent_context: auto-resolve depends_on ---
-        parent_context = {}
-        found: dict = {}
-        if depends_on:
-            placeholders = ",".join(["?"] * len(depends_on))
-            parent_rows = conn.execute(
-                f"SELECT name, thought_type, payload, compressed, ccr_hash, status "
-                f"FROM nodes WHERE session_id=? AND name IN ({placeholders})",
-                (session_id, *depends_on),
-            ).fetchall()
-            found = {r["name"]: r for r in parent_rows}
+            # --- parent_context: auto-resolve depends_on ---
+            parent_context: dict = {}
+            found: dict[str, sqlite3.Row] = (
+                {
+                    r["name"]: r
+                    for r in conn.execute(
+                        "SELECT name, thought_type, payload, compressed, ccr_hash, status "
+                        "FROM nodes WHERE session_id=? AND name IN "
+                        f"({','.join(['?'] * len(depends_on))})",
+                        (session_id, *depends_on),
+                    ).fetchall()
+                }
+                if depends_on
+                else {}
+            )
 
-        for parent_name in depends_on:
-            row = found.get(parent_name)
-            if row is None:
-                parent_context[parent_name] = {"error": f"Node '{parent_name}' not found"}
-                continue
+            for parent_name in depends_on:
+                row = found.get(parent_name)
+                if row is None:
+                    parent_context[parent_name] = {"error": f"Node '{parent_name}' not found"}
+                    continue
 
-            entry = {
-                "thought_type": row["thought_type"],
-                "ccr_hash": row["ccr_hash"],
-                "is_compressed": row["compressed"] is not None,
-            }
-            entry["payload"] = row["compressed"] if row["compressed"] else row["payload"]
+                entry = {
+                    "thought_type": row["thought_type"],
+                    "ccr_hash": row["ccr_hash"],
+                    "is_compressed": row["compressed"] is not None,
+                }
+                entry["payload"] = row["compressed"] if row["compressed"] else row["payload"]
 
-            if row["status"] == "INVALIDATED":
-                entry["warning"] = f"Parent node '{parent_name}' is INVALIDATED — review before proceeding"
-                entry["is_invalidated"] = True
+                if row["status"] == "INVALIDATED":
+                    entry["warning"] = (
+                        f"Parent node '{parent_name}' is INVALIDATED"
+                        " — review before proceeding"
+                    )
+                    entry["is_invalidated"] = True
 
-            parent_context[parent_name] = entry
+                parent_context[parent_name] = entry
 
-        # --- compress payload (I06: thought_type 전달) ---
-        compressed_text, hash_val, tokens_saved = compress(payload, thought_type)
-        is_compressed = compressed_text != payload
+            # --- compress payload (I06: thought_type 전달) ---
+            compressed_text, hash_val, tokens_saved = compress(payload, thought_type)
+            is_compressed = compressed_text != payload
 
-        # --- upsert node ---
-        existing = conn.execute(
-            "SELECT id, ccr_hash FROM nodes WHERE session_id=? AND name=?",
-            (session_id, node_name),
-        ).fetchone()
-
-        if existing:
-            old_ccr_hash = existing["ccr_hash"]
-
-            # stale outgoing edges from previous version are no longer valid
-            conn.execute(
-                "DELETE FROM edges WHERE session_id=? AND parent=?",
+            # --- upsert node ---
+            existing = conn.execute(
+                "SELECT id, ccr_hash, payload, compressed "
+                "FROM nodes WHERE session_id=? AND name=?",
                 (session_id, node_name),
-            )
+            ).fetchone()
 
-            conn.execute(
-                """UPDATE nodes
-                   SET thought_type=?, payload=?, compressed=?, ccr_hash=?,
-                       note=?, status='COMPLETED', created_at=CURRENT_TIMESTAMP
-                   WHERE session_id=? AND name=?""",
-                (
-                    thought_type, payload,
-                    compressed_text if is_compressed else None,
-                    hash_val, note,
-                    session_id, node_name,
-                ),
-            )
-            op_status = "updated"
+            if existing:
+                old_ccr_hash = existing["ccr_hash"]
+                # Compute old contribution to subtract before adding new value (BUG-1 fix)
+                old_orig = estimate_tokens(existing["payload"])
+                old_comp = (
+                    estimate_tokens(existing["compressed"])
+                    if existing["compressed"]
+                    else old_orig
+                )
+                old_contribution = old_orig - old_comp
 
-            if old_ccr_hash != hash_val:
-                conn.execute("DELETE FROM ccr_store WHERE hash=?", (old_ccr_hash,))
-        else:
-            conn.execute(
-                """INSERT INTO nodes
-                   (session_id, name, thought_type, payload, compressed, ccr_hash, note, status)
-                   VALUES (?,?,?,?,?,?,?,'COMPLETED')""",
-                (
-                    session_id, node_name, thought_type, payload,
-                    compressed_text if is_compressed else None,
-                    hash_val, note,
-                ),
-            )
-            op_status = "created"
-
-        # --- store original in ccr_store (always) ---
-        conn.execute(
-            """INSERT OR REPLACE INTO ccr_store (hash, session_id, node_name, original)
-               VALUES (?,?,?,?)""",
-            (hash_val, session_id, node_name, payload),
-        )
-
-        # --- record edges ---
-        for parent in depends_on:
-            if parent in found:
+                # stale outgoing edges from previous version are no longer valid
                 conn.execute(
-                    "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?,?,?)",
-                    (session_id, parent, node_name),
+                    "DELETE FROM edges WHERE session_id=? AND parent=?",
+                    (session_id, node_name),
                 )
 
-        # --- update session aggregate ---
-        conn.execute(
-            "UPDATE sessions SET tokens_saved = tokens_saved + ? WHERE id=?",
-            (tokens_saved, session_id),
-        )
+                conn.execute(
+                    """UPDATE nodes
+                       SET thought_type=?, payload=?, compressed=?, ccr_hash=?,
+                           note=?, status='COMPLETED', created_at=CURRENT_TIMESTAMP
+                       WHERE session_id=? AND name=?""",
+                    (
+                        thought_type, payload,
+                        compressed_text if is_compressed else None,
+                        hash_val, note,
+                        session_id, node_name,
+                    ),
+                )
+                op_status = "updated"
 
-        # I02: read back session cumulative total after update
-        session_row = conn.execute(
-            "SELECT tokens_saved FROM sessions WHERE id=?", (session_id,)
-        ).fetchone()
-        session_total_saved = session_row["tokens_saved"] if session_row else tokens_saved
+                if old_ccr_hash != hash_val:
+                    conn.execute("DELETE FROM ccr_store WHERE hash=?", (old_ccr_hash,))
+            else:
+                old_contribution = 0
+                conn.execute(
+                    """INSERT INTO nodes
+                       (session_id, name, thought_type, payload, compressed,
+                        ccr_hash, note, status)
+                       VALUES (?,?,?,?,?,?,?,'COMPLETED')""",
+                    (
+                        session_id, node_name, thought_type, payload,
+                        compressed_text if is_compressed else None,
+                        hash_val, note,
+                    ),
+                )
+                op_status = "created"
 
-        # I07: 컨텍스트 압박 수준 (upsert 후 — 동일 트랜잭션 내 COUNT 반영)
-        context_pressure = _compute_context_pressure(conn, session_id)
+            # --- store original in ccr_store (always) ---
+            conn.execute(
+                """INSERT OR REPLACE INTO ccr_store (hash, session_id, node_name, original)
+                   VALUES (?,?,?,?)""",
+                (hash_val, session_id, node_name, payload),
+            )
+
+            # --- record edges ---
+            for parent in depends_on:
+                if parent in found:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?,?,?)",
+                        (session_id, parent, node_name),
+                    )
+
+            # --- update session aggregate (net delta only — avoids double-count on update) ---
+            delta = tokens_saved - old_contribution
+            conn.execute(
+                "UPDATE sessions SET tokens_saved = tokens_saved + ? WHERE id=?",
+                (delta, session_id),
+            )
+
+            # I02: read back session cumulative total after update
+            session_row = conn.execute(
+                "SELECT tokens_saved FROM sessions WHERE id=?", (session_id,)
+            ).fetchone()
+            session_total_saved = session_row["tokens_saved"] if session_row else tokens_saved
+
+            # I07: 컨텍스트 압박 수준 (upsert 후 — 동일 트랜잭션 내 COUNT 반영)
+            context_pressure = _compute_context_pressure(conn, session_id)
 
     result: dict = {
         "status": op_status,
@@ -581,7 +600,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
         },
         "restoration_manifest": {
             "how_to_restore": (
-                "dag_thinking(action='restore',session_id='<id>', ccr_hash='<hash>')"
+                "dag_thinking(action='restore', session_id='<id>', ccr_hash='<hash>')"
             ),
             "nodes": manifest_nodes,
         },
@@ -710,7 +729,8 @@ def dag_thinking(
     action="think"      — create/update a reasoning node (node_name, thought_type, payload required)
     action="status"     — show DAG topology, metrics, and restoration manifest
     action="invalidate" — cascade-invalidate a node and its descendants (target_node required)
-    action="restore"    — retrieve original payload by ccr_hash; omit hash to list all restorable nodes
+    action="restore"    — retrieve original payload by ccr_hash;
+                          omit hash to list all restorable nodes
     """
     return call_dag_thinking(
         action=action,

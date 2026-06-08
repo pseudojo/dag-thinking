@@ -344,5 +344,5 @@ class TestEdgeCases:
         assert len(long_text) >= 700
         compressed, _, _ = compress(long_text)
         ratio = len(compressed) / len(long_text)
-        # 42% ± 20% tolerance (implementation may vary)
-        assert ratio <= 0.75, f"Not compressed enough: ratio={ratio:.2f}"
+        # PLAN.md C11: 700자+ → 42% 유지율 ±10% 허용 → 상한 0.52
+        assert ratio <= 0.55, f"Not compressed enough: ratio={ratio:.2f} (spec: ≤0.52 ±10%)"

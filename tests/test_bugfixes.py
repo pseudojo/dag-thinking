@@ -1,5 +1,6 @@
 """
 RED-phase tests for:
+  BUG-1: tokens_saved double-counts on node update
   P3-9 : context_pressure must exclude INVALIDATED nodes from COUNT
   P3-12: blank/whitespace node_name and session_id must raise ValueError
 """
@@ -11,7 +12,67 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.server import _PRESSURE_MEDIUM
-from tests.helpers import think, invalidate
+from tests.helpers import think, invalidate, status
+
+
+# ---------------------------------------------------------------------------
+# BUG-1: tokens_saved must NOT double-count on node update
+# ---------------------------------------------------------------------------
+
+_PAYLOAD_A = (
+    "Initial analysis shows critical bottleneck in database layer. "
+    "The key finding is that N+1 queries cause exponential load. "
+    "Therefore we must implement eager loading as the primary solution. "
+    "The assumption is that ORM fixes suffice without raw SQL rewrites. "
+    "Conclusion: phased rollout minimizes risk to production stability."
+)
+_PAYLOAD_B = (
+    "Revised analysis reveals message broker is the actual bottleneck. "
+    "The key finding is that vertical scaling is more cost-effective here. "
+    "Therefore we must implement connection pooling as the primary solution. "
+    "The assumption is that pooling reduces latency by 70 percent at peak. "
+    "Conclusion: validate in staging environment before production deployment."
+)
+
+
+class TestTokensSavedOnUpdate:
+
+    def test_update_same_node_no_double_count(self, db_path):
+        """BUG-1: 같은 노드를 다른 payload로 재생성해도 session total이 이중 집계되지 않음.
+
+        현재 코드는 update 경로에서도 tokens_saved를 무조건 더하므로 이중 집계 발생 (RED).
+        """
+        r1 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
+        r2 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_B)
+        s = status(db_path, "s1")
+        expected = r2["compression"]["tokens_saved"]
+        actual = s["metrics"]["tokens_saved"]
+        assert actual == expected, (
+            f"노드 업데이트 후 tokens_saved 이중 집계: actual={actual}, expected={expected}. "
+            f"r1.saved={r1['compression']['tokens_saved']}, r2.saved={r2['compression']['tokens_saved']}"
+        )
+
+    def test_update_same_payload_no_double_count(self, db_path):
+        """BUG-1 변형: 동일 payload로 재생성해도 이중 집계 없음."""
+        r1 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
+        r2 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
+        s = status(db_path, "s1")
+        expected = r2["compression"]["tokens_saved"]
+        assert s["metrics"]["tokens_saved"] == expected, (
+            f"동일 payload 재생성 후 이중 집계: total={s['metrics']['tokens_saved']}, expected={expected}"
+        )
+
+    def test_multi_node_update_accumulates_correctly(self, db_path):
+        """BUG-1: 두 노드 중 하나를 업데이트해도 session total이 올바름."""
+        r1 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
+        r2 = think(db_path, "s1", "n2", "Hypothesis", payload=_PAYLOAD_A)
+        # n1을 새 payload로 업데이트
+        r1b = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_B)
+        s = status(db_path, "s1")
+        expected = r1b["compression"]["tokens_saved"] + r2["compression"]["tokens_saved"]
+        assert s["metrics"]["tokens_saved"] == expected, (
+            f"멀티 노드 업데이트 후 집계 오류: actual={s['metrics']['tokens_saved']}, expected={expected}"
+        )
 
 
 # ---------------------------------------------------------------------------
