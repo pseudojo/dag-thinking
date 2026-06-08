@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.4
+# dag-thinking 설계 문서 v0.5
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -7,6 +7,7 @@
 | v0.2 | 툴 1개로 통합, 자동 resolve, 복원 매니페스트 |
 | v0.3 | I03 invalidate 존재 검증, I04 created_at 노출, I05 next_hint 동적화 |
 | v0.4 | I06 thought_type 키워드 가중치, I07 context_pressure 경보, I08 dag_health 진단 |
+| v0.5 | Q-1 session_total_saved 공식 버그 수정, Q-2 edge 배치 조회 분리, Q-3 _validate_think_inputs SRP 추출, Q-4 import 가드 스코프 수정, Q-5 _NEXT_HINTS 직접 접근, Q-6 스테일 주석 제거 |
 
 ---
 
@@ -350,6 +351,17 @@ dag-thinking/
 □ T25. restore: hash 없이 목록 / hash 있이 원본 왕복
 □ T26. 압축 passthrough 조건 (100자 미만)
 □ T27. 압축 후 status 메트릭 tokens_saved 정확성
+
+[ v0.5 품질 개선 — Q 시리즈 ]
+□ Q-1. session_total_saved delta 공식 수정: delta = new_tokens_saved − old_tokens_saved
+□ Q-2. _load_forward_edges(conn, session_id) → dict[str, list[str]] 분리 (edge 1회 fetch)
+□ Q-2. _has_cycle_graph(graph, new_parent, new_child) → bool (DB 접근 없음)
+□ Q-2. _action_think cycle loop에서 _load_forward_edges 1회 호출로 교체
+□ Q-3. _validate_think_inputs(node_name, thought_type, payload) → None (SRP 추출)
+□ Q-3. _action_think 첫 호출을 _validate_think_inputs로 위임
+□ Q-4. except ImportError 절 → from src.compressor import (bare 'from compressor' 제거)
+□ Q-5. _NEXT_HINTS.get() → _NEXT_HINTS[thought_type] (dead fallback 제거)
+□ Q-6. _resolve_parent_context 스테일 주석(YELLOW_3, stub) 제거
 ```
 
 ---

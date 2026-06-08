@@ -13,7 +13,7 @@ from fastmcp import FastMCP
 try:
     from .compressor import compress, estimate_tokens
 except ImportError:
-    from compressor import compress, estimate_tokens  # type: ignore[no-redef]  # fastmcp run (top-level)
+    from src.compressor import compress, estimate_tokens  # type: ignore[no-redef]
 
 # ---------------------------------------------------------------------------
 # DB path — default next to this file, overridable for tests
@@ -102,6 +102,67 @@ def _ensure_session(conn: sqlite3.Connection, session_id: str) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Q-2: _load_forward_edges / _has_cycle_graph — batch edge fetch (1회 조회)
+# ---------------------------------------------------------------------------
+
+def _load_forward_edges(
+    conn: sqlite3.Connection,
+    session_id: str,
+) -> dict[str, list[str]]:
+    """session_id의 모든 forward-edge를 인접 리스트로 반환 (단 1회 DB 조회)."""
+    rows = conn.execute(
+        "SELECT parent, child FROM edges WHERE session_id=?", (session_id,)
+    ).fetchall()
+    graph: dict[str, list[str]] = {}
+    for row in rows:
+        graph.setdefault(row["parent"], []).append(row["child"])
+    return graph
+
+
+def _has_cycle_graph(
+    graph: dict[str, list[str]],
+    new_parent: str,
+    new_child: str,
+) -> bool:
+    """Pre-loaded graph으로 사이클 감지 — DB 접근 없음. self-reference 즉시 처리."""
+    if new_parent == new_child:
+        return True
+    visited: set[str] = set()
+    stack = [new_child]
+    while stack:
+        node = stack.pop()
+        if node == new_parent:
+            return True
+        if node in visited:
+            continue
+        visited.add(node)
+        stack.extend(graph.get(node, []))
+    return False
+
+
+# ---------------------------------------------------------------------------
+# Q-3: _validate_think_inputs — 입력 유효성 검사 (SRP 분리)
+# ---------------------------------------------------------------------------
+
+def _validate_think_inputs(
+    node_name: str | None,
+    thought_type: str | None,
+    payload: str | None,
+) -> None:
+    """action='think' 입력 유효성 검사. 실패 시 ValueError 즉시 raise."""
+    if not node_name or not node_name.strip():
+        raise ValueError("node_name is required for action='think' and cannot be blank")
+    if not thought_type or thought_type not in VALID_THOUGHT_TYPES:
+        raise ValueError(f"thought_type must be one of: {sorted(VALID_THOUGHT_TYPES)}")
+    if not payload:
+        raise ValueError("payload is required for action='think'")
+    if len(payload) < 80:
+        raise ValueError("payload must be at least 80 characters")
+    if len(payload) > 1500:
+        raise ValueError("payload must be at most 1500 characters")
+
+
+# ---------------------------------------------------------------------------
 # T04: _has_cycle — DFS cycle detection (I01: simplified to single DFS)
 # ---------------------------------------------------------------------------
 
@@ -169,8 +230,7 @@ def _cascade_invalidate(conn: sqlite3.Connection, session_id: str, root: str) ->
 
 
 # ---------------------------------------------------------------------------
-# R-4 stub: _resolve_parent_context — extracted from _action_think (SRP)
-# Full implementation in YELLOW_3
+# _resolve_parent_context — depends_on 부모 노드 컨텍스트 해결 (SRP 분리)
 # ---------------------------------------------------------------------------
 
 def _resolve_parent_context(
@@ -415,57 +475,45 @@ def _action_think(
     depends_on: list[str],
     note: str,
 ) -> dict:
-    # --- validation ---
-    if not node_name or not node_name.strip():
-        raise ValueError("node_name is required for action='think' and cannot be blank")
-    if not thought_type or thought_type not in VALID_THOUGHT_TYPES:
-        raise ValueError(f"thought_type must be one of: {sorted(VALID_THOUGHT_TYPES)}")
-    if not payload:
-        raise ValueError("payload is required for action='think'")
-    if len(payload) < 80:
-        raise ValueError("payload must be at least 80 characters")
-    if len(payload) > 1500:
-        raise ValueError("payload must be at most 1500 characters")
+    # Q-3: 입력 유효성 검사 — 분리된 순수 함수로 위임
+    _validate_think_inputs(node_name, thought_type, payload)
 
     with contextlib.closing(_db(db_path)) as conn:
         with conn:
             _ensure_session(conn, session_id)
 
-            # --- cycle detection ---
+            # Q-2: edge를 1회만 fetch해 사이클 감지 (N×DB → 1×DB)
+            forward_graph = _load_forward_edges(conn, session_id)
             for parent in depends_on:
-                if parent == node_name:
-                    raise ValueError(f"Cycle detected: '{node_name}' cannot depend on itself")
-                if _has_cycle(conn, session_id, parent, node_name):
+                if _has_cycle_graph(forward_graph, parent, node_name):
                     raise ValueError(
                         f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
                     )
 
-            # --- parent_context: auto-resolve depends_on (R-4: _resolve_parent_context) ---
+            # R-4: 부모 컨텍스트 자동 resolve
             parent_context = _resolve_parent_context(conn, session_id, depends_on)
 
-            # --- compress payload (I06: thought_type 전달) ---
+            # I06: thought_type 전달해 압축 가중치 적용
             tokens_original_val = estimate_tokens(payload)  # R-3: 쓰기 시점 계산
             compressed_text, hash_val, tokens_saved = compress(payload, thought_type)
             is_compressed = compressed_text != payload
 
             # --- upsert node ---
             existing = conn.execute(
-                "SELECT id, ccr_hash, tokens_original, tokens_saved "
+                "SELECT id, ccr_hash, tokens_saved "
                 "FROM nodes WHERE session_id=? AND name=?",
                 (session_id, node_name),
             ).fetchone()
 
             if existing:
                 old_ccr_hash = existing["ccr_hash"]
-                # R-3: stored token counts — payload 텍스트 로딩 불필요 (BUG-1 fix 유지)
-                old_contribution = existing["tokens_original"] - existing["tokens_saved"]
+                # Q-1: delta = new_saved - old_saved (이전 공식은 old_compressed를 빼던 버그)
+                old_tokens_saved = existing["tokens_saved"]
 
-                # stale outgoing edges from previous version are no longer valid
                 conn.execute(
                     "DELETE FROM edges WHERE session_id=? AND parent=?",
                     (session_id, node_name),
                 )
-
                 conn.execute(
                     """UPDATE nodes
                        SET thought_type=?, payload=?, compressed=?, ccr_hash=?,
@@ -485,7 +533,7 @@ def _action_think(
                 if old_ccr_hash != hash_val:
                     conn.execute("DELETE FROM ccr_store WHERE hash=?", (old_ccr_hash,))
             else:
-                old_contribution = 0
+                old_tokens_saved = 0
                 conn.execute(
                     """INSERT INTO nodes
                        (session_id, name, thought_type, payload, compressed,
@@ -500,14 +548,12 @@ def _action_think(
                 )
                 op_status = "created"
 
-            # --- store original in ccr_store (always) ---
             conn.execute(
                 """INSERT OR REPLACE INTO ccr_store (hash, session_id, node_name, original)
                    VALUES (?,?,?,?)""",
                 (hash_val, session_id, node_name, payload),
             )
 
-            # --- record edges (only for found parents — no error key in parent_context) ---
             for parent in depends_on:
                 if "error" not in parent_context.get(parent, {"error": ""}):
                     conn.execute(
@@ -515,20 +561,18 @@ def _action_think(
                         (session_id, parent, node_name),
                     )
 
-            # --- update session aggregate (net delta only — avoids double-count on update) ---
-            delta = tokens_saved - old_contribution
+            # Q-1: delta = 새 savings - 이전 savings (SUM(tokens_saved) 누적 정확성)
+            delta = tokens_saved - old_tokens_saved
             conn.execute(
                 "UPDATE sessions SET tokens_saved = tokens_saved + ? WHERE id=?",
                 (delta, session_id),
             )
 
-            # I02: read back session cumulative total after update
             session_row = conn.execute(
                 "SELECT tokens_saved FROM sessions WHERE id=?", (session_id,)
             ).fetchone()
             session_total_saved = session_row["tokens_saved"] if session_row else tokens_saved
 
-            # I07: 컨텍스트 압박 수준 (upsert 후 — 동일 트랜잭션 내 COUNT 반영)
             context_pressure = _compute_context_pressure(conn, session_id)
 
     result: dict = {
@@ -537,10 +581,10 @@ def _action_think(
         "ccr_hash": hash_val,
         "compression": {
             "tokens_saved": tokens_saved,
-            "session_total_saved": session_total_saved,  # I02: PLAN.md 명세 준수
+            "session_total_saved": session_total_saved,
         },
-        "next_hint": _NEXT_HINTS.get(thought_type, "Call status() to review DAG."),  # I05
-        "context_pressure": context_pressure,  # I07: 사전 예방적 컨텍스트 압박 경보
+        "next_hint": _NEXT_HINTS[thought_type],  # Q-5: thought_type 검증 완료 — dead fallback 제거
+        "context_pressure": context_pressure,
     }
 
     if parent_context:

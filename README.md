@@ -211,3 +211,25 @@ uv run ruff check src/
 ```
 
 테스트는 임시 SQLite DB를 사용하며 격리 실행됩니다.
+
+## 변경 이력
+
+### v0.5 (2026-06-09) — 내부 품질 개선
+
+ruthless-code-critic 감사 기반 TDD 개선 (165 tests · 0 failures):
+
+- **Q-1** `session_total_saved` 공식 버그 수정 — 노드 업데이트 시 `delta = new_saved − old_saved` (기존: `old_compressed` 기준으로 오차 발생)
+- **Q-2** edge 배치 조회 분리 — `_load_forward_edges` / `_has_cycle_graph` 신규 함수로 cycle check 루프의 N×DB 쿼리 → 1×DB 쿼리로 개선
+- **Q-3** SRP 적용 — `_validate_think_inputs` 독립 함수 추출, `_action_think` 책임 축소
+- **Q-4** import 가드 수정 — `from compressor import` → `from src.compressor import` (내부 ImportError 노출 방지)
+- **Q-5** dead fallback 제거 — `_NEXT_HINTS.get(thought_type, ...)` → `_NEXT_HINTS[thought_type]`
+- **Q-6** 스테일 주석 제거 — 태스크 트래킹 주석(`YELLOW_3`, `stub`) 완전 제거
+
+### v0.4 — I06/I07/I08
+- thought_type 키워드 가중치, context_pressure 경보, dag_health 수렴 진단
+
+### v0.3 — I03/I04/I05
+- invalidate 존재 검증, created_at 노출, next_hint 동적화
+
+### v0.2 — 통합 설계
+- 툴 5개 → 1개, 자동 resolve, 복원 매니페스트
