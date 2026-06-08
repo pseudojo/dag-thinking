@@ -260,7 +260,8 @@ def _compute_dag_health(node_rows, edge_rows) -> dict:
             "health_hint": "No nodes yet. Start with an Objective node.",
         }
 
-    node_names = {r["name"] for r in node_rows}
+    # COMPLETED 노드만 구조 분석 대상 (INVALIDATED 제외)
+    completed_names = {r["name"] for r in node_rows if r["status"] == "COMPLETED"}
     type_dist: dict[str, int] = {}
     is_converging = False
 
@@ -272,7 +273,7 @@ def _compute_dag_health(node_rows, edge_rows) -> dict:
         if t in ("Synthesis", "Action"):
             is_converging = True
 
-    # 엣지 정보로 연결성 분석
+    # 엣지 정보로 연결성 분석 (엣지 전체 사용 — 연결 이력 기준)
     child_map: dict[str, list[str]] = {}
     has_parent: set[str] = set()
     has_child: set[str] = set()
@@ -281,15 +282,15 @@ def _compute_dag_health(node_rows, edge_rows) -> dict:
         has_parent.add(r["child"])
         has_child.add(r["parent"])
 
-    # 고립 노드: 2개 이상 노드 세션에서 엣지가 전혀 없는 노드
+    # 고립 노드: COMPLETED 노드 중 엣지가 없는 노드 (2개 이상일 때만)
     connected = has_parent | has_child
     orphan_nodes = (
-        sorted(n for n in node_names if n not in connected)
-        if len(node_names) > 1 else []
+        sorted(n for n in completed_names if n not in connected)
+        if len(completed_names) > 1 else []
     )
 
-    # 최장 체인 깊이: 루트 노드(부모 없음)에서 BFS
-    roots = [n for n in node_names if n not in has_parent]
+    # 최장 체인 깊이: COMPLETED 루트 노드(부모 없음)에서 BFS
+    roots = [n for n in completed_names if n not in has_parent]
     max_depth = 0
     if roots:
         bfs: deque[tuple[str, int]] = deque((r, 0) for r in roots)
@@ -306,7 +307,7 @@ def _compute_dag_health(node_rows, edge_rows) -> dict:
                     bfs.append((child, depth + 1))
 
     # health_hint: 우선순위 — 고립 > 수렴 > 미수렴 경고 > 정상
-    total_nodes = len(node_names)
+    total_nodes = len(completed_names)
     if orphan_nodes:
         health_hint = (
             f"Orphan node(s) detected: {orphan_nodes}. "
@@ -655,7 +656,7 @@ def _action_restore(
 
             if ccr_hash_val is None:
                 rows = conn.execute(
-                    "SELECT name, ccr_hash FROM nodes WHERE session_id=? ORDER BY id",
+                    "SELECT name, ccr_hash, status FROM nodes WHERE session_id=? ORDER BY id",
                     (session_id,),
                 ).fetchall()
                 return {
@@ -663,6 +664,7 @@ def _action_restore(
                         {
                             "name": r["name"],
                             "ccr_hash": r["ccr_hash"],
+                            "status": r["status"],
                             "restore_cmd": (
                                 f"dag_thinking(action='restore', "
                                 f"session_id={repr(session_id)}, "
