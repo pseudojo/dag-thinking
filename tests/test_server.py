@@ -3,67 +3,15 @@ dag-thinking integration tests (T21-T27, checks C01-C23)
 RED phase: written before implementation.
 """
 
-import pytest
-import tempfile
 import os
 import sys
+import pytest
 
-# Allow importing src as a package
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from src.compressor import compress, ccr_hash, estimate_tokens
-from src.server import call_dag_thinking, init_db
-
-
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-@pytest.fixture
-def db_path(tmp_path):
-    path = str(tmp_path / "test.db")
-    init_db(path)
-    return path
-
-
-def think(db_path, session_id, node_name, thought_type, payload, depends_on=None, note=""):
-    return call_dag_thinking(
-        db_path=db_path,
-        action="think",
-        session_id=session_id,
-        node_name=node_name,
-        thought_type=thought_type,
-        payload=payload,
-        depends_on=depends_on or [],
-        note=note,
-    )
-
-
-def status(db_path, session_id):
-    return call_dag_thinking(
-        db_path=db_path,
-        action="status",
-        session_id=session_id,
-    )
-
-
-def restore(db_path, session_id, ccr_hash_val=None):
-    return call_dag_thinking(
-        db_path=db_path,
-        action="restore",
-        session_id=session_id,
-        ccr_hash=ccr_hash_val,
-    )
-
-
-def invalidate(db_path, session_id, target_node, reason="test"):
-    return call_dag_thinking(
-        db_path=db_path,
-        action="invalidate",
-        session_id=session_id,
-        target_node=target_node,
-        reason=reason,
-    )
+from src.server import call_dag_thinking
+from tests.helpers import think, status, restore, invalidate
 
 
 # ---------------------------------------------------------------------------

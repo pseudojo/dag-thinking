@@ -2,8 +2,6 @@
 RED-phase tests for:
   P3-9 : context_pressure must exclude INVALIDATED nodes from COUNT
   P3-12: blank/whitespace node_name and session_id must raise ValueError
-
-These tests FAIL before the GREEN implementation.
 """
 
 import pytest
@@ -12,39 +10,8 @@ import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from src.server import call_dag_thinking, init_db, _PRESSURE_MEDIUM
-
-
-PAYLOAD = (
-    "The key finding from this analysis is that the current architecture has a critical bottleneck "
-    "in the data pipeline. The assumption is that horizontal scaling will resolve the throughput issue. "
-    "Evidence from load tests shows that latency doubles beyond 500 concurrent connections. "
-    "Therefore, the conclusion is to implement a message queue to decouple producers from consumers. "
-    "This result must be addressed before the next production release to avoid system failure."
-)
-
-
-@pytest.fixture
-def db_path(tmp_path):
-    path = str(tmp_path / "test_bugfixes.db")
-    init_db(path)
-    return path
-
-
-def think(db, sid, name, ttype, payload=None, depends_on=None):
-    return call_dag_thinking(
-        db_path=db, action="think", session_id=sid,
-        node_name=name, thought_type=ttype,
-        payload=payload if payload is not None else PAYLOAD,
-        depends_on=depends_on or [],
-    )
-
-
-def invalidate(db, sid, target, reason="test"):
-    return call_dag_thinking(
-        db_path=db, action="invalidate", session_id=sid,
-        target_node=target, reason=reason,
-    )
+from src.server import _PRESSURE_MEDIUM
+from tests.helpers import think, invalidate
 
 
 # ---------------------------------------------------------------------------
