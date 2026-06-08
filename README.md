@@ -195,7 +195,7 @@ SQLite (WAL 모드):
 - `sessions` — 세션 메타데이터 및 누적 토큰 절약량
 - `nodes` — 추론 노드 (원본 + 압축본 + 상태)
 - `edges` — 노드 간 의존 관계
-- `ccr_store` — 원본 페이로드 영구 보존 (복원용)
+- `ccr_store` — 원본 페이로드 영구 보존, `(hash, session_id)` 복합 PK로 세션 간 독립 보존
 
 ## 개발
 
@@ -213,6 +213,16 @@ uv run ruff check src/
 테스트는 임시 SQLite DB를 사용하며 격리 실행됩니다.
 
 ## 변경 이력
+
+### v0.6 (2026-06-09) — 버그 수정 / 구조 정리
+
+ruthless-code-critic 감사 기반 TDD 개선 (173 tests · 0 failures):
+
+- **R-EDGE** 엣지 삭제 방향 버그 수정 — 노드 upsert 시 `DELETE WHERE parent=?` → `WHERE child=?`. 기존 코드는 노드를 업데이트할 때 자신의 자식 노드들의 부모 관계를 파괴해 cascade invalidate 경로를 끊는 버그가 있었음
+- **R-CCR** `ccr_store` 복합 PK 도입 — `hash TEXT PRIMARY KEY` → `PRIMARY KEY (hash, session_id)`. 두 세션이 동일 내용의 노드를 가질 때 `INSERT OR REPLACE`가 session_id를 덮어써서 한 세션의 restore를 파괴하는 충돌 버그 수정
+- **R-CCR** `INSERT OR REPLACE` → `INSERT OR IGNORE` + 고아 DELETE 제거 — 업데이트 시 기존 ccr 원본을 삭제하지 않아 content-addressed 보존 원칙 준수
+- **CLEAN-1** `_has_cycle()` 데드 코드 30줄 삭제 — v0.5 Q-2 리팩토링 이후 호출처 없는 함수
+- **CLEAN-2** 모듈 상수 순서 정규화 — `VALID_THOUGHT_TYPES`, `_PRESSURE_*`, `_NEXT_HINTS`를 첫 사용 함수 이전으로 이동
 
 ### v0.5 (2026-06-09) — 내부 품질 개선
 

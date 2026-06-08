@@ -66,11 +66,12 @@ def init_db(path: str = _DEFAULT_DB) -> None:
             """)
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS ccr_store (
-                    hash       TEXT PRIMARY KEY,
+                    hash       TEXT NOT NULL,
                     session_id TEXT NOT NULL,
                     node_name  TEXT NOT NULL,
                     original   TEXT NOT NULL,
-                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    PRIMARY KEY (hash, session_id)
                 )
             """)
             conn.execute("""
@@ -141,6 +142,31 @@ def _has_cycle_graph(
 
 
 # ---------------------------------------------------------------------------
+# Module-level constants — defined before first use
+# ---------------------------------------------------------------------------
+
+VALID_THOUGHT_TYPES = frozenset({
+    "Objective", "Hypothesis", "Assumption",
+    "Evidence", "Critique", "Synthesis", "Action",
+})
+
+# I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
+_PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
+_PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
+
+# I05: thought_type별 컨텍스트 힌트 (LLM 다음 단계 안내)
+_NEXT_HINTS: dict[str, str] = {
+    "Objective":   "Add Hypothesis or Assumption nodes to explore this objective.",
+    "Hypothesis":  "Add Evidence or Assumption nodes to support or challenge this hypothesis.",
+    "Assumption":  "Add Evidence to validate, or Critique to challenge this assumption.",
+    "Evidence":    "Add Synthesis to draw conclusions, or Critique to challenge the evidence.",
+    "Critique":    "Add Synthesis to reconcile findings, or revise the critiqued node.",
+    "Synthesis":   "Add Action nodes to operationalize insights, or call status() to close.",
+    "Action":      "All conclusions reached. Call status() to review the full DAG.",
+}
+
+
+# ---------------------------------------------------------------------------
 # Q-3: _validate_think_inputs — 입력 유효성 검사 (SRP 분리)
 # ---------------------------------------------------------------------------
 
@@ -160,42 +186,6 @@ def _validate_think_inputs(
         raise ValueError("payload must be at least 80 characters")
     if len(payload) > 1500:
         raise ValueError("payload must be at most 1500 characters")
-
-
-# ---------------------------------------------------------------------------
-# T04: _has_cycle — DFS cycle detection (I01: simplified to single DFS)
-# ---------------------------------------------------------------------------
-
-def _has_cycle(conn: sqlite3.Connection, session_id: str, new_parent: str, new_child: str) -> bool:
-    """Return True if adding edge new_parent→new_child would create a cycle.
-
-    Strategy: if new_child can already reach new_parent via existing forward
-    edges, then adding new_parent→new_child would close a cycle.
-    Single forward-DFS from new_child; self-reference handled upfront.
-    """
-    if new_parent == new_child:
-        return True
-
-    rows = conn.execute(
-        "SELECT parent, child FROM edges WHERE session_id=?", (session_id,)
-    ).fetchall()
-    forward: dict[str, list[str]] = {}
-    for row in rows:
-        forward.setdefault(row["parent"], []).append(row["child"])
-
-    # DFS: can we reach new_parent starting from new_child?
-    visited: set[str] = set()
-    stack = [new_child]
-    while stack:
-        node = stack.pop()
-        if node == new_parent:
-            return True
-        if node in visited:
-            continue
-        visited.add(node)
-        stack.extend(forward.get(node, []))
-
-    return False
 
 
 # ---------------------------------------------------------------------------
@@ -333,16 +323,6 @@ def call_dag_thinking(
 # action="think"
 # ---------------------------------------------------------------------------
 
-VALID_THOUGHT_TYPES = frozenset({
-    "Objective", "Hypothesis", "Assumption",
-    "Evidence", "Critique", "Synthesis", "Action",
-})
-
-# I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
-_PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
-_PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
-
-
 def _compute_context_pressure(conn: sqlite3.Connection, session_id: str) -> dict:
     """I07: 세션 COMPLETED 노드 수 기반 컨텍스트 압박 수준 계산 (upsert 후 호출)."""
     node_count = conn.execute(
@@ -453,17 +433,6 @@ def _compute_dag_health(node_rows, edge_rows) -> dict:
         "health_hint": health_hint,
     }
 
-# I05: thought_type별 컨텍스트 힌트 (LLM 다음 단계 안내)
-_NEXT_HINTS: dict[str, str] = {
-    "Objective":   "Add Hypothesis or Assumption nodes to explore this objective.",
-    "Hypothesis":  "Add Evidence or Assumption nodes to support or challenge this hypothesis.",
-    "Assumption":  "Add Evidence to validate, or Critique to challenge this assumption.",
-    "Evidence":    "Add Synthesis to draw conclusions, or Critique to challenge the evidence.",
-    "Critique":    "Add Synthesis to reconcile findings, or revise the critiqued node.",
-    "Synthesis":   "Add Action nodes to operationalize insights, or call status() to close.",
-    "Action":      "All conclusions reached. Call status() to review the full DAG.",
-}
-
 
 def _action_think(
     *,
@@ -506,12 +475,12 @@ def _action_think(
             ).fetchone()
 
             if existing:
-                old_ccr_hash = existing["ccr_hash"]
                 # Q-1: delta = new_saved - old_saved (이전 공식은 old_compressed를 빼던 버그)
                 old_tokens_saved = existing["tokens_saved"]
 
+                # R-EDGE: child=? 로 이 노드의 incoming edges(부모 관계)만 초기화
                 conn.execute(
-                    "DELETE FROM edges WHERE session_id=? AND parent=?",
+                    "DELETE FROM edges WHERE session_id=? AND child=?",
                     (session_id, node_name),
                 )
                 conn.execute(
@@ -529,9 +498,6 @@ def _action_think(
                     ),
                 )
                 op_status = "updated"
-
-                if old_ccr_hash != hash_val:
-                    conn.execute("DELETE FROM ccr_store WHERE hash=?", (old_ccr_hash,))
             else:
                 old_tokens_saved = 0
                 conn.execute(
@@ -548,8 +514,9 @@ def _action_think(
                 )
                 op_status = "created"
 
+            # R-CCR: OR IGNORE — 복합 PK(hash, session_id)로 세션별 독립 보존
             conn.execute(
-                """INSERT OR REPLACE INTO ccr_store (hash, session_id, node_name, original)
+                """INSERT OR IGNORE INTO ccr_store (hash, session_id, node_name, original)
                    VALUES (?,?,?,?)""",
                 (hash_val, session_id, node_name, payload),
             )

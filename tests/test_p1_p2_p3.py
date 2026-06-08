@@ -158,18 +158,25 @@ class TestP21TypeDistExcludesInvalidated:
 
 class TestP22CcrStoreOrphanCleanup:
 
-    def test_recreate_node_leaves_one_ccr_entry(self, db_path):
-        """P2-2: 노드 재생성 후 ccr_store 엔트리가 1개만 남아야 함."""
-        think(db_path, "s1", "node_a", "Objective", payload=PAYLOAD)
+    def test_recreate_node_new_hash_is_restorable(self, db_path):
+        """P2-2 (v0.6): 노드 재생성 후 새 hash로 restore 가능, 구 hash도 보존됨.
+        R-CCR fix: INSERT OR IGNORE + 복합 PK — 구 엔트리 삭제 없음."""
+        r1 = think(db_path, "s1", "node_a", "Objective", payload=PAYLOAD)
+        old_hash = r1["ccr_hash"]
         invalidate(db_path, "s1", "node_a")
-        think(db_path, "s1", "node_a", "Objective", payload=PAYLOAD2)
+        r2 = think(db_path, "s1", "node_a", "Objective", payload=PAYLOAD2)
+        new_hash = r2["ccr_hash"]
+        assert old_hash != new_hash
+        # 새 hash로 restore 가능
+        res = restore(db_path, "s1", new_hash)
+        assert res["original_payload"] == PAYLOAD2
+        # 구 hash도 ccr_store에 남아있어야 함 (R-CCR: 고아 삭제 없음)
         with contextlib.closing(_conn(db_path)) as conn:
-            count = conn.execute(
-                "SELECT COUNT(*) FROM ccr_store WHERE session_id='s1' AND node_name='node_a'",
-            ).fetchone()[0]
-        assert count == 1, (
-            f"ccr_store에 orphan 엔트리 존재: count={count} (expected 1)"
-        )
+            old_row = conn.execute(
+                "SELECT original FROM ccr_store WHERE hash=? AND session_id='s1'",
+                (old_hash,),
+            ).fetchone()
+        assert old_row is not None, "구 hash는 ccr_store에 보존되어야 함 (R-CCR)"
 
     def test_same_payload_recreate_still_one_entry(self, db_path):
         """P2-2 회귀: 동일 payload 재생성 시 ccr_store 1개 유지."""
@@ -189,8 +196,9 @@ class TestP22CcrStoreOrphanCleanup:
 
 class TestP23StaleEdgeCleanup:
 
-    def test_recreate_node_removes_old_outgoing_edges(self, db_path):
-        """P2-3: A→B 관계에서 A invalidate 후 depends_on=[]로 재생성 → A→B edge 제거."""
+    def test_recreate_node_preserves_outgoing_edges(self, db_path):
+        """P2-3 (v0.6): A→B 관계에서 A invalidate 후 재생성 → A→B edge 보존됨.
+        R-EDGE fix: upsert는 child=? 방향만 삭제 — outgoing edge는 유지."""
         think(db_path, "s1", "node_a", "Objective")
         think(db_path, "s1", "node_b", "Hypothesis", depends_on=["node_a"])
         invalidate(db_path, "s1", "node_a")
@@ -199,8 +207,8 @@ class TestP23StaleEdgeCleanup:
             count = conn.execute(
                 "SELECT COUNT(*) FROM edges WHERE session_id='s1' AND parent='node_a'",
             ).fetchone()[0]
-        assert count == 0, (
-            f"재생성 후에도 A→B edge 잔존: count={count}"
+        assert count == 1, (
+            f"A 재생성 후 A→B edge가 사라짐: count={count} (R-EDGE: outgoing edges 보존)"
         )
 
     def test_recreate_with_new_depends_on_creates_new_edge(self, db_path):

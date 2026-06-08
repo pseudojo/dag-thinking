@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.5
+# dag-thinking 설계 문서 v0.6
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -8,6 +8,7 @@
 | v0.3 | I03 invalidate 존재 검증, I04 created_at 노출, I05 next_hint 동적화 |
 | v0.4 | I06 thought_type 키워드 가중치, I07 context_pressure 경보, I08 dag_health 진단 |
 | v0.5 | Q-1 session_total_saved 공식 버그 수정, Q-2 edge 배치 조회 분리, Q-3 _validate_think_inputs SRP 추출, Q-4 import 가드 스코프 수정, Q-5 _NEXT_HINTS 직접 접근, Q-6 스테일 주석 제거 |
+| v0.6 | R-EDGE 엣지 삭제 방향 버그 수정(parent→child), R-CCR ccr_store 복합 PK + INSERT OR IGNORE, CLEAN-1 _has_cycle() 데드 코드 제거, CLEAN-2 상수 순서 정규화 |
 
 ---
 
@@ -362,6 +363,14 @@ dag-thinking/
 □ Q-4. except ImportError 절 → from src.compressor import (bare 'from compressor' 제거)
 □ Q-5. _NEXT_HINTS.get() → _NEXT_HINTS[thought_type] (dead fallback 제거)
 □ Q-6. _resolve_parent_context 스테일 주석(YELLOW_3, stub) 제거
+
+[ v0.6 버그 수정 / 구조 정리 — R/CLEAN 시리즈 ]
+□ R-EDGE. _action_think upsert: DELETE edges WHERE parent=? → WHERE child=? (outgoing edge 보존)
+□ R-CCR.  ccr_store PRIMARY KEY (hash, session_id) 복합키 — 세션 간 해시 충돌 차단
+□ R-CCR.  INSERT OR REPLACE → INSERT OR IGNORE (세션 소유권 덮어쓰기 방지)
+□ R-CCR.  DELETE FROM ccr_store WHERE hash=old_hash 제거 (content-addressed 원본 보존)
+□ CLEAN-1. _has_cycle() 데드 코드 30줄 삭제 (Q-2에서 대체된 이후 호출처 없음)
+□ CLEAN-2. 상수(VALID_THOUGHT_TYPES, _PRESSURE_*, _NEXT_HINTS) → 첫 사용 함수 이전으로 이동
 ```
 
 ---
