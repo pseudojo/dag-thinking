@@ -380,7 +380,7 @@ def _action_think(
                     f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
                 )
 
-        # --- parent_context: auto-resolve depends_on (P2-5: bulk IN query) ---
+        # --- parent_context: auto-resolve depends_on ---
         parent_context = {}
         found: dict = {}
         if depends_on:
@@ -424,7 +424,7 @@ def _action_think(
         if existing:
             old_ccr_hash = existing["ccr_hash"]
 
-            # P2-3: delete stale outgoing edges before re-inserting new depends_on
+            # stale outgoing edges from previous version are no longer valid
             conn.execute(
                 "DELETE FROM edges WHERE session_id=? AND parent=?",
                 (session_id, node_name),
@@ -444,7 +444,6 @@ def _action_think(
             )
             op_status = "updated"
 
-            # P2-2: remove orphaned ccr_store entry from previous version
             if old_ccr_hash != hash_val:
                 conn.execute("DELETE FROM ccr_store WHERE hash=?", (old_ccr_hash,))
         else:
@@ -467,7 +466,7 @@ def _action_think(
             (hash_val, session_id, node_name, payload),
         )
 
-        # --- record edges (P1-2: only insert if parent exists in DB) ---
+        # --- record edges ---
         for parent in depends_on:
             if parent in found:
                 conn.execute(
@@ -536,7 +535,6 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
     # I08: DAG 수렴 상태 진단 (DB 연결 닫힌 후 — 이미 fetch된 Row 객체로 계산)
     dag_health = _compute_dag_health(node_rows, edge_rows)
 
-    # P2-4: metrics count only COMPLETED nodes
     completed_rows = [r for r in node_rows if r["status"] == "COMPLETED"]
     tokens_original = sum(estimate_tokens(r["payload"]) for r in completed_rows)
     tokens_compressed = sum(
