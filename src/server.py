@@ -153,6 +153,9 @@ VALID_THOUGHT_TYPES = frozenset({
 # I17: depends_on 상한 — SQLite 바인딩 파라미터 제한(999) 안전 마진
 _MAX_DEPENDS_ON = 20
 
+# I22: node_name 길이 상한 — DoS 방어 및 SQL 인덱스 효율
+_MAX_NODE_NAME_LEN = 200
+
 # I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
 _PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
 _PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
@@ -182,6 +185,11 @@ def _validate_think_inputs(
     """action='think' 입력 유효성 검사. 실패 시 ValueError 즉시 raise."""
     if not node_name or not node_name.strip():
         raise ValueError("node_name is required for action='think' and cannot be blank")
+    if len(node_name) > _MAX_NODE_NAME_LEN:
+        raise ValueError(
+            f"node_name exceeds maximum length of {_MAX_NODE_NAME_LEN} characters "
+            f"(got {len(node_name)})"
+        )
     if not thought_type or thought_type not in VALID_THOUGHT_TYPES:
         raise ValueError(f"thought_type must be one of: {sorted(VALID_THOUGHT_TYPES)}")
     if not payload:

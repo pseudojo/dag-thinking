@@ -56,10 +56,13 @@ def ccr_hash(text: str) -> str:
 def estimate_tokens(text: str) -> int:
     cjk_count = sum(
         1 for ch in text
-        if ('぀' <= ch <= 'ゟ'   # Hiragana
-            or '゠' <= ch <= 'ヿ'  # Katakana
+        if ('㐀' <= ch <= '䶿'   # CJK Extension A
             or '一' <= ch <= '鿿'  # CJK Unified Ideographs
-            or '가' <= ch <= '힣')  # Hangul Syllables
+            or '豈' <= ch <= '﫿'  # CJK Compatibility Ideographs
+            or '가' <= ch <= '힣'  # Hangul Syllables
+            or '぀' <= ch <= 'ゟ'  # Hiragana
+            or '゠' <= ch <= 'ヿ'  # Katakana
+            or ord(ch) >= 0x20000)         # CJK Extension B/C/D/E/F/I (SMP)
     )
     non_cjk = len(text) - cjk_count
     return max(1, cjk_count * 2 + non_cjk // 4)
@@ -136,6 +139,28 @@ def _compress_list(
 # T11: _compress_prose — sentence-level extractive compression
 # ---------------------------------------------------------------------------
 
+_CJK_TERMINATORS: frozenset[str] = frozenset("。！？")
+
+
+def _join_sentences(sentences: list[str]) -> str:
+    """분리된 문장을 원문 언어 특성에 맞게 재결합.
+
+    CJK 종결자(。！？)로 끝나는 문장 → 공백 없이 연결
+    그 외(ASCII .!?) → 단일 공백으로 연결
+    """
+    if not sentences:
+        return ""
+    parts: list[str] = []
+    for i, s in enumerate(sentences):
+        parts.append(s)
+        if i < len(sentences) - 1:
+            if s and s[-1] in _CJK_TERMINATORS:
+                pass  # CJK 종결 — 구분자 없음
+            else:
+                parts.append(" ")
+    return "".join(parts)
+
+
 def _split_sentences(text: str) -> list[str]:
     """텍스트를 문장 단위로 분리.
 
@@ -163,7 +188,7 @@ def _compress_prose(
     ]
     scored.sort(key=lambda x: x[0], reverse=True)
     selected = sorted(scored[:k], key=lambda x: x[1])
-    return " ".join(item[2] for item in selected)
+    return _join_sentences([item[2] for item in selected])
 
 
 # ---------------------------------------------------------------------------

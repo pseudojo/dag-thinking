@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.9
+# dag-thinking 설계 문서 v0.10
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -11,6 +11,7 @@
 | v0.6 | R-EDGE 엣지 삭제 방향 버그 수정(parent→child), R-CCR ccr_store 복합 PK + INSERT OR IGNORE, CLEAN-1 _has_cycle() 데드 코드 제거, CLEAN-2 상수 순서 정규화 |
 | v0.7 | SEC-1 세션 ID 정보 노출 차단, PERF-1 compress() 트랜잭션 밖 이동, PERF-2 status/restore 읽기 트랜잭션 축소, TYPE-1 타입 어노테이션 완성 |
 | v0.8 | I09 context_pressure 트랜잭션 밖 이동, I10 dag_health INVALIDATED 엣지 BFS 제외, I11 _compress_prose 유니코드 문장 구분자 지원 |
+| v0.9 | I12 _split_sentences CJK 공백 없는 분리, I13 _is_list_content middle dot 제거, I17 depends_on 길이 상한 검증 |
 
 ---
 
@@ -276,11 +277,12 @@ nodes(
 edges(session_id, parent, child, PRIMARY KEY(session_id, parent, child))
 
 ccr_store(
-  hash TEXT PK,
-  session_id TEXT,
+  hash TEXT NOT NULL,
+  session_id TEXT NOT NULL,
   node_name TEXT,
   original TEXT,         -- 항상 원본 보존
-  created_at DATETIME
+  created_at DATETIME,
+  PRIMARY KEY (hash, session_id)  -- 복합 PK: 세션 간 해시 충돌 차단
 )
 ```
 
@@ -388,6 +390,20 @@ dag-thinking/
        (INVALIDATED 노드 경유 경로가 max_depth / orphan_nodes 계산을 오염하던 버그 수정)
 □ I11. compressor.py: _split_sentences(text) 함수 추출 + 유니코드 문장 구분자 지원
        (기존 r"(?<=[.!?])\s+" → r"(?<=[.!?。！？])\s+", 한중일 구두점 추가)
+
+[ v0.9 압축 정확성 / 입력 방어 — I12/I13/I17 ]
+□ I12. compressor.py: _split_sentences — CJK 종결자 뒤 공백 없이도 즉시 분리
+       (r"(?<=[.!?])\s+|(?<=[。！？])" — ASCII는 공백 필요, CJK는 즉시 분리)
+□ I13. compressor.py: _is_list_content — · (U+00B7 middle dot) bullet 인정 제거
+       (한국어 단어 구분자/수식 점곱 false positive 차단)
+□ I17. server.py: _validate_think_inputs — depends_on 길이 상한 _MAX_DEPENDS_ON=20
+       (SQLite IN(?,?,... 999개) 제한 초과 방어)
+
+[ v0.10 압축/토큰/트랜잭션 개선 — I18/I20/I21/I22 ]
+□ I18. compressor.py: estimate_tokens — CJK Extension A(U+3400-U+4DBF), Compatibility(U+F900-U+FAFF), Extension B+(ord≥0x20000) 추가
+□ I20. server.py: _action_think — session_total_saved SELECT를 with conn: 블록 외부로 이동 (PERF-2 완성)
+□ I21. compressor.py: _compress_prose — CJK 종결 문장 재결합 시 공백 없이 결합 (_join_sentences 추출)
+□ I22. server.py: _validate_think_inputs — node_name 길이 상한 _MAX_NODE_NAME_LEN=200 추가
 ```
 
 ---
