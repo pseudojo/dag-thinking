@@ -1,6 +1,6 @@
 # dag-thinking 개선 이력
 
-> 모든 항목 구현 완료 (v0.3 ~ v0.7). 상세 설계는 PLAN.md, 구현은 src/server.py · src/compressor.py 참조.
+> 모든 항목 구현 완료 (v0.3 ~ v0.8). 상세 설계는 PLAN.md, 구현은 src/server.py · src/compressor.py 참조.
 
 ---
 
@@ -37,12 +37,15 @@
 | PERF-1 | `compress()` / `estimate_tokens()` DB 쓰기 락 밖으로 이동 | v0.7 |
 | PERF-2 | `_action_status` / `_action_restore` 트랜잭션 범위 최소화 | v0.7 |
 | TYPE-1 | `_db()` / `_compute_dag_health()` 타입 어노테이션 완성 | v0.7 |
+| I09 | `_compute_context_pressure()` 쓰기 트랜잭션 밖으로 이동 (PERF-2 완성) | v0.8 |
+| I10 | `_compute_dag_health()` INVALIDATED 경유 엣지 BFS 제외 버그 수정 | v0.8 |
+| I11 | `_split_sentences()` 추출 + 유니코드 문장 구분자 (。！？) 지원 | v0.8 |
 
 ---
 
 ## 검증 체크리스트
 
-모든 항목 GREEN · 181 tests passed (v0.7 기준)
+모든 항목 GREEN · 194 tests passed (v0.8 기준)
 
 ```
 [I01 — cycle detection]                         [v0.3 ✅]

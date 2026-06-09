@@ -214,6 +214,14 @@ uv run ruff check src/
 
 ## 변경 이력
 
+### v0.8 (2026-06-10) — 버그 수정 / 압축 품질
+
+ruthless-code-critic 감사 기반 TDD 개선 (194 tests · 0 failures):
+
+- **I09** `_compute_context_pressure()` 쓰기 트랜잭션 밖으로 이동 — `_action_think`의 PERF-2 원칙 완성. `with conn:` 블록 내에 남아있던 COUNT 읽기 쿼리를 커밋 후 실행으로 교정
+- **I10** `_compute_dag_health()` INVALIDATED 엣지 BFS 제외 — INVALIDATED 노드와 연결된 엣지가 `max_depth` / `orphan_nodes` 계산을 오염하는 버그 수정. COMPLETED 전용 서브그래프(양쪽 모두 COMPLETED인 엣지)만 사용
+- **I11** `_split_sentences()` 함수 추출 + 유니코드 문장 구분자 지원 — `_compress_prose` 내 인라인 분리 로직을 독립 함수로 추출. `r"(?<=[.!?。！？])\s+"` 패턴으로 한중일 구두점(。！？) 지원 추가
+
 ### v0.7 (2026-06-09) — 성능 / 보안 / 타입 안전성
 
 ruthless-code-critic 감사 기반 TDD 개선 (181 tests · 0 failures):
