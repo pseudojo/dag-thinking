@@ -58,7 +58,7 @@ def estimate_tokens(text: str) -> int:
         1 for ch in text
         if ('㐀' <= ch <= '䶿'   # CJK Extension A
             or '一' <= ch <= '鿿'  # CJK Unified Ideographs
-            or '豈' <= ch <= '﫿'  # CJK Compatibility Ideographs
+            or '\uF900' <= ch <= '\uFAFF'  # CJK Compatibility Ideographs (U+F900-U+FAFF)
             or '가' <= ch <= '힣'  # Hangul Syllables
             or '぀' <= ch <= 'ゟ'  # Hiragana
             or '゠' <= ch <= 'ヿ'  # Katakana
@@ -105,8 +105,13 @@ def _score_sentence(
         elif position == total - 1:
             score += 1.0
 
-    # length factor: prefer medium-length sentences (10–40 words)
-    word_count = len(words)
+    # I24: CJK-aware length factor
+    # \b\w+\b treats an entire CJK run as one "word", so word_count would be 1
+    # for a 15-char Hangul sentence — underestimating length.
+    # When the text is primarily CJK (>50% of chars), use CJK char count instead.
+    cjk_char_count = sum(1 for ch in sentence if ord(ch) > 0x2E7F)
+    primarily_cjk = cjk_char_count > len(sentence) * 0.5 if sentence else False
+    word_count = cjk_char_count if primarily_cjk else len(words)
     if 10 <= word_count <= 40:
         score += 0.5
     elif word_count < 5:

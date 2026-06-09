@@ -474,6 +474,13 @@ def _action_think(
     is_compressed = compressed_text != payload
 
     with contextlib.closing(_db(db_path)) as conn:
+        # I20: PERF-2 완성 — session total을 쓰기 트랜잭션 이전에 읽어 SELECT를 락 밖으로 이동
+        prev_row = conn.execute(
+            "SELECT tokens_saved FROM sessions WHERE id=?", (session_id,)
+        ).fetchone()
+        prev_session_total = prev_row["tokens_saved"] if prev_row else 0
+        delta = 0  # with conn: 내에서 갱신됨
+
         with conn:
             _ensure_session(conn, session_id)
 
@@ -555,11 +562,10 @@ def _action_think(
                 "UPDATE sessions SET tokens_saved = tokens_saved + ? WHERE id=?",
                 (delta, session_id),
             )
+            # I20: SELECT 제거 — session_total_saved는 with conn: 이후 로컬 계산
 
-            session_row = conn.execute(
-                "SELECT tokens_saved FROM sessions WHERE id=?", (session_id,)
-            ).fetchone()
-            session_total_saved = session_row["tokens_saved"] if session_row else tokens_saved
+        # I20: PERF-2 완성 — prev + delta 로컬 계산 (SELECT 없음)
+        session_total_saved = prev_session_total + delta
 
         # I09: PERF-2 완성 — context_pressure COUNT 쿼리를 with conn: 밖으로 이동
         context_pressure = _compute_context_pressure(conn, session_id)

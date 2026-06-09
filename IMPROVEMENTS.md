@@ -46,12 +46,15 @@
 | I18 | `estimate_tokens()` CJK Extension A/Compatibility/SMP 범위 보완 | v0.10 |
 | I21 | `_join_sentences()` 추출 + `_compress_prose()` CJK 재결합 공백 제거 | v0.10 |
 | I22 | `_validate_think_inputs()` `node_name` 길이 상한 `_MAX_NODE_NAME_LEN=200` 추가 | v0.10 |
+| I20 | `_action_think()` `session_total_saved` SELECT 쓰기 트랜잭션 외부 이동 (PERF-2 완성) | v0.11 |
+| I23 | `estimate_tokens()` CJK Compatibility 범위 `'豈'–'﫿'` 유니코드 이스케이프 교체 | v0.11 |
+| I24 | `_score_sentence()` CJK-aware word_count — CJK >50% 문장에서 char count를 word_count 대리값으로 사용 | v0.11 |
 
 ---
 
 ## 검증 체크리스트
 
-모든 항목 GREEN · 231 tests passed (v0.10 기준)
+모든 항목 GREEN · 247 tests passed (v0.11 기준)
 
 ```
 [I01 — cycle detection]                         [v0.3 ✅]

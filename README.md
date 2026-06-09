@@ -214,6 +214,14 @@ uv run ruff check src/
 
 ## 변경 이력
 
+### v0.11 (2026-06-10) — 트랜잭션 최적화 / CJK 안전성 / 스코어링 개선
+
+ruthless-code-critic 감사 기반 TDD 개선 (247 tests · 0 failures):
+
+- **I20** `session_total_saved` SELECT 트랜잭션 외부 이동 — PERF-2 원칙 완성. `_action_think`의 `with conn:` 블록 내에서 `UPDATE sessions` 이후 `SELECT tokens_saved`를 실행해 쓰기 락을 불필요하게 연장하던 구조 수정. `prev_session_total`을 `with conn:` 이전에 읽고 `session_total_saved = prev_session_total + delta`로 로컬 계산 교체
+- **I23** CJK Compatibility Ideographs 유니코드 이스케이프 교체 — `estimate_tokens()`의 `'豈' <= ch <= '﫿'` 리터럴 문자를 `'豈' <= ch <= '﫿'` 이스케이프로 교체. 소스 파일 인코딩 훼손 시 범위 경계 문자가 깨져 CJK 토큰 계산이 오작동할 위험 제거
+- **I24** `_score_sentence()` CJK-aware word_count — `re.findall(r"\b\w+\b")`가 CJK 연속 문자를 하나의 토큰으로 처리해 `word_count=1 < 5` → 전 CJK 문장에 균일 `-0.5` 패널티 부여하던 버그 수정. CJK 문자 비율 > 50% 시 CJK 문자 수를 `word_count` 대리값으로 사용, 짧은/긴 CJK 문장을 정확히 구분
+
 ### v0.10 (2026-06-10) — 압축 품질 / 토큰 정확도 / 입력 방어
 
 ruthless-code-critic 감사 기반 TDD 개선 (231 tests · 0 failures):

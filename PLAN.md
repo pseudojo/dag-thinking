@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.10
+# dag-thinking 설계 문서 v0.11
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -12,6 +12,8 @@
 | v0.7 | SEC-1 세션 ID 정보 노출 차단, PERF-1 compress() 트랜잭션 밖 이동, PERF-2 status/restore 읽기 트랜잭션 축소, TYPE-1 타입 어노테이션 완성 |
 | v0.8 | I09 context_pressure 트랜잭션 밖 이동, I10 dag_health INVALIDATED 엣지 BFS 제외, I11 _compress_prose 유니코드 문장 구분자 지원 |
 | v0.9 | I12 _split_sentences CJK 공백 없는 분리, I13 _is_list_content middle dot 제거, I17 depends_on 길이 상한 검증 |
+| v0.10 | I18 estimate_tokens CJK Extension A/Compat/SMP, I21 _join_sentences CJK 재결합, I22 node_name 길이 상한 |
+| v0.11 | I20 session_total_saved SELECT 트랜잭션 외부 이동(PERF-2 완성), I23 CJK Compatibility 유니코드 이스케이프, I24 _score_sentence CJK 길이 패널티 제거 |
 
 ---
 
@@ -404,6 +406,18 @@ dag-thinking/
 □ I20. server.py: _action_think — session_total_saved SELECT를 with conn: 블록 외부로 이동 (PERF-2 완성)
 □ I21. compressor.py: _compress_prose — CJK 종결 문장 재결합 시 공백 없이 결합 (_join_sentences 추출)
 □ I22. server.py: _validate_think_inputs — node_name 길이 상한 _MAX_NODE_NAME_LEN=200 추가
+
+[ v0.11 트랜잭션 최적화 / 안전성 / CJK 스코어링 — I20/I23/I24 ]
+□ I20. server.py: _action_think — prev_session_total을 with conn: 이전에 SELECT → 트랜잭션 내 SELECT 제거
+        with conn: 이전: prev_row = conn.execute("SELECT tokens_saved FROM sessions WHERE id=?", ...).fetchone()
+        prev_session_total = prev_row["tokens_saved"] if prev_row else 0
+        with conn: 내부: UPDATE sessions (delta) — SELECT 없음
+        with conn: 이후: session_total_saved = prev_session_total + delta
+□ I23. compressor.py: estimate_tokens — '豈' <= ch <= '﫿' → '豈' <= ch <= '﫿' 유니코드 이스케이프 교체
+        (소스 파일 인코딩 훼손 시 리터럴 범위 경계 깨짐 방지)
+□ I24. compressor.py: _score_sentence — CJK 텍스트에서 words=[] 일 때 cjk_char_count를 word_count 대리값으로 사용
+        words가 비어있으면 len([ch for ch in sentence if ord(ch) > 0x2E7F]) 로 word_count 결정
+        (순수 CJK 문장 전체가 word_count=0 → -0.5 패널티 받던 문제 해결)
 ```
 
 ---
