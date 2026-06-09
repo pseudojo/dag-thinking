@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.11
+# dag-thinking 설계 문서 v0.12
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -14,6 +14,7 @@
 | v0.9 | I12 _split_sentences CJK 공백 없는 분리, I13 _is_list_content middle dot 제거, I17 depends_on 길이 상한 검증 |
 | v0.10 | I18 estimate_tokens CJK Extension A/Compat/SMP, I21 _join_sentences CJK 재결합, I22 node_name 길이 상한 |
 | v0.11 | I20 session_total_saved SELECT 트랜잭션 외부 이동(PERF-2 완성), I23 CJK Compatibility 유니코드 이스케이프, I24 _score_sentence CJK 길이 패널티 제거 |
+| v0.12 | I25 _is_cjk_char 헬퍼 추출(CJK 정의 통일), I28 _action_restore LEFT JOIN(N+1 제거), I29 depends_on 중복 제거, I30 session_id 길이 상한 |
 
 ---
 
@@ -418,6 +419,21 @@ dag-thinking/
 □ I24. compressor.py: _score_sentence — CJK 텍스트에서 words=[] 일 때 cjk_char_count를 word_count 대리값으로 사용
         words가 비어있으면 len([ch for ch in sentence if ord(ch) > 0x2E7F]) 로 word_count 결정
         (순수 CJK 문장 전체가 word_count=0 → -0.5 패널티 받던 문제 해결)
+
+[ v0.12 DRY / 쿼리 최적화 / 입력 방어 — I25/I28/I29/I30 ]
+□ I25. compressor.py: _is_cjk_char(ch) 헬퍼 함수 추출
+        estimate_tokens와 _score_sentence 양쪽에서 사용 (CJK 정의 통일, DRY 해소)
+        범위: Extension A(U+3400-U+4DBF), Unified(U+4E00-U+9FFF), Compat(U+F900-U+FAFF),
+              Hangul(U+AC00-U+D7A3), Hiragana(U+3040-U+309F), Katakana(U+30A0-U+30FF),
+              SMP Extension B+(ord>=0x20000)
+□ I28. server.py: _action_restore — ccr_store + nodes 별도 2-query를 LEFT JOIN 1-query로 통합
+        SELECT c.node_name, c.original, n.status
+        FROM ccr_store c LEFT JOIN nodes n ON n.session_id=c.session_id AND n.name=c.node_name
+        WHERE c.hash=? AND c.session_id=?
+□ I29. server.py: call_dag_thinking — depends_on 중복 항목 순서 보존 제거
+        list(dict.fromkeys(depends_on)) 로 중복 제거 후 하위 함수에 전달
+□ I30. server.py: call_dag_thinking — session_id 길이 상한 _MAX_SESSION_ID_LEN=200 추가
+        node_name과 동일한 200자 제한, blank 검증 직후 실행
 ```
 
 ---

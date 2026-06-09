@@ -50,11 +50,16 @@
 | I23 | `estimate_tokens()` CJK Compatibility 범위 `'豈'–'﫿'` 유니코드 이스케이프 교체 | v0.11 |
 | I24 | `_score_sentence()` CJK-aware word_count — CJK >50% 문장에서 char count를 word_count 대리값으로 사용 | v0.11 |
 
+| I25 | `_is_cjk_char()` 헬퍼 추출 — `estimate_tokens`와 `_score_sentence` CJK 정의 통일 (DRY) | v0.12 |
+| I28 | `_action_restore()` ccr_store+nodes 2-query → LEFT JOIN 1-query 통합 | v0.12 |
+| I29 | `call_dag_thinking()` `depends_on` 중복 항목 순서 보존 제거 | v0.12 |
+| I30 | `call_dag_thinking()` `session_id` 길이 상한 `_MAX_SESSION_ID_LEN=200` 추가 | v0.12 |
+
 ---
 
 ## 검증 체크리스트
 
-모든 항목 GREEN · 247 tests passed (v0.11 기준)
+모든 항목 GREEN · 282 tests passed (v0.12 기준)
 
 ```
 [I01 — cycle detection]                         [v0.3 ✅]

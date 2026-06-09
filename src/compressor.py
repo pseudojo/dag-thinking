@@ -50,20 +50,29 @@ def ccr_hash(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# T07: estimate_tokens — naive token count
+# I25: _is_cjk_char
+# ---------------------------------------------------------------------------
+
+def _is_cjk_char(ch: str) -> bool:
+    """CJK/Hangul/Kana char check used by estimate_tokens and _score_sentence."""
+    cp = ord(ch)
+    return (
+        0x3400 <= cp <= 0x4DBF   # CJK Extension A
+        or 0x4E00 <= cp <= 0x9FFF  # CJK Unified Ideographs
+        or 0xF900 <= cp <= 0xFAFF  # CJK Compatibility Ideographs
+        or 0xAC00 <= cp <= 0xD7A3  # Hangul Syllables
+        or 0x3040 <= cp <= 0x309F  # Hiragana
+        or 0x30A0 <= cp <= 0x30FF  # Katakana
+        or cp >= 0x20000            # CJK Extension B/C/D/E/F/I (SMP)
+    )
+
+
+# ---------------------------------------------------------------------------
+# T07: estimate_tokens
 # ---------------------------------------------------------------------------
 
 def estimate_tokens(text: str) -> int:
-    cjk_count = sum(
-        1 for ch in text
-        if ('㐀' <= ch <= '䶿'   # CJK Extension A
-            or '一' <= ch <= '鿿'  # CJK Unified Ideographs
-            or '\uF900' <= ch <= '\uFAFF'  # CJK Compatibility Ideographs (U+F900-U+FAFF)
-            or '가' <= ch <= '힣'  # Hangul Syllables
-            or '぀' <= ch <= 'ゟ'  # Hiragana
-            or '゠' <= ch <= 'ヿ'  # Katakana
-            or ord(ch) >= 0x20000)         # CJK Extension B/C/D/E/F/I (SMP)
-    )
+    cjk_count = sum(1 for ch in text if _is_cjk_char(ch))
     non_cjk = len(text) - cjk_count
     return max(1, cjk_count * 2 + non_cjk // 4)
 
@@ -109,7 +118,8 @@ def _score_sentence(
     # \b\w+\b treats an entire CJK run as one "word", so word_count would be 1
     # for a 15-char Hangul sentence — underestimating length.
     # When the text is primarily CJK (>50% of chars), use CJK char count instead.
-    cjk_char_count = sum(1 for ch in sentence if ord(ch) > 0x2E7F)
+    # I25: _is_cjk_char 헬퍼 사용 — estimate_tokens와 동일 CJK 범위 기준
+    cjk_char_count = sum(1 for ch in sentence if _is_cjk_char(ch))
     primarily_cjk = cjk_char_count > len(sentence) * 0.5 if sentence else False
     word_count = cjk_char_count if primarily_cjk else len(words)
     if 10 <= word_count <= 40:

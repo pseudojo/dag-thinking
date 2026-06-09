@@ -214,6 +214,13 @@ uv run ruff check src/
 
 ## 변경 이력
 
+### v0.12
+- **I25**: `_is_cjk_char()` 헬퍼 추출 — `estimate_tokens`와 `_score_sentence` CJK 범위 정의 통일 (DRY)
+- **I28**: `_action_restore()` ccr_store+nodes 2-query → LEFT JOIN 1-query 통합
+- **I29**: `call_dag_thinking()` `depends_on` 중복 항목 순서 보존 제거
+- **I30**: `call_dag_thinking()` `session_id` 길이 상한 `_MAX_SESSION_ID_LEN=200` 추가
+- 282 tests passing
+
 ### v0.11 (2026-06-10) — 트랜잭션 최적화 / CJK 안전성 / 스코어링 개선
 
 ruthless-code-critic 감사 기반 TDD 개선 (247 tests · 0 failures):

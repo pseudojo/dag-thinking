@@ -156,6 +156,9 @@ _MAX_DEPENDS_ON = 20
 # I22: node_name 길이 상한 — DoS 방어 및 SQL 인덱스 효율
 _MAX_NODE_NAME_LEN = 200
 
+# I30: session_id 길이 상한 — node_name과 동일 기준
+_MAX_SESSION_ID_LEN = 200
+
 # I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
 _PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
 _PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
@@ -304,6 +307,14 @@ def call_dag_thinking(
 ) -> dict:
     if not session_id or not session_id.strip():
         raise ValueError("session_id cannot be empty or blank")
+    if len(session_id) > _MAX_SESSION_ID_LEN:
+        raise ValueError(
+            f"session_id exceeds maximum length of {_MAX_SESSION_ID_LEN} characters "
+            f"(got {len(session_id)})"
+        )
+
+    # I29: depends_on 중복 항목 순서 보존 제거 — 불필요한 중복 엣지/사이클감지 방지
+    deduped_depends_on = list(dict.fromkeys(depends_on)) if depends_on else []
 
     if action == "think":
         return _action_think(
@@ -312,7 +323,7 @@ def call_dag_thinking(
             node_name=node_name,
             thought_type=thought_type,
             payload=payload,
-            depends_on=depends_on or [],
+            depends_on=deduped_depends_on,
             note=note,
         )
     elif action == "status":
@@ -737,10 +748,12 @@ def _action_restore(
                 ]
             }
 
-        # C18: session scoping — hash must belong to this session
+        # I28: C18 session scoping + nodes status — LEFT JOIN으로 1-query 통합
         row = conn.execute(
-            "SELECT node_name, original FROM ccr_store "
-            "WHERE hash=? AND session_id=?",
+            "SELECT c.node_name, c.original, n.status "
+            "FROM ccr_store c "
+            "LEFT JOIN nodes n ON n.session_id=c.session_id AND n.name=c.node_name "
+            "WHERE c.hash=? AND c.session_id=?",
             (ccr_hash_val, session_id),
         ).fetchone()
 
@@ -757,11 +770,7 @@ def _action_restore(
             "tokens": tokens,
         }
 
-        node = conn.execute(
-            "SELECT status FROM nodes WHERE session_id=? AND name=?",
-            (session_id, row["node_name"]),
-        ).fetchone()
-        if node and node["status"] == "INVALIDATED":
+        if row["status"] == "INVALIDATED":
             result["warning"] = (
                 f"Node '{row['node_name']}' is INVALIDATED. "
                 "This payload may be stale or superseded."
