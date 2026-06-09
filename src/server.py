@@ -375,14 +375,15 @@ def _compute_dag_health(
         if t in ("Synthesis", "Action"):
             is_converging = True
 
-    # 엣지 정보로 연결성 분석 (엣지 전체 사용 — 연결 이력 기준)
+    # I10: COMPLETED 전용 서브그래프만 사용 — INVALIDATED 경유 경로 오염 버그 수정
     child_map: dict[str, list[str]] = {}
     has_parent: set[str] = set()
     has_child: set[str] = set()
     for r in edge_rows:
-        child_map.setdefault(r["parent"], []).append(r["child"])
-        has_parent.add(r["child"])
-        has_child.add(r["parent"])
+        if r["parent"] in completed_names and r["child"] in completed_names:
+            child_map.setdefault(r["parent"], []).append(r["child"])
+            has_parent.add(r["child"])
+            has_child.add(r["parent"])
 
     # 고립 노드: COMPLETED 노드 중 엣지가 없는 노드 (2개 이상일 때만)
     connected = has_parent | has_child
@@ -543,7 +544,8 @@ def _action_think(
             ).fetchone()
             session_total_saved = session_row["tokens_saved"] if session_row else tokens_saved
 
-            context_pressure = _compute_context_pressure(conn, session_id)
+        # I09: PERF-2 완성 — context_pressure COUNT 쿼리를 with conn: 밖으로 이동
+        context_pressure = _compute_context_pressure(conn, session_id)
 
     result: dict = {
         "status": op_status,

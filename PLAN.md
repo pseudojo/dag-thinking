@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.7
+# dag-thinking 설계 문서 v0.8
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -10,6 +10,7 @@
 | v0.5 | Q-1 session_total_saved 공식 버그 수정, Q-2 edge 배치 조회 분리, Q-3 _validate_think_inputs SRP 추출, Q-4 import 가드 스코프 수정, Q-5 _NEXT_HINTS 직접 접근, Q-6 스테일 주석 제거 |
 | v0.6 | R-EDGE 엣지 삭제 방향 버그 수정(parent→child), R-CCR ccr_store 복합 PK + INSERT OR IGNORE, CLEAN-1 _has_cycle() 데드 코드 제거, CLEAN-2 상수 순서 정규화 |
 | v0.7 | SEC-1 세션 ID 정보 노출 차단, PERF-1 compress() 트랜잭션 밖 이동, PERF-2 status/restore 읽기 트랜잭션 축소, TYPE-1 타입 어노테이션 완성 |
+| v0.8 | I09 context_pressure 트랜잭션 밖 이동, I10 dag_health INVALIDATED 엣지 BFS 제외, I11 _compress_prose 유니코드 문장 구분자 지원 |
 
 ---
 
@@ -379,6 +380,14 @@ dag-thinking/
 □ PERF-2. _action_status / _action_restore: with conn: 범위를 _ensure_session 단독으로 축소
 □ TYPE-1. _db() → sqlite3.Connection 반환 타입 어노테이션 추가
 □ TYPE-1. _compute_dag_health(node_rows: list[sqlite3.Row], edge_rows: list[sqlite3.Row]) 파라미터 타입 추가
+
+[ v0.8 버그 수정 / 압축 품질 — I09/I10/I11 ]
+□ I09. _action_think: _compute_context_pressure() 호출을 with conn: 블록 밖으로 이동
+       (PERF-2 원칙 완성 — think에 남아있던 읽기 쿼리를 트랜잭션 외부로)
+□ I10. _compute_dag_health: edge 필터링 — parent/child 모두 completed_names에 있는 엣지만 child_map에 포함
+       (INVALIDATED 노드 경유 경로가 max_depth / orphan_nodes 계산을 오염하던 버그 수정)
+□ I11. compressor.py: _split_sentences(text) 함수 추출 + 유니코드 문장 구분자 지원
+       (기존 r"(?<=[.!?])\s+" → r"(?<=[.!?。！？])\s+", 한중일 구두점 추가)
 ```
 
 ---

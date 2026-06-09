@@ -136,14 +136,23 @@ def _compress_list(
 # T11: _compress_prose — sentence-level extractive compression
 # ---------------------------------------------------------------------------
 
+def _split_sentences(text: str) -> list[str]:
+    """텍스트를 문장 단위로 분리.
+
+    ASCII (.!?) 및 유니코드 (。！？) 문장 종결 문자를 지원.
+    종결 문자 뒤 1개 이상의 공백을 분리 기준으로 사용.
+    """
+    sentences = re.split(r"(?<=[.!?。！？])\s+", text.strip())
+    return [s.strip() for s in sentences if s.strip()]
+
+
 def _compress_prose(
     text: str,
     target_ratio: float,
     extra_keywords: frozenset = frozenset(),  # I06
 ) -> str:
-    # Split into sentences preserving rough boundaries
-    sentences = re.split(r"(?<=[.!?])\s+", text.strip())
-    sentences = [s.strip() for s in sentences if s.strip()]
+    # I11: _split_sentences로 위임 — 유니코드 문장 구분자 지원
+    sentences = _split_sentences(text)
     if not sentences:
         return text
 
