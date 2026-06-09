@@ -221,3 +221,7 @@ __marimo__/
 *.db
 *.db-shm
 *.db-wal
+
+# Claude / AI session artifacts
+prompt.txt
+reports/
