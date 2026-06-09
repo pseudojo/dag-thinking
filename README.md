@@ -214,6 +214,14 @@ uv run ruff check src/
 
 ## 변경 이력
 
+### v0.9 (2026-06-10) — 압축 정확성 / 입력 방어
+
+ruthless-code-critic 감사 기반 TDD 개선 (208 tests · 0 failures):
+
+- **I12** `_split_sentences()` CJK 공백 없는 분리 — `r"(?<=[.!?。！？])\s+"` 패턴이 CJK 종결자 뒤 공백을 요구해 `"A。B。"` 형태를 1개 문장으로 처리하던 버그 수정. `r"(?<=[.!?])\s+|(?<=[。！？])"` 로 교정 — ASCII는 공백 필요, CJK는 종결자 자체로 즉시 분리
+- **I13** `_is_list_content()` middle dot 오탐 제거 — `·` (U+00B7)이 한국어 단어 구분자나 수학 점곱으로 사용되는 텍스트를 목록으로 오분류하던 문제. bullet 패턴에서 U+00B7 제거, `•` (U+2022)만 허용
+- **I17** `_validate_think_inputs()` `depends_on` 길이 상한 — `_resolve_parent_context`의 `IN (?, ...)` 파라미터가 SQLite 제한(999)을 초과할 수 있던 잠재적 `OperationalError`. `_MAX_DEPENDS_ON = 20` 상수 도입, 초과 시 즉시 `ValueError` 발생
+
 ### v0.8 (2026-06-10) — 버그 수정 / 압축 품질
 
 ruthless-code-critic 감사 기반 TDD 개선 (194 tests · 0 failures):

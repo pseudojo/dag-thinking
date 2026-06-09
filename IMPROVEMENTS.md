@@ -40,12 +40,15 @@
 | I09 | `_compute_context_pressure()` 쓰기 트랜잭션 밖으로 이동 (PERF-2 완성) | v0.8 |
 | I10 | `_compute_dag_health()` INVALIDATED 경유 엣지 BFS 제외 버그 수정 | v0.8 |
 | I11 | `_split_sentences()` 추출 + 유니코드 문장 구분자 (。！？) 지원 | v0.8 |
+| I12 | `_split_sentences()` CJK 공백 없는 즉시 분리 — `|(?<=[。！？])` 패턴 분기 추가 | v0.9 |
+| I13 | `_is_list_content()` `·` (U+00B7) middle dot 오탐 제거 | v0.9 |
+| I17 | `_validate_think_inputs()` `depends_on` 길이 상한 `_MAX_DEPENDS_ON=20` 추가 | v0.9 |
 
 ---
 
 ## 검증 체크리스트
 
-모든 항목 GREEN · 194 tests passed (v0.8 기준)
+모든 항목 GREEN · 208 tests passed (v0.9 기준)
 
 ```
 [I01 — cycle detection]                         [v0.3 ✅]
