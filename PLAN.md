@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.8
+# dag-thinking 설계 문서 v0.9
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |

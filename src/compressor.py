@@ -75,7 +75,7 @@ def _is_list_content(text: str) -> bool:
         return False
     list_lines = sum(
         1 for line in lines
-        if re.match(r"^[-*•·]\s+", line) or re.match(r"^\d+[.)]\s+", line)
+        if re.match(r"^[-*•]\s+", line) or re.match(r"^\d+[.)]\s+", line)
     )
     return list_lines / len(lines) >= 0.5
 
@@ -139,10 +139,10 @@ def _compress_list(
 def _split_sentences(text: str) -> list[str]:
     """텍스트를 문장 단위로 분리.
 
-    ASCII (.!?) 및 유니코드 (。！？) 문장 종결 문자를 지원.
-    종결 문자 뒤 1개 이상의 공백을 분리 기준으로 사용.
+    ASCII (.!?): 종결자 뒤 공백(whitespace+) 기준 분리
+    CJK (。！？): 공백 없이도 종결자 자체로 즉시 분리
     """
-    sentences = re.split(r"(?<=[.!?。！？])\s+", text.strip())
+    sentences = re.split(r"(?<=[.!?])\s+|(?<=[。！？])", text.strip())
     return [s.strip() for s in sentences if s.strip()]
 
 

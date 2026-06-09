@@ -150,6 +150,9 @@ VALID_THOUGHT_TYPES = frozenset({
     "Evidence", "Critique", "Synthesis", "Action",
 })
 
+# I17: depends_on 상한 — SQLite 바인딩 파라미터 제한(999) 안전 마진
+_MAX_DEPENDS_ON = 20
+
 # I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
 _PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
 _PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
@@ -174,6 +177,7 @@ def _validate_think_inputs(
     node_name: str | None,
     thought_type: str | None,
     payload: str | None,
+    depends_on: list[str] | None = None,
 ) -> None:
     """action='think' 입력 유효성 검사. 실패 시 ValueError 즉시 raise."""
     if not node_name or not node_name.strip():
@@ -186,6 +190,11 @@ def _validate_think_inputs(
         raise ValueError("payload must be at least 80 characters")
     if len(payload) > 1500:
         raise ValueError("payload must be at most 1500 characters")
+    if depends_on is not None and len(depends_on) > _MAX_DEPENDS_ON:
+        raise ValueError(
+            f"depends_on exceeds maximum of {_MAX_DEPENDS_ON} parents "
+            f"(got {len(depends_on)})"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -449,7 +458,7 @@ def _action_think(
     note: str,
 ) -> dict:
     # Q-3: 입력 유효성 검사 — 분리된 순수 함수로 위임
-    _validate_think_inputs(node_name, thought_type, payload)
+    _validate_think_inputs(node_name, thought_type, payload, depends_on)
 
     # PERF-1: CPU 연산을 DB 락 획득 전에 선실행 (SHA-256 + 문장 스코어링)
     tokens_original_val = estimate_tokens(payload)
