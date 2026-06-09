@@ -214,6 +214,15 @@ uv run ruff check src/
 
 ## 변경 이력
 
+### v0.10 (2026-06-10) — 압축 품질 / 토큰 정확도 / 입력 방어
+
+ruthless-code-critic 감사 기반 TDD 개선 (231 tests · 0 failures):
+
+- **I21** `_join_sentences()` 추출 + `_compress_prose()` CJK 재결합 수정 — v0.9에서 CJK 문장 분리를 추가했으나 재결합은 여전히 `" ".join()` 사용. `"A。B。C。"` 압축 시 `"A。 B。 C。"` (원문에 없는 공백 삽입) 버그 수정. `_CJK_TERMINATORS = frozenset("。！？")`으로 종결자 감지 후 CJK 문장은 공백 없이, ASCII 문장은 공백으로 구분 결합
+- **I18** `estimate_tokens()` CJK 확장 범위 보완 — CJK Extension A (U+3400~U+4DBF, ~6,600자), CJK Compatibility Ideographs (U+F900~U+FAFF), CJK Extension B+ SMP (`ord(ch) >= 0x20000`) 미처리 문자들을 `non_cjk`(÷4)로 계산해 토큰 수 최대 8배 과소 산출하던 버그 수정
+- **I20** `session_total_saved` 회귀 안전성 — 기존 누적 계산 정확성 검증 테스트 3건 추가
+- **I22** `_validate_think_inputs()` `node_name` 길이 상한 — 무제한 길이 `node_name`으로 인한 잠재적 DoS 및 SQL 인덱스 비효율 차단. `_MAX_NODE_NAME_LEN = 200` 상수 도입, blank 검증 직후 길이 검증 실행
+
 ### v0.9 (2026-06-10) — 압축 정확성 / 입력 방어
 
 ruthless-code-critic 감사 기반 TDD 개선 (208 tests · 0 failures):

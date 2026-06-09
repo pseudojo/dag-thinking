@@ -43,12 +43,15 @@
 | I12 | `_split_sentences()` CJK 공백 없는 즉시 분리 — `|(?<=[。！？])` 패턴 분기 추가 | v0.9 |
 | I13 | `_is_list_content()` `·` (U+00B7) middle dot 오탐 제거 | v0.9 |
 | I17 | `_validate_think_inputs()` `depends_on` 길이 상한 `_MAX_DEPENDS_ON=20` 추가 | v0.9 |
+| I18 | `estimate_tokens()` CJK Extension A/Compatibility/SMP 범위 보완 | v0.10 |
+| I21 | `_join_sentences()` 추출 + `_compress_prose()` CJK 재결합 공백 제거 | v0.10 |
+| I22 | `_validate_think_inputs()` `node_name` 길이 상한 `_MAX_NODE_NAME_LEN=200` 추가 | v0.10 |
 
 ---
 
 ## 검증 체크리스트
 
-모든 항목 GREEN · 208 tests passed (v0.9 기준)
+모든 항목 GREEN · 231 tests passed (v0.10 기준)
 
 ```
 [I01 — cycle detection]                         [v0.3 ✅]
