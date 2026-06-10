@@ -203,9 +203,12 @@ def _validate_think_inputs(
     thought_type: str | None,
     payload: str | None,
     depends_on: list[str] | None = None,
-    note: str = "",
+    note: str | None = "",
 ) -> None:
     """action='think' 입력 유효성 검사. 실패 시 ValueError 즉시 raise."""
+    # I46: note=None(JSON null) 방어 — 빈 문자열로 정규화
+    if note is None:
+        note = ""
     if not node_name or not node_name.strip():
         raise ValueError("node_name is required for action='think' and cannot be blank")
     if len(node_name) > _MAX_NODE_NAME_LEN:
@@ -733,7 +736,10 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
 def _action_invalidate(
     *, db_path: str, session_id: str, target_node: str | None, reason: str
 ) -> dict:
-    if not target_node or not target_node.strip():
+    # I47: strip 후 재할당 — 공백 포함 이름이 DB 조회를 미스하는 버그 수정
+    if target_node:
+        target_node = target_node.strip()
+    if not target_node:
         raise ValueError("target_node is required for action='invalidate'")
 
     with contextlib.closing(_db(db_path)) as conn:

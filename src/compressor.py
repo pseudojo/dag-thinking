@@ -246,7 +246,8 @@ def _split_sentences(text: str) -> list[str]:
                  연속 종결자(줄임표 `...`) 뒤 공백은 경계로 인정하지 않음
     CJK (。！？): 공백 없이도 종결자 자체로 즉시 분리
     """
-    sentences = re.split(r"(?<=[^.!?][.!?])\s+|(?<=[。！？])", text.strip())
+    # I48: [!?]{2} 대안 추가 — ?!/!!/??  등 복합 종결자 뒤 공백도 경계 인식
+    sentences = re.split(r"(?<=[^.!?][.!?]|[!?]{2})\s+|(?<=[。！？])", text.strip())
     return [s.strip() for s in sentences if s.strip()]
 
 
