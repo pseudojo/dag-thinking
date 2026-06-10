@@ -58,6 +58,7 @@ class TestWhitespacePayloadValidation:
 # I32: node_name / depends_on 경계값 + idx_edges_child 인덱스
 # ---------------------------------------------------------------------------
 
+
 class TestBoundaryValidation:
     """I32 + 경계값: node_name 200/201자, depends_on 20/21개"""
 
@@ -103,6 +104,7 @@ class TestBoundaryValidation:
 # I33: _split_sentences 줄임표 false-split 수정
 # ---------------------------------------------------------------------------
 
+
 class TestSplitSentencesEllipsis:
     """I33: _split_sentences — 연속 구두점(줄임표) 오분리 방지"""
 
@@ -142,6 +144,7 @@ class TestSplitSentencesEllipsis:
 # I34: edges executemany + 가드 명확화
 # ---------------------------------------------------------------------------
 
+
 class TestEdgesExecutemany:
     """I34: executemany 최적화 + parent_context 가드 명확화"""
 
@@ -159,8 +162,9 @@ class TestEdgesExecutemany:
     def test_missing_parent_no_edge_no_error(self, db_path):
         """T15: 존재하지 않는 부모 포함 → 유효 부모만 엣지, 오류 없음"""
         think(db_path, "s1", "real", "Objective", PAYLOAD)
-        result = think(db_path, "s1", "child", "Hypothesis", PAYLOAD,
-                       depends_on=["real", "nonexistent"])
+        result = think(
+            db_path, "s1", "child", "Hypothesis", PAYLOAD, depends_on=["real", "nonexistent"]
+        )
         assert result["status"] in ("created", "updated")
         s = status(db_path, "s1")
         edges = s["dag"]["edges"]
@@ -182,6 +186,7 @@ class TestEdgesExecutemany:
 # C33/C34: thought_type 키워드 가중치
 # ---------------------------------------------------------------------------
 
+
 class TestThoughtTypeKeywords:
     """C33/C34: _score_sentence extra_keywords + compress 반환 타입"""
 
@@ -194,8 +199,7 @@ class TestThoughtTypeKeywords:
         """C33: Evidence 키워드 포함 시 스코어가 base보다 높아야 함"""
         base_score = _score_sentence(self.EVIDENCE_SENTENCE, 0, 2)
         boosted_score = _score_sentence(
-            self.EVIDENCE_SENTENCE, 0, 2,
-            extra_keywords=_TYPE_KEYWORDS["Evidence"]
+            self.EVIDENCE_SENTENCE, 0, 2, extra_keywords=_TYPE_KEYWORDS["Evidence"]
         )
         assert boosted_score > base_score, (
             f"Evidence 키워드 부스트 실패: base={base_score}, boosted={boosted_score}"
@@ -222,13 +226,22 @@ class TestThoughtTypeKeywords:
 # C37/C39/C40/C41: context_pressure + dag_health
 # ---------------------------------------------------------------------------
 
+
 class TestContextPressureAndDagHealth:
     """C37/C39/C40/C41: 압박 경보 및 DAG 수렴 진단"""
 
     def test_pressure_medium_with_8_nodes(self, db_path):
         """C37: 8개 이상 노드 → context_pressure.level 'medium' 또는 'high'"""
-        types = ["Objective", "Hypothesis", "Assumption", "Evidence",
-                 "Critique", "Synthesis", "Action", "Evidence"]
+        types = [
+            "Objective",
+            "Hypothesis",
+            "Assumption",
+            "Evidence",
+            "Critique",
+            "Synthesis",
+            "Action",
+            "Evidence",
+        ]
         for i, t in enumerate(types):
             think(db_path, "pressure_sess", f"node_{i}", t, PAYLOAD)
         # 마지막 노드 응답에서 pressure 확인

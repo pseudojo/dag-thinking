@@ -74,6 +74,7 @@ class TestThinkStatusRestoreRoundtrip:
 # T22: depends_on → parent_context auto-attach
 # ---------------------------------------------------------------------------
 
+
 class TestDependsOnParentContext:
     PAYLOAD_A = (
         "The objective is to reduce API latency below 200ms. "
@@ -100,7 +101,9 @@ class TestDependsOnParentContext:
         """C04/T14: depends_on 지정 → 응답에 parent_context.{parent}.payload 자동 첨부"""
         # C04
         think(db_path, "s1", "obj_node", "Objective", self.PAYLOAD_A)
-        result = think(db_path, "s1", "hyp_node", "Hypothesis", self.PAYLOAD_B, depends_on=["obj_node"])
+        result = think(
+            db_path, "s1", "hyp_node", "Hypothesis", self.PAYLOAD_B, depends_on=["obj_node"]
+        )
         assert "parent_context" in result
         assert "obj_node" in result["parent_context"]
         assert "payload" in result["parent_context"]["obj_node"]
@@ -109,7 +112,9 @@ class TestDependsOnParentContext:
         """C05: parent_context의 payload가 원본 이하 길이 (압축 또는 동일)"""
         # C05: compressed payload must be <= original length
         think(db_path, "s1", "obj_node", "Objective", self.PAYLOAD_A)
-        result = think(db_path, "s1", "hyp_node", "Hypothesis", self.PAYLOAD_B, depends_on=["obj_node"])
+        result = think(
+            db_path, "s1", "hyp_node", "Hypothesis", self.PAYLOAD_B, depends_on=["obj_node"]
+        )
         parent_payload = result["parent_context"]["obj_node"]["payload"]
         assert len(parent_payload) <= len(self.PAYLOAD_A)
 
@@ -118,15 +123,20 @@ class TestDependsOnParentContext:
         # C06
         think(db_path, "s1", "obj_node", "Objective", self.PAYLOAD_A)
         invalidate(db_path, "s1", "obj_node")
-        result = think(db_path, "s1", "hyp_node", "Hypothesis", self.PAYLOAD_B, depends_on=["obj_node"])
+        result = think(
+            db_path, "s1", "hyp_node", "Hypothesis", self.PAYLOAD_B, depends_on=["obj_node"]
+        )
         # Should have a warning but still proceed (or include warning in parent_context)
         assert "parent_context" in result
-        assert result["parent_context"]["obj_node"].get("warning") or result["parent_context"]["obj_node"].get("is_invalidated")
+        assert result["parent_context"]["obj_node"].get("warning") or result["parent_context"][
+            "obj_node"
+        ].get("is_invalidated")
 
 
 # ---------------------------------------------------------------------------
 # T23: Cycle detection
 # ---------------------------------------------------------------------------
+
 
 class TestCycleDetection:
     PAYLOAD = (
@@ -155,6 +165,7 @@ class TestCycleDetection:
 # ---------------------------------------------------------------------------
 # T24: Cascade invalidation
 # ---------------------------------------------------------------------------
+
 
 class TestCascadeInvalidation:
     PAYLOAD = (
@@ -195,6 +206,7 @@ class TestCascadeInvalidation:
 # ---------------------------------------------------------------------------
 # T25: restore — list and single
 # ---------------------------------------------------------------------------
+
 
 class TestRestore:
     PAYLOAD = (
@@ -239,6 +251,7 @@ class TestRestore:
 # T26: Compression passthrough for short payloads
 # ---------------------------------------------------------------------------
 
+
 class TestCompressionPassthrough:
     def test_short_payload_passthrough(self, db_path):
         """C10/T12: 100자 미만 payload → tokens_saved=0, passthrough"""
@@ -259,8 +272,10 @@ class TestCompressionPassthrough:
 # T27: Compression metrics accuracy
 # ---------------------------------------------------------------------------
 
+
 class TestMetrics:
     """T27: 압축 메트릭 정확성 검증 (C22, C23)"""
+
     LONG_PAYLOAD = (
         "The comprehensive analysis of the distributed system performance reveals multiple critical bottlenecks. "
         "First, the key finding is that network latency between microservices accounts for 40% of total request time. "
@@ -295,6 +310,7 @@ class TestMetrics:
 # ---------------------------------------------------------------------------
 # Additional edge-case checks (C01, C02, C07, C08, C10, C11, C13)
 # ---------------------------------------------------------------------------
+
 
 class TestEdgeCases:
     def test_unknown_action_raises(self, db_path):

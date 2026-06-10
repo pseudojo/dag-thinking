@@ -26,16 +26,14 @@ class TestActionThinkPerf2Reads:
     def test_parent_context_resolved_for_existing_parent(self, db_path):
         """T35-2: 기존 부모 노드 → parent_context 포함"""
         think(db_path, "s1", "parent", "Objective", PAYLOAD)
-        result = think(db_path, "s1", "child", "Hypothesis", PAYLOAD,
-                       depends_on=["parent"])
+        result = think(db_path, "s1", "child", "Hypothesis", PAYLOAD, depends_on=["parent"])
         assert "parent_context" in result
         assert "parent" in result["parent_context"]
         assert "error" not in result["parent_context"]["parent"]
 
     def test_missing_parent_returns_error_entry(self, db_path):
         """T35-3: 존재하지 않는 부모 → parent_context error 포함"""
-        result = think(db_path, "s1", "child", "Hypothesis", PAYLOAD,
-                       depends_on=["nonexist"])
+        result = think(db_path, "s1", "child", "Hypothesis", PAYLOAD, depends_on=["nonexist"])
         assert "parent_context" in result
         assert "error" in result["parent_context"]["nonexist"]
 
@@ -68,6 +66,7 @@ class TestActionThinkPerf2Reads:
 # I36: note 필드 길이 상한 (_MAX_NOTE_LEN=500)
 # ---------------------------------------------------------------------------
 
+
 class TestNoteLengthValidation:
     """I36: note exceeds 500 chars → ValueError"""
 
@@ -96,6 +95,7 @@ class TestNoteLengthValidation:
 # I37: _compress_list 최소 k=2 (다중 아이템 과잉 압축 방지)
 # ---------------------------------------------------------------------------
 
+
 def _make_list_text(n: int, chars_per_item: int = 80) -> str:
     """n개의 bullet 아이템으로 구성된 목록 텍스트 생성."""
     return "\n".join(f"- Item {i + 1}: {'x' * (chars_per_item - 12)}" for i in range(n))
@@ -123,9 +123,7 @@ class TestCompressListMinK:
         text = _make_list_text(3, 100)
         result = _compress_list(text, _RATIO_LONG)
         lines = [l for l in result.splitlines() if l.strip()]
-        assert len(lines) >= 2, (
-            f"3-item 목록을 {len(lines)}개로 과잉 압축함 (최소 2개 보존 필요)"
-        )
+        assert len(lines) >= 2, f"3-item 목록을 {len(lines)}개로 과잉 압축함 (최소 2개 보존 필요)"
 
     def test_three_item_list_ratio_58_keeps_2(self):
         """T37-4: 3-item 목록, ratio=0.58 → k=max(2,round(1.74))=max(2,2)=2"""

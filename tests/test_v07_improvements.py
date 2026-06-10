@@ -37,6 +37,7 @@ PAYLOAD_B = (
 # SEC-1: Session ID information leak prevention
 # ---------------------------------------------------------------------------
 
+
 class TestSecSessionIdLeak:
     """S1-1 ~ S1-3: restore error path must not expose other session IDs."""
 
@@ -77,6 +78,7 @@ class TestSecSessionIdLeak:
 # ---------------------------------------------------------------------------
 # PERF-1/PERF-2 regression: functional equivalence after refactor
 # ---------------------------------------------------------------------------
+
 
 class TestPerfRegressions:
     """P1-1, P2-1, P2-2: PERF 변경 후 기능 동일성 검증."""
@@ -130,6 +132,7 @@ class TestPerfRegressions:
 # ---------------------------------------------------------------------------
 # TYPE-1: Return type annotation existence
 # ---------------------------------------------------------------------------
+
 
 class TestTypeAnnotations:
     """T1-1, T1-2: 반환 타입 어노테이션 정적 확인."""

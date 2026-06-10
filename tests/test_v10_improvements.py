@@ -76,6 +76,7 @@ class TestI21CompressProseCJKNoSpace:
             # 압축이 발생한 경우: 한글 문자 사이에 ASCII 공백이 없어야 함
             # "다。 이" 패턴 (CJK 종결 후 ASCII 공백) 은 버그
             import re
+
             bad_pattern = re.compile(r"[。！？] [^\n]")
             assert not bad_pattern.search(compressed), (
                 f"CJK terminator followed by ASCII space found in: {repr(compressed[:200])}"
@@ -86,24 +87,25 @@ class TestI21CompressProseCJKNoSpace:
 # I18: estimate_tokens — CJK 확장 범위
 # ---------------------------------------------------------------------------
 
+
 class TestI18EstimateTokensCJKExtended:
     """CJK Extension A, Compatibility Ideographs, SMP Extension B+를 cjk_count에 포함해야 한다."""
 
     def test_cjk_extension_a_start(self):
         """CJK Extension A 시작 문자 (U+3400) → 2 토큰."""
-        ch = '㐀'
+        ch = "㐀"
         result = estimate_tokens(ch)
         assert result == 2, f"CJK Extension A char should be 2 tokens, got {result}"
 
     def test_cjk_extension_a_end(self):
         """CJK Extension A 끝 문자 (U+4DBF) → 2 토큰."""
-        ch = '䶿'
+        ch = "䶿"
         result = estimate_tokens(ch)
         assert result == 2, f"CJK Extension A end char should be 2 tokens, got {result}"
 
     def test_cjk_compatibility_start(self):
         """CJK Compatibility Ideographs 시작 (U+F900) → 2 토큰."""
-        ch = '豈'
+        ch = "豈"
         result = estimate_tokens(ch)
         assert result == 2, f"CJK Compatibility char should be 2 tokens, got {result}"
 
@@ -115,19 +117,19 @@ class TestI18EstimateTokensCJKExtended:
 
     def test_hangul_regression(self):
         """기존 Hangul Syllables 동작 회귀 없음."""
-        assert estimate_tokens('가') == 2
+        assert estimate_tokens("가") == 2
 
     def test_cjk_unified_regression(self):
         """기존 CJK Unified Ideographs 동작 회귀 없음."""
-        assert estimate_tokens('一') == 2
+        assert estimate_tokens("一") == 2
 
     def test_ascii_regression(self):
         """ASCII 동작 회귀 없음 — 단일 문자는 min(1, ...) = 1."""
-        assert estimate_tokens('A') == 1
+        assert estimate_tokens("A") == 1
 
     def test_mixed_extension_a_and_ascii(self):
         """Extension A 1자 + ASCII 4자 → 2 + 1 = 3 토큰."""
-        text = '㐀' + 'ABCD'
+        text = "㐀" + "ABCD"
         result = estimate_tokens(text)
         assert result == 3, f"expected 3, got {result}"
 
@@ -135,6 +137,7 @@ class TestI18EstimateTokensCJKExtended:
 # ---------------------------------------------------------------------------
 # I20: session_total_saved 트랜잭션 외부 이동 (회귀 확인)
 # ---------------------------------------------------------------------------
+
 
 class TestI20SessionTotalSavedRegression:
     """session_total_saved가 다수 노드 think 후에도 정확히 누적되어야 한다."""
@@ -148,6 +151,7 @@ class TestI20SessionTotalSavedRegression:
 
     def _make_db(self, tmp_path):
         from src.server import call_dag_thinking, init_db
+
         db = str(tmp_path / "test.db")
         init_db(db)
         return db, call_dag_thinking
@@ -156,8 +160,12 @@ class TestI20SessionTotalSavedRegression:
         """첫 번째 think: session_total_saved == 해당 노드의 tokens_saved."""
         db, call_dt = self._make_db(tmp_path)
         result = call_dt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         node_saved = result["compression"]["tokens_saved"]
         session_total = result["compression"]["session_total_saved"]
@@ -169,12 +177,20 @@ class TestI20SessionTotalSavedRegression:
         """두 번째 think: session_total_saved가 두 노드 합산."""
         db, call_dt = self._make_db(tmp_path)
         r1 = call_dt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         r2 = call_dt(
-            action="think", session_id="s1", node_name="n2",
-            thought_type="Evidence", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n2",
+            thought_type="Evidence",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         s1 = r1["compression"]["session_total_saved"]
         s2 = r2["compression"]["session_total_saved"]
@@ -184,13 +200,21 @@ class TestI20SessionTotalSavedRegression:
         """동일 노드 재think: delta만큼 session_total_saved 변경."""
         db, call_dt = self._make_db(tmp_path)
         r1 = call_dt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         # 동일 노드 재think (payload 동일하므로 delta=0 예상)
         r2 = call_dt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         s1 = r1["compression"]["session_total_saved"]
         s2 = r2["compression"]["session_total_saved"]
@@ -200,6 +224,7 @@ class TestI20SessionTotalSavedRegression:
 # ---------------------------------------------------------------------------
 # I22: _validate_think_inputs — node_name 길이 상한
 # ---------------------------------------------------------------------------
+
 
 class TestI22NodeNameLengthValidation:
     """node_name이 200자 상한을 초과하면 ValueError를 발생시켜야 한다."""

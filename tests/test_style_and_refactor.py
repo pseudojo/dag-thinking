@@ -19,8 +19,8 @@ _PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
 # STYLE-1 + QUAL-1 + I001 + E501: ruff check src/ must pass cleanly
 # ---------------------------------------------------------------------------
 
-class TestRuffConformance:
 
+class TestRuffConformance:
     def test_ruff_no_violations(self):
         """STYLE-1/QUAL-1/I001/E501: src/ must have zero ruff E/F/I violations.
 
@@ -34,14 +34,13 @@ class TestRuffConformance:
             cwd=_PROJECT_ROOT,
         )
         output = result.stdout.decode("utf-8", errors="replace")
-        assert result.returncode == 0, (
-            f"ruff violations found ({result.returncode}):\n{output}"
-        )
+        assert result.returncode == 0, f"ruff violations found ({result.returncode}):\n{output}"
 
 
 # ---------------------------------------------------------------------------
 # QUAL-1: _is_list_content 동작 회귀 방지 (l → line 리네임 안전망)
 # ---------------------------------------------------------------------------
+
 
 class TestIsListContentBehavior:
     """_is_list_content 변수명 변경 전후 동작이 동일함을 보장."""
@@ -95,8 +94,8 @@ class TestIsListContentBehavior:
 # QUAL-1: _compress_list 동작 회귀 방지 (l → line 리네임 안전망)
 # ---------------------------------------------------------------------------
 
-class TestCompressListBehavior:
 
+class TestCompressListBehavior:
     def test_compress_list_returns_string(self):
         """_compress_list가 문자열을 반환함."""
         text = "- alpha detail here\n- beta detail here\n- gamma detail here"
@@ -125,6 +124,7 @@ class TestCompressListBehavior:
 # QUAL-2: found 변수 인라인화 동작 회귀 방지
 # ---------------------------------------------------------------------------
 
+
 class TestFoundVariableRefactor:
     """found 변수 구조 변경 후 parent_context 동작이 동일함을 보장."""
 
@@ -143,24 +143,32 @@ class TestFoundVariableRefactor:
 
     def test_ghost_parent_in_found_gives_error_entry(self, db_path):
         """depends_on=["ghost"] (미존재) → parent_context["ghost"]["error"] 존재."""
-        result = think(db_path, "s1", "obj", "Objective",
-                       payload=self._PAYLOAD, depends_on=["ghost"])
+        result = think(
+            db_path, "s1", "obj", "Objective", payload=self._PAYLOAD, depends_on=["ghost"]
+        )
         assert "parent_context" in result
         assert "error" in result["parent_context"]["ghost"]
 
     def test_valid_parent_in_found_gives_payload(self, db_path):
         """depends_on=["parent"] (존재) → parent_context["parent"]["payload"] 존재."""
         think(db_path, "s1", "parent", "Objective", payload=self._PAYLOAD)
-        result = think(db_path, "s1", "child", "Hypothesis",
-                       payload=self._PAYLOAD, depends_on=["parent"])
+        result = think(
+            db_path, "s1", "child", "Hypothesis", payload=self._PAYLOAD, depends_on=["parent"]
+        )
         assert "parent_context" in result
         assert "payload" in result["parent_context"]["parent"]
 
     def test_mixed_ghost_and_valid_parents(self, db_path):
         """depends_on=['real', 'ghost'] → real은 payload, ghost는 error."""
         think(db_path, "s1", "real", "Objective", payload=self._PAYLOAD)
-        result = think(db_path, "s1", "child", "Hypothesis",
-                       payload=self._PAYLOAD, depends_on=["real", "ghost"])
+        result = think(
+            db_path,
+            "s1",
+            "child",
+            "Hypothesis",
+            payload=self._PAYLOAD,
+            depends_on=["real", "ghost"],
+        )
         pc = result["parent_context"]
         assert "payload" in pc["real"]
         assert "error" in pc["ghost"]

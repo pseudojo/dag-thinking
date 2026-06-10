@@ -42,9 +42,7 @@ class TestSessionTotalSavedAccuracy:
         r2 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_LONG_B)
         expected = r2["compression"]["tokens_saved"]
         actual = r2["compression"]["session_total_saved"]
-        assert actual == expected, (
-            f"QC-1: session_total_saved={actual}, expected={expected}"
-        )
+        assert actual == expected, f"QC-1: session_total_saved={actual}, expected={expected}"
 
     def test_qc2_multi_node_update_session_total_saved(self, db_path):
         """QC-2: 두 노드 중 하나 업데이트 후 session_total_saved == Σ 최신 per-node saved"""
@@ -53,15 +51,15 @@ class TestSessionTotalSavedAccuracy:
         r1b = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_LONG_B)
         expected = r1b["compression"]["tokens_saved"] + r2["compression"]["tokens_saved"]
         actual = r1b["compression"]["session_total_saved"]
-        assert actual == expected, (
-            f"QC-2: session_total_saved={actual}, expected={expected}"
-        )
+        assert actual == expected, f"QC-2: session_total_saved={actual}, expected={expected}"
 
     def test_qc3_same_payload_update_session_total_saved_unchanged(self, db_path):
         """QC-3: 동일 payload 재생성 시 session_total_saved 불변 (delta == 0)"""
         r1 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_LONG_A)
         r2 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_LONG_A)
-        assert r1["compression"]["session_total_saved"] == r2["compression"]["session_total_saved"], (
+        assert (
+            r1["compression"]["session_total_saved"] == r2["compression"]["session_total_saved"]
+        ), (
             f"QC-3: changed on same-payload update: "
             f"{r1['compression']['session_total_saved']} → {r2['compression']['session_total_saved']}"
         )
@@ -183,18 +181,12 @@ class TestRuffClean:
             capture_output=True,
             text=True,
         )
-        assert result.returncode == 0, (
-            f"QC-16: ruff violations:\n{result.stdout}"
-        )
+        assert result.returncode == 0, f"QC-16: ruff violations:\n{result.stdout}"
 
     def test_qc17_no_bare_compressor_import(self):
         """QC-17: 'from compressor import' 패턴이 src/server.py에 없음"""
-        matches = re.findall(
-            r"^\s*from compressor import", _SERVER_SRC, re.MULTILINE
-        )
-        assert not matches, (
-            f"QC-17: bare 'from compressor import' found: {matches}"
-        )
+        matches = re.findall(r"^\s*from compressor import", _SERVER_SRC, re.MULTILINE)
+        assert not matches, f"QC-17: bare 'from compressor import' found: {matches}"
 
 
 # ---------------------------------------------------------------------------
@@ -208,9 +200,7 @@ class TestNextHintsDirect:
     def test_qc18_no_get_fallback_for_next_hints(self):
         """QC-18: server.py에서 _NEXT_HINTS.get( 패턴 없음"""
         matches = re.findall(r"_NEXT_HINTS\.get\(", _SERVER_SRC)
-        assert not matches, (
-            "QC-18: dead fallback _NEXT_HINTS.get() still present"
-        )
+        assert not matches, "QC-18: dead fallback _NEXT_HINTS.get() still present"
 
     def test_qc19_all_thought_types_return_next_hint(self, db_path):
         """QC-19: 7개 모든 valid thought_type에서 next_hint 필드 존재 (회귀)"""

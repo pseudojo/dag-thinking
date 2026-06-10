@@ -52,6 +52,7 @@ class TestI12SplitSentencesCJKNoSpace:
 # I13: _is_list_content — middle dot (U+00B7) false positive 제거
 # ---------------------------------------------------------------------------
 
+
 class TestI13IsListContentMiddleDot:
     """· (U+00B7)은 목록 bullet로 인정하지 않아야 한다."""
 
@@ -80,6 +81,7 @@ class TestI13IsListContentMiddleDot:
 # I17: _validate_think_inputs — depends_on 길이 상한
 # ---------------------------------------------------------------------------
 
+
 class TestI17DependsOnLengthValidation:
     """depends_on 길이가 상한(20)을 초과하면 ValueError를 발생시켜야 한다."""
 
@@ -92,7 +94,9 @@ class TestI17DependsOnLengthValidation:
     def test_depends_on_at_limit_passes(self):
         """depends_on 20개 → 정상 통과 (상한 정확히)."""
         _validate_think_inputs(
-            "node_a", "Objective", self._VALID_PAYLOAD,
+            "node_a",
+            "Objective",
+            self._VALID_PAYLOAD,
             [f"parent_{i}" for i in range(20)],
         )
 
@@ -100,7 +104,9 @@ class TestI17DependsOnLengthValidation:
         """depends_on 21개 → ValueError 발생."""
         with pytest.raises(ValueError):
             _validate_think_inputs(
-                "node_a", "Objective", self._VALID_PAYLOAD,
+                "node_a",
+                "Objective",
+                self._VALID_PAYLOAD,
                 [f"parent_{i}" for i in range(21)],
             )
 
@@ -108,7 +114,9 @@ class TestI17DependsOnLengthValidation:
         """ValueError 메시지에 초과 수(21)와 상한(20) 모두 포함."""
         with pytest.raises(ValueError, match=r"21") as exc_info:
             _validate_think_inputs(
-                "node_a", "Objective", self._VALID_PAYLOAD,
+                "node_a",
+                "Objective",
+                self._VALID_PAYLOAD,
                 [f"parent_{i}" for i in range(21)],
             )
         assert "20" in str(exc_info.value)

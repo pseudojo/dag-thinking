@@ -34,8 +34,8 @@ PAYLOAD2 = (
 # P1-2: orphan edge prevention — ghost depends_on skips edge INSERT
 # ---------------------------------------------------------------------------
 
-class TestP12OrphanEdgePrevention:
 
+class TestP12OrphanEdgePrevention:
     def test_ghost_parent_creates_no_edge(self, db_path):
         """P1-2: depends_on=['ghost'] (not in DB) → edges table has 0 rows."""
         think(db_path, "s1", "node_a", "Objective", depends_on=["ghost"])
@@ -43,9 +43,7 @@ class TestP12OrphanEdgePrevention:
             count = conn.execute(
                 "SELECT COUNT(*) FROM edges WHERE session_id='s1'",
             ).fetchone()[0]
-        assert count == 0, (
-            f"ghost 노드를 parent로 하는 edge가 삽입됨: count={count}"
-        )
+        assert count == 0, f"ghost 노드를 parent로 하는 edge가 삽입됨: count={count}"
 
     def test_valid_parent_still_creates_edge(self, db_path):
         """P1-2 회귀: 유효한 parent → edge 정상 삽입."""
@@ -74,8 +72,8 @@ class TestP12OrphanEdgePrevention:
 # P1-3: restore_cmd single-quote escape — must produce valid Python syntax
 # ---------------------------------------------------------------------------
 
-class TestP13RestoreCmdEscape:
 
+class TestP13RestoreCmdEscape:
     def test_session_id_with_quote_valid_syntax_in_status(self, db_path):
         """P1-3: session_id에 single-quote → status restore_cmd가 valid Python."""
         sid = "it's_a_test"
@@ -100,9 +98,7 @@ class TestP13RestoreCmdEscape:
         try:
             ast.parse(cmd, mode="eval")
         except SyntaxError as e:
-            pytest.fail(
-                f"restore_cmd가 valid Python이 아님: cmd={cmd!r}, error={e}"
-            )
+            pytest.fail(f"restore_cmd가 valid Python이 아님: cmd={cmd!r}, error={e}")
 
     def test_node_name_with_quote_valid_syntax(self, db_path):
         """P1-3: ccr_hash는 hex만 포함하므로 이 경로는 주로 session_id 검증."""
@@ -117,8 +113,8 @@ class TestP13RestoreCmdEscape:
 # P2-1: type_distribution excludes INVALIDATED nodes
 # ---------------------------------------------------------------------------
 
-class TestP21TypeDistExcludesInvalidated:
 
+class TestP21TypeDistExcludesInvalidated:
     def test_invalidated_synthesis_not_in_type_dist(self, db_path):
         """P2-1: Synthesis 노드 invalidate 후 type_distribution에 Synthesis 없어야 함."""
         think(db_path, "s1", "obj", "Objective")
@@ -138,9 +134,7 @@ class TestP21TypeDistExcludesInvalidated:
         invalidate(db_path, "s1", "a")
         s = status(db_path, "s1")
         type_dist = s["dag_health"]["thought_type_distribution"]
-        assert type_dist == {}, (
-            f"전체 INVALIDATED 세션에서 type_dist가 비어있지 않음: {type_dist}"
-        )
+        assert type_dist == {}, f"전체 INVALIDATED 세션에서 type_dist가 비어있지 않음: {type_dist}"
 
     def test_completed_types_still_counted(self, db_path):
         """P2-1 회귀: COMPLETED 노드는 type_dist에 포함."""
@@ -156,8 +150,8 @@ class TestP21TypeDistExcludesInvalidated:
 # P2-2: ccr_store orphan cleanup on node update
 # ---------------------------------------------------------------------------
 
-class TestP22CcrStoreOrphanCleanup:
 
+class TestP22CcrStoreOrphanCleanup:
     def test_recreate_node_new_hash_is_restorable(self, db_path):
         """P2-2 (v0.6): 노드 재생성 후 새 hash로 restore 가능, 구 hash도 보존됨.
         R-CCR fix: INSERT OR IGNORE + 복합 PK — 구 엔트리 삭제 없음."""
@@ -194,8 +188,8 @@ class TestP22CcrStoreOrphanCleanup:
 # P2-3: stale edge cleanup on node regeneration
 # ---------------------------------------------------------------------------
 
-class TestP23StaleEdgeCleanup:
 
+class TestP23StaleEdgeCleanup:
     def test_recreate_node_preserves_outgoing_edges(self, db_path):
         """P2-3 (v0.6): A→B 관계에서 A invalidate 후 재생성 → A→B edge 보존됨.
         R-EDGE fix: upsert는 child=? 방향만 삭제 — outgoing edge는 유지."""
@@ -230,8 +224,8 @@ class TestP23StaleEdgeCleanup:
 # P2-4: status metrics exclude INVALIDATED nodes
 # ---------------------------------------------------------------------------
 
-class TestP24StatusMetricsCompletedOnly:
 
+class TestP24StatusMetricsCompletedOnly:
     def test_invalidated_node_excluded_from_tokens(self, db_path):
         """P2-4: 노드 invalidate 후 tokens_original/tokens_compressed가 0."""
         think(db_path, "s1", "node_a", "Objective", payload=PAYLOAD)
@@ -260,6 +254,7 @@ class TestP24StatusMetricsCompletedOnly:
         # node_a만 COMPLETED, node_b는 INVALIDATED
         # metrics는 node_a 단독 수치여야 함
         from src.compressor import estimate_tokens
+
         expected = estimate_tokens(PAYLOAD)
         assert s["metrics"]["tokens_original"] == expected, (
             f"metrics tokens_original mismatch: {s['metrics']['tokens_original']} != {expected}"
@@ -270,8 +265,8 @@ class TestP24StatusMetricsCompletedOnly:
 # P2-6: session/status composite index
 # ---------------------------------------------------------------------------
 
-class TestP26CompositeIndex:
 
+class TestP26CompositeIndex:
     def test_idx_nodes_session_status_exists(self, db_path):
         """P2-6: idx_nodes_session_status 인덱스가 DB에 존재해야 함."""
         with contextlib.closing(_conn(db_path)) as conn:
@@ -279,17 +274,15 @@ class TestP26CompositeIndex:
                 "SELECT name FROM sqlite_master "
                 "WHERE type='index' AND name='idx_nodes_session_status'",
             ).fetchone()
-        assert row is not None, (
-            "idx_nodes_session_status 인덱스가 init_db()에 의해 생성되지 않음"
-        )
+        assert row is not None, "idx_nodes_session_status 인덱스가 init_db()에 의해 생성되지 않음"
 
 
 # ---------------------------------------------------------------------------
 # P3-1: restore_cmd format — space after action='restore',
 # ---------------------------------------------------------------------------
 
-class TestP33HowToRestoreFormat:
 
+class TestP33HowToRestoreFormat:
     def test_how_to_restore_has_space_after_action(self, db_path):
         """P3-3: how_to_restore 템플릿도 restore_cmd와 동일한 공백 포맷이어야 함.
 
@@ -306,15 +299,12 @@ class TestP33HowToRestoreFormat:
 
 
 class TestP31RestoreCmdFormat:
-
     def test_status_restore_cmd_has_space_after_action(self, db_path):
         """P3-1: status restore_cmd 형식 — action='restore', session_id= (공백 포함)."""
         think(db_path, "s1", "node_a", "Objective")
         s = status(db_path, "s1")
         cmd = s["restoration_manifest"]["nodes"][0]["restore_cmd"]
-        assert "action='restore', session_id=" in cmd, (
-            f"restore_cmd에 공백 없음: {cmd!r}"
-        )
+        assert "action='restore', session_id=" in cmd, f"restore_cmd에 공백 없음: {cmd!r}"
 
     def test_restore_list_cmd_has_space_after_action(self, db_path):
         """P3-1: restore(ccr_hash=None) 목록의 restore_cmd도 공백 포함."""

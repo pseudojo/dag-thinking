@@ -39,6 +39,7 @@ PAYLOAD_X = (
 # R-EDGE: edge deletion direction
 # ---------------------------------------------------------------------------
 
+
 class TestEdgeDeletionDirection:
     """R-E-1 ~ R-E-4: verify that updating a node resets only its OWN incoming
     edges (child side), not its outgoing edges (parent side)."""
@@ -100,6 +101,7 @@ class TestEdgeDeletionDirection:
 # ---------------------------------------------------------------------------
 # R-CCR: ccr_store hash collision fix
 # ---------------------------------------------------------------------------
+
 
 class TestCcrStoreHashCollision:
     """R-C-1 ~ R-C-4: verify composite PK + INSERT OR IGNORE semantics."""
@@ -166,6 +168,4 @@ class TestCcrStoreHashCollision:
         assert old_hash != new_hash
 
         rows = self._ccr_store_rows(db_path, old_hash)
-        assert len(rows) >= 1, (
-            f"Old hash {old_hash!r} must remain in ccr_store after node update"
-        )
+        assert len(rows) >= 1, f"Old hash {old_hash!r} must remain in ccr_store after node update"

@@ -7,7 +7,6 @@ I44: _is_list_content — `+` 불릿 프리픽스 지원 (GFM)
 I45: _compute_dag_health — total_nodes 카운트 추가
 """
 
-
 from src.compressor import _is_list_content
 from tests.helpers import PAYLOAD, invalidate, status, think
 
@@ -44,8 +43,15 @@ class TestThinkResponseThoughtType:
 
     def test_all_valid_thought_types_returned(self, db_path):
         """I42-T5: 7개 모든 VALID_THOUGHT_TYPES → 각각 정확히 반환"""
-        types = ["Objective", "Hypothesis", "Assumption", "Evidence",
-                 "Critique", "Synthesis", "Action"]
+        types = [
+            "Objective",
+            "Hypothesis",
+            "Assumption",
+            "Evidence",
+            "Critique",
+            "Synthesis",
+            "Action",
+        ]
         for i, t in enumerate(types):
             result = think(db_path, "s1", f"node_{i}", t, PAYLOAD)
             assert result["thought_type"] == t, (
@@ -56,6 +62,7 @@ class TestThinkResponseThoughtType:
 # ---------------------------------------------------------------------------
 # I43: status dag.nodes에 ccr_hash 필드
 # ---------------------------------------------------------------------------
+
 
 class TestStatusDagNodesCcrHash:
     """I43: status 응답의 dag.nodes 각 항목에 ccr_hash 필드가 포함되어야 한다."""
@@ -90,8 +97,7 @@ class TestStatusDagNodesCcrHash:
         s = status(db_path, "s1")
         node_entry = next(n for n in s["dag"]["nodes"] if n["name"] == "n1")
         assert node_entry["ccr_hash"] == think_hash, (
-            f"dag.nodes ccr_hash({node_entry['ccr_hash']}) != "
-            f"think 응답 ccr_hash({think_hash})"
+            f"dag.nodes ccr_hash({node_entry['ccr_hash']}) != think 응답 ccr_hash({think_hash})"
         )
 
 
@@ -99,15 +105,14 @@ class TestStatusDagNodesCcrHash:
 # I44: _is_list_content `+` 불릿 지원
 # ---------------------------------------------------------------------------
 
+
 class TestIsListContentPlusBullet:
     """I44: `+` 불릿 프리픽스(GFM)를 리스트로 감지해야 한다."""
 
     def test_plus_bullets_three_lines_detected_as_list(self):
         """I44-T1: `+` 불릿 3줄 이상 → True"""
         text = "+ First item here\n+ Second item here\n+ Third item here"
-        assert _is_list_content(text) is True, (
-            "`+` 불릿 3줄이 리스트로 감지되지 않음"
-        )
+        assert _is_list_content(text) is True, "`+` 불릿 3줄이 리스트로 감지되지 않음"
 
     def test_mixed_plus_minus_star_bullets(self):
         """I44-T2: `+`, `-`, `*` 혼합 3줄 → True"""
@@ -138,6 +143,7 @@ class TestIsListContentPlusBullet:
 # ---------------------------------------------------------------------------
 # I45: _compute_dag_health total_nodes
 # ---------------------------------------------------------------------------
+
 
 class TestDagHealthTotalNodes:
     """I45: dag_health에 total_nodes(COMPLETED 노드 수)가 포함되어야 한다."""

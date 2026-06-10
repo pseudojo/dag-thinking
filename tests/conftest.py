@@ -1,4 +1,5 @@
 """Shared pytest fixtures for dag-thinking tests."""
+
 import pytest
 
 from src.server import init_db

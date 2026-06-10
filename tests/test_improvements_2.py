@@ -8,7 +8,6 @@ TDD RED phase — written before implementation.
   I08: DAG 수렴 상태 진단 — dag_health in status
 """
 
-
 from src.compressor import _score_sentence, compress
 from tests.helpers import PAYLOAD, status, think
 
@@ -30,6 +29,7 @@ class TestThoughtTypeAwareCompression:
     def test_ic17_evidence_type_boosts_evidence_sentence(self):
         """IC17: Evidence 타입 키워드 → evidence 문장 스코어 향상"""
         from src.compressor import _TYPE_KEYWORDS
+
         # 이 문장은 IMPORTANCE_KEYWORDS에 없는 단어만 포함
         sentence = "Data shows measured throughput of 500 RPS at observed latency."
         base = _score_sentence(sentence, 2, 7)
@@ -41,6 +41,7 @@ class TestThoughtTypeAwareCompression:
     def test_ic18_synthesis_type_boosts_conclusion_sentence(self):
         """IC18: Synthesis 타입 키워드 → conclusion 문장 스코어 향상"""
         from src.compressor import _TYPE_KEYWORDS
+
         # "conclude", "reconcile", "integrate" 는 IMPORTANCE_KEYWORDS 외부
         sentence = "We conclude and reconcile all findings to integrate a comprehensive approach."
         base = _score_sentence(sentence, 2, 7)
@@ -69,15 +70,14 @@ class TestThoughtTypeAwareCompression:
 # I07: context_pressure
 # ---------------------------------------------------------------------------
 
+
 class TestContextPressure:
     """IC21-IC24: think 응답 context_pressure"""
 
     def test_ic21_think_has_context_pressure(self, db_path):
         """IC21: think 응답에 context_pressure 필드 존재"""
         result = think(db_path, "s1", "n1", "Objective")
-        assert "context_pressure" in result, (
-            "think 응답에 context_pressure 누락"
-        )
+        assert "context_pressure" in result, "think 응답에 context_pressure 누락"
 
     def test_ic22_first_node_pressure_is_low(self, db_path):
         """IC22: 첫 번째 노드 → context_pressure.level == 'low'"""
@@ -89,6 +89,7 @@ class TestContextPressure:
     def test_ic23_pressure_increases_with_many_nodes(self, db_path):
         """IC23: _PRESSURE_MEDIUM 이상 노드 → level이 'medium' 또는 'high'"""
         from src.server import _PRESSURE_MEDIUM
+
         for i in range(_PRESSURE_MEDIUM):
             ttype = "Objective" if i == 0 else "Hypothesis"
             think(db_path, "s1", f"n{i}", ttype)
@@ -112,6 +113,7 @@ class TestContextPressure:
 # ---------------------------------------------------------------------------
 # I08: dag_health in status
 # ---------------------------------------------------------------------------
+
 
 class TestDagHealth:
     """IC25-IC29: status 응답 dag_health"""
@@ -142,13 +144,11 @@ class TestDagHealth:
 
     def test_ic28_orphan_nodes_detected(self, db_path):
         """IC28: 연결 없는 2개 노드 → orphan_nodes 포함"""
-        think(db_path, "s1", "n1", "Objective")   # depends_on 없음
+        think(db_path, "s1", "n1", "Objective")  # depends_on 없음
         think(db_path, "s1", "n2", "Hypothesis")  # depends_on 없음
         result = status(db_path, "s1")
         orphans = result["dag_health"]["orphan_nodes"]
-        assert len(orphans) >= 1, (
-            f"연결 없는 2개 노드임에도 orphan_nodes가 비어있음: {orphans}"
-        )
+        assert len(orphans) >= 1, f"연결 없는 2개 노드임에도 orphan_nodes가 비어있음: {orphans}"
 
     def test_ic29_max_depth_chain(self, db_path):
         """IC29: A→B→C 체인 → max_depth == 2"""
@@ -157,6 +157,4 @@ class TestDagHealth:
         think(db_path, "s1", "c", "Evidence", depends_on=["b"])
         result = status(db_path, "s1")
         depth = result["dag_health"]["max_depth"]
-        assert depth == 2, (
-            f"A→B→C 체인의 max_depth가 2가 아님: {depth}"
-        )
+        assert depth == 2, f"A→B→C 체인의 max_depth가 2가 아님: {depth}"

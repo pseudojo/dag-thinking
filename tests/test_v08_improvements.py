@@ -14,6 +14,7 @@ from tests.helpers import invalidate, status, think
 # I11 임포트 — _split_sentences 존재하지 않으면 RED 단계에서 ImportError
 try:
     from src.compressor import _split_sentences, compress
+
     _HAS_SPLIT = True
 except ImportError:
     _HAS_SPLIT = False
@@ -39,6 +40,7 @@ CJK_PAYLOAD = (
 # ---------------------------------------------------------------------------
 # I09: context_pressure 회귀 검증 (기능 변경 없음 — 리팩토링 안전망)
 # ---------------------------------------------------------------------------
+
 
 class TestI09ContextPressureRegression:
     """I09: _compute_context_pressure 호출 위치 이동 후 기능 동일성 보장."""
@@ -70,6 +72,7 @@ class TestI09ContextPressureRegression:
 # ---------------------------------------------------------------------------
 # I10: _compute_dag_health — INVALIDATED 엣지 BFS 제외
 # ---------------------------------------------------------------------------
+
 
 class TestI10DagHealthInvalidatedFilter:
     """I10: INVALIDATED 노드를 경유하는 엣지가 max_depth / orphan_nodes 계산을 오염하는 버그 수정."""
@@ -117,9 +120,7 @@ class TestI10DagHealthInvalidatedFilter:
             f"A should be an orphan (its only edge leads to INVALIDATED B), "
             f"got orphan_nodes={orphans}"
         )
-        assert "D" in orphans, (
-            f"D should be an orphan (no edges), got orphan_nodes={orphans}"
-        )
+        assert "D" in orphans, f"D should be an orphan (no edges), got orphan_nodes={orphans}"
 
     def test_fully_completed_chain_max_depth_regression(self, db_path):
         """I10-3: 회귀 — A→B→C 모두 COMPLETED → max_depth == 2."""
@@ -150,6 +151,7 @@ class TestI10DagHealthInvalidatedFilter:
 # ---------------------------------------------------------------------------
 # I11: _split_sentences — 유니코드 문장 구분자 지원
 # ---------------------------------------------------------------------------
+
 
 class TestI11SplitSentences:
     """I11: _split_sentences 함수 추출 + 유니코드 (。！？) 문장 구분자 지원."""

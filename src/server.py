@@ -26,6 +26,7 @@ _DEFAULT_DB = os.path.join(os.path.dirname(__file__), "..", "dag_thinking.db")
 # T01: init_db — 4 tables, WAL mode
 # ---------------------------------------------------------------------------
 
+
 def init_db(path: str = _DEFAULT_DB) -> None:
     with contextlib.closing(_db(path)) as conn:
         # WAL PRAGMA must run outside a transaction
@@ -88,6 +89,7 @@ def init_db(path: str = _DEFAULT_DB) -> None:
 # T02: _db — connection helper with row_factory and busy_timeout
 # ---------------------------------------------------------------------------
 
+
 def _db(path: str = _DEFAULT_DB) -> sqlite3.Connection:
     conn = sqlite3.connect(path, timeout=10)
     conn.row_factory = sqlite3.Row
@@ -99,6 +101,7 @@ def _db(path: str = _DEFAULT_DB) -> sqlite3.Connection:
 # T03: _ensure_session — INSERT OR IGNORE
 # ---------------------------------------------------------------------------
 
+
 def _ensure_session(conn: sqlite3.Connection, session_id: str) -> None:
     conn.execute(
         "INSERT OR IGNORE INTO sessions (id) VALUES (?)",
@@ -109,6 +112,7 @@ def _ensure_session(conn: sqlite3.Connection, session_id: str) -> None:
 # ---------------------------------------------------------------------------
 # Q-2: _load_forward_edges / _has_cycle_graph — batch edge fetch (1회 조회)
 # ---------------------------------------------------------------------------
+
 
 def _load_forward_edges(
     conn: sqlite3.Connection,
@@ -150,8 +154,13 @@ def _has_cycle_graph(
 # ---------------------------------------------------------------------------
 
 VALID_THOUGHT_TYPES = frozenset({
-    "Objective", "Hypothesis", "Assumption",
-    "Evidence", "Critique", "Synthesis", "Action",
+    "Objective",
+    "Hypothesis",
+    "Assumption",
+    "Evidence",
+    "Critique",
+    "Synthesis",
+    "Action",
 })
 
 # I17: depends_on 상한 — SQLite 바인딩 파라미터 제한(999) 안전 마진
@@ -167,24 +176,25 @@ _MAX_SESSION_ID_LEN = 200
 _MAX_NOTE_LEN = 500
 
 # I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
-_PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
+_PRESSURE_MEDIUM = 8  # 이 수 이상이면 "medium" 경보
 _PRESSURE_HIGH = 15  # 이 수 이상이면 "high" 경보
 
 # I05: thought_type별 컨텍스트 힌트 (LLM 다음 단계 안내)
 _NEXT_HINTS: dict[str, str] = {
-    "Objective":   "Add Hypothesis or Assumption nodes to explore this objective.",
-    "Hypothesis":  "Add Evidence or Assumption nodes to support or challenge this hypothesis.",
-    "Assumption":  "Add Evidence to validate, or Critique to challenge this assumption.",
-    "Evidence":    "Add Synthesis to draw conclusions, or Critique to challenge the evidence.",
-    "Critique":    "Add Synthesis to reconcile findings, or revise the critiqued node.",
-    "Synthesis":   "Add Action nodes to operationalize insights, or call status() to close.",
-    "Action":      "All conclusions reached. Call status() to review the full DAG.",
+    "Objective": "Add Hypothesis or Assumption nodes to explore this objective.",
+    "Hypothesis": "Add Evidence or Assumption nodes to support or challenge this hypothesis.",
+    "Assumption": "Add Evidence to validate, or Critique to challenge this assumption.",
+    "Evidence": "Add Synthesis to draw conclusions, or Critique to challenge the evidence.",
+    "Critique": "Add Synthesis to reconcile findings, or revise the critiqued node.",
+    "Synthesis": "Add Action nodes to operationalize insights, or call status() to close.",
+    "Action": "All conclusions reached. Call status() to review the full DAG.",
 }
 
 
 # ---------------------------------------------------------------------------
 # Q-3: _validate_think_inputs — 입력 유효성 검사 (SRP 분리)
 # ---------------------------------------------------------------------------
+
 
 def _validate_think_inputs(
     node_name: str | None,
@@ -211,20 +221,19 @@ def _validate_think_inputs(
         raise ValueError("payload must be at most 1500 characters")
     if depends_on is not None and len(depends_on) > _MAX_DEPENDS_ON:
         raise ValueError(
-            f"depends_on exceeds maximum of {_MAX_DEPENDS_ON} parents "
-            f"(got {len(depends_on)})"
+            f"depends_on exceeds maximum of {_MAX_DEPENDS_ON} parents (got {len(depends_on)})"
         )
     # I36: note 길이 상한 — 비압축 scratchpad DoS 방어
     if len(note) > _MAX_NOTE_LEN:
         raise ValueError(
-            f"note exceeds maximum length of {_MAX_NOTE_LEN} characters "
-            f"(got {len(note)})"
+            f"note exceeds maximum length of {_MAX_NOTE_LEN} characters (got {len(note)})"
         )
 
 
 # ---------------------------------------------------------------------------
 # T05: _cascade_invalidate — recursive DFS, returns affected names
 # ---------------------------------------------------------------------------
+
 
 def _cascade_invalidate(conn: sqlite3.Connection, session_id: str, root: str) -> list[str]:
     rows = conn.execute(
@@ -256,6 +265,7 @@ def _cascade_invalidate(conn: sqlite3.Connection, session_id: str, root: str) ->
 # ---------------------------------------------------------------------------
 # _resolve_parent_context — depends_on 부모 노드 컨텍스트 해결 (SRP 분리)
 # ---------------------------------------------------------------------------
+
 
 def _resolve_parent_context(
     conn: sqlite3.Connection,
@@ -291,8 +301,7 @@ def _resolve_parent_context(
         }
         if row["status"] == "INVALIDATED":
             entry["warning"] = (
-                f"Parent node '{parent_name}' is INVALIDATED"
-                " — review before proceeding"
+                f"Parent node '{parent_name}' is INVALIDATED — review before proceeding"
             )
             entry["is_invalidated"] = True
 
@@ -304,6 +313,7 @@ def _resolve_parent_context(
 # ---------------------------------------------------------------------------
 # Core logic — separated from FastMCP layer for testability
 # ---------------------------------------------------------------------------
+
 
 def call_dag_thinking(
     *,
@@ -364,6 +374,7 @@ def call_dag_thinking(
 # ---------------------------------------------------------------------------
 # action="think"
 # ---------------------------------------------------------------------------
+
 
 def _compute_context_pressure(conn: sqlite3.Connection, session_id: str) -> dict:
     """I07: 세션 COMPLETED 노드 수 기반 컨텍스트 압박 수준 계산 (upsert 후 호출)."""
@@ -431,8 +442,7 @@ def _compute_dag_health(
     # 고립 노드: COMPLETED 노드 중 엣지가 없는 노드 (2개 이상일 때만)
     connected = has_parent | has_child
     orphan_nodes = (
-        sorted(n for n in completed_names if n not in connected)
-        if len(completed_names) > 1 else []
+        sorted(n for n in completed_names if n not in connected) if len(completed_names) > 1 else []
     )
 
     # 최장 체인 깊이: COMPLETED 루트 노드(부모 없음)에서 BFS
@@ -525,8 +535,7 @@ def _action_think(
 
             # --- upsert node ---
             existing = conn.execute(
-                "SELECT id, ccr_hash, tokens_saved "
-                "FROM nodes WHERE session_id=? AND name=?",
+                "SELECT id, ccr_hash, tokens_saved FROM nodes WHERE session_id=? AND name=?",
                 (session_id, node_name),
             ).fetchone()
 
@@ -546,11 +555,15 @@ def _action_think(
                            tokens_original=?, tokens_saved=?
                        WHERE session_id=? AND name=?""",
                     (
-                        thought_type, payload,
+                        thought_type,
+                        payload,
                         compressed_text if is_compressed else None,
-                        hash_val, note,
-                        tokens_original_val, tokens_saved,
-                        session_id, node_name,
+                        hash_val,
+                        note,
+                        tokens_original_val,
+                        tokens_saved,
+                        session_id,
+                        node_name,
                     ),
                 )
                 op_status = "updated"
@@ -562,10 +575,15 @@ def _action_think(
                         ccr_hash, note, status, tokens_original, tokens_saved)
                        VALUES (?,?,?,?,?,?,?,'COMPLETED',?,?)""",
                     (
-                        session_id, node_name, thought_type, payload,
+                        session_id,
+                        node_name,
+                        thought_type,
+                        payload,
                         compressed_text if is_compressed else None,
-                        hash_val, note,
-                        tokens_original_val, tokens_saved,
+                        hash_val,
+                        note,
+                        tokens_original_val,
+                        tokens_saved,
                     ),
                 )
                 op_status = "created"
@@ -579,8 +597,7 @@ def _action_think(
 
             # I34: executemany 1회 + .get("error") is None 가드 명확화
             valid_parents = [
-                p for p in depends_on
-                if parent_context.get(p, {}).get("error") is None
+                p for p in depends_on if parent_context.get(p, {}).get("error") is None
             ]
             conn.executemany(
                 "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?,?,?)",
@@ -623,6 +640,7 @@ def _action_think(
 # ---------------------------------------------------------------------------
 # action="status"
 # ---------------------------------------------------------------------------
+
 
 def _action_status(*, db_path: str, session_id: str) -> dict:
     with contextlib.closing(_db(db_path)) as conn:
@@ -681,7 +699,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
                     "thought_type": r["thought_type"],
                     "status": r["status"],
                     "created_at": r["created_at"],  # I04
-                    "ccr_hash": r["ccr_hash"],      # I43: 복원 해시 직접 접근
+                    "ccr_hash": r["ccr_hash"],  # I43: 복원 해시 직접 접근
                 }
                 for r in node_rows
             ],
@@ -706,6 +724,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
 # ---------------------------------------------------------------------------
 # action="invalidate"
 # ---------------------------------------------------------------------------
+
 
 def _action_invalidate(
     *, db_path: str, session_id: str, target_node: str | None, reason: str
@@ -741,9 +760,8 @@ def _action_invalidate(
 # action="restore"
 # ---------------------------------------------------------------------------
 
-def _action_restore(
-    *, db_path: str, session_id: str, ccr_hash_val: str | None
-) -> dict:
+
+def _action_restore(*, db_path: str, session_id: str, ccr_hash_val: str | None) -> dict:
     with contextlib.closing(_db(db_path)) as conn:
         # PERF-2: _ensure_session 쓰기만 트랜잭션 — 읽기 쿼리는 트랜잭션 밖
         with conn:
@@ -781,9 +799,7 @@ def _action_restore(
 
         if row is None:
             # SEC-1: 타 세션 존재 여부를 probe하지 않음 — session_id 노출 방지
-            raise ValueError(
-                f"Hash '{ccr_hash_val}' not found in session '{session_id}'"
-            )
+            raise ValueError(f"Hash '{ccr_hash_val}' not found in session '{session_id}'")
 
         tokens = estimate_tokens(row["original"])
         result: dict = {
@@ -814,9 +830,9 @@ def dag_thinking(
     session_id: str,
     node_name: str | None = None,
     thought_type: Literal[
-        "Objective", "Hypothesis", "Assumption",
-        "Evidence", "Critique", "Synthesis", "Action"
-    ] | None = None,
+        "Objective", "Hypothesis", "Assumption", "Evidence", "Critique", "Synthesis", "Action"
+    ]
+    | None = None,
     payload: str | None = None,
     depends_on: list[str] | None = None,
     note: str = "",

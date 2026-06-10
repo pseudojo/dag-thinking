@@ -24,16 +24,12 @@ class TestSplitSentencesEllipsisWithSpace:
     def test_ellipsis_with_space_not_split(self):
         """I38-T1: 'Wait... really?' (공백 있음) → 1개 (false-split 방지)"""
         result = _split_sentences("Wait... really?")
-        assert len(result) == 1, (
-            f"줄임표+공백을 문장 경계로 오인 분리: {result}"
-        )
+        assert len(result) == 1, f"줄임표+공백을 문장 경계로 오인 분리: {result}"
 
     def test_multiple_ellipsis_with_space_not_split(self):
         """I38-T2: 'Go... wait... stop.' (공백 있는 줄임표 연속) → 1개"""
         result = _split_sentences("Go... wait... stop.")
-        assert len(result) == 1, (
-            f"줄임표 연속 공백 분리 오류: {result}"
-        )
+        assert len(result) == 1, f"줄임표 연속 공백 분리 오류: {result}"
 
     def test_normal_ascii_split_preserved(self):
         """I38-T3: 'Hello. World.' → ['Hello.', 'World.'] (정상 분리 유지)"""
@@ -61,9 +57,13 @@ class TestSplitSentencesEllipsisWithSpace:
 # I39: _compress_prose 최소 k=2
 # ---------------------------------------------------------------------------
 
+
 def _make_prose(n: int, chars_per_sent: int = 60) -> str:
     """n개 문장으로 구성된 산문 텍스트 생성."""
-    sentences = [f"The analysis shows that finding number {i + 1} is important and critical here." for i in range(n)]
+    sentences = [
+        f"The analysis shows that finding number {i + 1} is important and critical here."
+        for i in range(n)
+    ]
     return " ".join(sentences)
 
 
@@ -111,9 +111,7 @@ class TestCompressProseMinK:
         text = _make_prose(5)
         result = _compress_prose(text, _RATIO_SHORT)
         result_sents = _split_sentences(result)
-        assert len(result_sents) == 3, (
-            f"5문장 ratio=0.58 결과가 {len(result_sents)}개 (기대: 3)"
-        )
+        assert len(result_sents) == 3, f"5문장 ratio=0.58 결과가 {len(result_sents)}개 (기대: 3)"
 
     def test_empty_text_returns_empty(self):
         """I39-T5: 빈 텍스트 → 빈 문자열"""
@@ -124,6 +122,7 @@ class TestCompressProseMinK:
 # ---------------------------------------------------------------------------
 # I40: depends_on 빈 경우 동작 동등성 (관찰 가능한 동작 변화 없음)
 # ---------------------------------------------------------------------------
+
 
 class TestDependsOnEmptyBehavior:
     """I40: depends_on=[] 시 cycle check 스킵 — 동작 동등성 보장"""
@@ -141,8 +140,7 @@ class TestDependsOnEmptyBehavior:
     def test_nonempty_depends_on_has_parent_context(self, db_path):
         """I40-T3: depends_on=['parent'] → 응답에 parent_context 포함"""
         think(db_path, "s1", "parent", "Objective", PAYLOAD)
-        result = think(db_path, "s1", "child", "Hypothesis", PAYLOAD,
-                       depends_on=["parent"])
+        result = think(db_path, "s1", "child", "Hypothesis", PAYLOAD, depends_on=["parent"])
         assert "parent_context" in result
         assert "error" not in result["parent_context"]["parent"]
 
@@ -156,6 +154,7 @@ class TestDependsOnEmptyBehavior:
 # I41: _action_invalidate target_node 공백 전용 방어
 # ---------------------------------------------------------------------------
 
+
 class TestInvalidateTargetNodeWhitespace:
     """I41: target_node 공백 전용 → ValueError (node_name 검증과 동일 패턴)"""
 
@@ -163,32 +162,28 @@ class TestInvalidateTargetNodeWhitespace:
         """I41-T1: target_node=None → ValueError"""
         with pytest.raises(ValueError, match="target_node"):
             call_dag_thinking(
-                db_path=db_path, action="invalidate",
-                session_id="s1", target_node=None, reason=""
+                db_path=db_path, action="invalidate", session_id="s1", target_node=None, reason=""
             )
 
     def test_target_node_empty_string_raises(self, db_path):
         """I41-T2: target_node='' → ValueError"""
         with pytest.raises(ValueError, match="target_node"):
             call_dag_thinking(
-                db_path=db_path, action="invalidate",
-                session_id="s1", target_node="", reason=""
+                db_path=db_path, action="invalidate", session_id="s1", target_node="", reason=""
             )
 
     def test_target_node_whitespace_only_raises(self, db_path):
         """I41-T3: target_node='   ' (공백 전용) → ValueError (현재 버그: 통과)"""
         with pytest.raises(ValueError, match="target_node"):
             call_dag_thinking(
-                db_path=db_path, action="invalidate",
-                session_id="s1", target_node="   ", reason=""
+                db_path=db_path, action="invalidate", session_id="s1", target_node="   ", reason=""
             )
 
     def test_target_node_tab_newline_raises(self, db_path):
         """I41-T4: target_node='\\t\\n' → ValueError"""
         with pytest.raises(ValueError, match="target_node"):
             call_dag_thinking(
-                db_path=db_path, action="invalidate",
-                session_id="s1", target_node="\t\n", reason=""
+                db_path=db_path, action="invalidate", session_id="s1", target_node="\t\n", reason=""
             )
 
     def test_valid_target_node_invalidates(self, db_path):

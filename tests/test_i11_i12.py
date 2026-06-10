@@ -5,7 +5,6 @@ RED-phase tests for I11 and I12.
   I12: _compute_dag_health INVALIDATED 노드를 구조 분석에서 제외
 """
 
-
 from tests.helpers import invalidate, restore, status, think
 
 _LONG_PAYLOAD = (
@@ -21,8 +20,8 @@ _LONG_PAYLOAD = (
 # I11: _action_restore list — status 필드
 # ---------------------------------------------------------------------------
 
-class TestRestoreListStatus:
 
+class TestRestoreListStatus:
     # T1: COMPLETED 노드 목록 → status == "COMPLETED"
     def test_completed_node_has_status_completed_in_list(self, db_path):
         """I11-T1: COMPLETED 노드 복원 목록에 status='COMPLETED' 포함.
@@ -88,9 +87,7 @@ class TestRestoreListStatus:
 
         result = restore(db_path, "s1")
         for entry in result["restorable_nodes"]:
-            assert "status" in entry, (
-                f"항목 '{entry['name']}'에 status 없음"
-            )
+            assert "status" in entry, f"항목 '{entry['name']}'에 status 없음"
 
     # T5: 빈 세션 → restorable_nodes == [] (회귀)
     def test_empty_session_list_unaffected(self, db_path):
@@ -103,8 +100,8 @@ class TestRestoreListStatus:
 # I12: _compute_dag_health — INVALIDATED 노드 제외
 # ---------------------------------------------------------------------------
 
-class TestDagHealthExcludesInvalidated:
 
+class TestDagHealthExcludesInvalidated:
     # T6: INVALIDATED 노드가 orphan_nodes에 미포함
     def test_invalidated_node_not_in_orphan_nodes(self, db_path):
         """I12-T6: 1 COMPLETED + 1 INVALIDATED, 엣지 없음 → orphan_nodes == [].
@@ -133,9 +130,7 @@ class TestDagHealthExcludesInvalidated:
 
         result = status(db_path, "s1")
         orphans = result["dag_health"]["orphan_nodes"]
-        assert orphans == [], (
-            f"COMPLETED 1개 세션의 orphan_nodes가 비어있지 않음 — RED: {orphans}"
-        )
+        assert orphans == [], f"COMPLETED 1개 세션의 orphan_nodes가 비어있지 않음 — RED: {orphans}"
 
     # T8: INVALIDATED root가 max_depth에 기여 방지
     def test_invalidated_root_excluded_from_max_depth(self, db_path):
@@ -146,8 +141,7 @@ class TestDagHealthExcludesInvalidated:
         """
         # B→C COMPLETED chain (max_depth=1)
         think(db_path, "s1", "b_node", "Objective", payload=_LONG_PAYLOAD)
-        think(db_path, "s1", "c_node", "Hypothesis", payload=_LONG_PAYLOAD,
-              depends_on=["b_node"])
+        think(db_path, "s1", "c_node", "Hypothesis", payload=_LONG_PAYLOAD, depends_on=["b_node"])
         # A는 독립 INVALIDATED
         think(db_path, "s1", "a_node", "Evidence", payload=_LONG_PAYLOAD)
         invalidate(db_path, "s1", "a_node")

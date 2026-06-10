@@ -31,7 +31,6 @@ _PAYLOAD_B = (
 
 
 class TestTokensSavedOnUpdate:
-
     def test_update_same_node_no_double_count(self, db_path):
         """BUG-1: 같은 노드를 다른 payload로 재생성해도 session total이 이중 집계되지 않음.
 
@@ -74,8 +73,8 @@ class TestTokensSavedOnUpdate:
 # P3-9: context_pressure must NOT count INVALIDATED nodes
 # ---------------------------------------------------------------------------
 
-class TestContextPressureExcludesInvalidated:
 
+class TestContextPressureExcludesInvalidated:
     def test_invalidated_chain_not_counted(self, db_path):
         """P3-9: 체인 전체 INVALIDATED 후 새 노드 1개 → level == 'low'.
 
@@ -109,17 +108,15 @@ class TestContextPressureExcludesInvalidated:
         # One COMPLETED node
         result = think(db_path, "s1", "new_node", "Objective")
         node_count = result["context_pressure"]["node_count"]
-        assert node_count == 1, (
-            f"node_count가 INVALIDATED를 포함: {node_count} (expected 1)"
-        )
+        assert node_count == 1, f"node_count가 INVALIDATED를 포함: {node_count} (expected 1)"
 
 
 # ---------------------------------------------------------------------------
 # P3-12: Blank/whitespace input validation
 # ---------------------------------------------------------------------------
 
-class TestBlankInputValidation:
 
+class TestBlankInputValidation:
     def test_blank_node_name_raises(self, db_path):
         """P3-12: 공백 node_name → ValueError.
 

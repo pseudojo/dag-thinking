@@ -30,8 +30,8 @@ def fresh_db(tmp_path):
 # R-2: init_db DDL 트랜잭션 안전화
 # ---------------------------------------------------------------------------
 
-class TestInitDbDDLSafety:
 
+class TestInitDbDDLSafety:
     def test_r2_t1_wal_mode_enabled(self, tmp_path):
         """R2-T1: init_db 후 journal_mode == 'wal'"""
         path = str(tmp_path / "wal_test.db")
@@ -45,26 +45,16 @@ class TestInitDbDDLSafety:
         path = str(tmp_path / "col_test.db")
         init_db(path)
         with contextlib.closing(_db(path)) as conn:
-            columns = [
-                row[1]
-                for row in conn.execute("PRAGMA table_info(nodes)").fetchall()
-            ]
-        assert "tokens_original" in columns, (
-            f"tokens_original 컬럼 미존재. 현재 컬럼: {columns}"
-        )
+            columns = [row[1] for row in conn.execute("PRAGMA table_info(nodes)").fetchall()]
+        assert "tokens_original" in columns, f"tokens_original 컬럼 미존재. 현재 컬럼: {columns}"
 
     def test_r2_t3_nodes_has_tokens_saved_column(self, tmp_path):
         """R2-T3: nodes 테이블에 tokens_saved 컬럼 존재"""
         path = str(tmp_path / "col_test2.db")
         init_db(path)
         with contextlib.closing(_db(path)) as conn:
-            columns = [
-                row[1]
-                for row in conn.execute("PRAGMA table_info(nodes)").fetchall()
-            ]
-        assert "tokens_saved" in columns, (
-            f"tokens_saved 컬럼 미존재. 현재 컬럼: {columns}"
-        )
+            columns = [row[1] for row in conn.execute("PRAGMA table_info(nodes)").fetchall()]
+        assert "tokens_saved" in columns, f"tokens_saved 컬럼 미존재. 현재 컬럼: {columns}"
 
     def test_r2_t4_init_db_idempotent(self, tmp_path):
         """R2-T4: init_db 두 번 호출 — 예외 없음"""
@@ -77,6 +67,7 @@ class TestInitDbDDLSafety:
         import inspect
 
         import src.server as server_module
+
         source = inspect.getsource(server_module)
         assert "executescript" not in source, (
             "init_db가 executescript()를 사용 중 — 암묵적 COMMIT 위험"
@@ -87,8 +78,8 @@ class TestInitDbDDLSafety:
 # R-3: 노드별 토큰 저장 + _action_status payload 스캔 제거
 # ---------------------------------------------------------------------------
 
-class TestPerNodeTokenStorage:
 
+class TestPerNodeTokenStorage:
     def test_r3_t1_think_stores_tokens_original(self, fresh_db):
         """R3-T1: think() 후 nodes.tokens_original > 0"""
         think(fresh_db, "s1", "n1", "Objective")
@@ -121,7 +112,7 @@ class TestPerNodeTokenStorage:
             ).fetchone()[0]
         # 두 번째 생성 (업데이트 경로) — payload가 2배이므로 tokens_original도 커야 함
         # PAYLOAD*2는 1500자 이하인지 확인 후 사용
-        double = (PAYLOAD[:700])  # 700자로 자름 (1500자 이하 보장)
+        double = PAYLOAD[:700]  # 700자로 자름 (1500자 이하 보장)
         think(fresh_db, "s1", "n1", "Objective", payload=double)
         with contextlib.closing(_db(fresh_db)) as conn:
             second = conn.execute(
@@ -152,6 +143,7 @@ class TestPerNodeTokenStorage:
         import inspect
 
         import src.server as server_module
+
         source = inspect.getsource(server_module._action_status)
         # node_rows SELECT 쿼리에 payload나 compressed가 없어야 함
         # "payload" 문자열이 없거나, 있더라도 metrics 계산용 별도 쿼리에서만 사용
@@ -175,9 +167,7 @@ class TestPerNodeTokenStorage:
         r1 = think(fresh_db, "s1", "n1", "Objective")
         r2 = think(fresh_db, "s1", "n2", "Hypothesis")
         s = status(fresh_db, "s1")
-        expected = (
-            r1["compression"]["tokens_saved"] + r2["compression"]["tokens_saved"]
-        )
+        expected = r1["compression"]["tokens_saved"] + r2["compression"]["tokens_saved"]
         assert s["metrics"]["tokens_saved"] == expected, (
             f"tokens_saved 집계 오류: metrics={s['metrics']['tokens_saved']}, expected={expected}"
         )
@@ -187,8 +177,8 @@ class TestPerNodeTokenStorage:
 # R-4: _resolve_parent_context 독립 함수 추출
 # ---------------------------------------------------------------------------
 
-class TestResolveParentContext:
 
+class TestResolveParentContext:
     def test_r4_t1_function_importable(self):
         """R4-T1: _resolve_parent_context가 server 모듈에서 임포트 가능"""
         from src.server import _resolve_parent_context  # noqa: F401
@@ -196,6 +186,7 @@ class TestResolveParentContext:
     def test_r4_t2_empty_depends_on_returns_empty_dict(self, fresh_db):
         """R4-T2: depends_on=[] → {}"""
         from src.server import _resolve_parent_context
+
         with contextlib.closing(_db(fresh_db)) as conn:
             result = _resolve_parent_context(conn, "s1", [])
         assert result == {}, f"빈 depends_on이 {{}}을 반환하지 않음: {result}"
@@ -203,6 +194,7 @@ class TestResolveParentContext:
     def test_r4_t3_existing_parent_returns_required_fields(self, fresh_db):
         """R4-T3: 존재하는 부모 → thought_type, ccr_hash, is_compressed, payload 모두 포함"""
         from src.server import _ensure_session, _resolve_parent_context
+
         think(fresh_db, "s1", "parent_node", "Objective")
         with contextlib.closing(_db(fresh_db)) as conn:
             _ensure_session(conn, "s1")
@@ -215,18 +207,18 @@ class TestResolveParentContext:
     def test_r4_t4_missing_parent_returns_error_key(self, fresh_db):
         """R4-T4: 존재하지 않는 부모 → {"error": "Node '...' not found"}"""
         from src.server import _ensure_session, _resolve_parent_context
+
         with contextlib.closing(_db(fresh_db)) as conn:
             _ensure_session(conn, "s1")
             result = _resolve_parent_context(conn, "s1", ["ghost_node"])
         assert "ghost_node" in result
-        assert "error" in result["ghost_node"], (
-            f"누락 노드에 error 키 없음: {result['ghost_node']}"
-        )
+        assert "error" in result["ghost_node"], f"누락 노드에 error 키 없음: {result['ghost_node']}"
         assert "ghost_node" in result["ghost_node"]["error"]
 
     def test_r4_t5_invalidated_parent_returns_warning(self, fresh_db):
         """R4-T5: INVALIDATED 부모 → warning + is_invalidated=True"""
         from src.server import _ensure_session, _resolve_parent_context
+
         think(fresh_db, "s1", "bad_node", "Objective")
         invalidate(fresh_db, "s1", "bad_node")
         with contextlib.closing(_db(fresh_db)) as conn:
@@ -234,9 +226,7 @@ class TestResolveParentContext:
             result = _resolve_parent_context(conn, "s1", ["bad_node"])
         assert "bad_node" in result
         entry = result["bad_node"]
-        assert entry.get("is_invalidated") is True, (
-            f"is_invalidated 누락 또는 False: {entry}"
-        )
+        assert entry.get("is_invalidated") is True, f"is_invalidated 누락 또는 False: {entry}"
         assert "warning" in entry, f"warning 필드 누락: {entry}"
 
     def test_r4_t6_think_depends_on_regression(self, fresh_db):

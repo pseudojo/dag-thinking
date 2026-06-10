@@ -5,7 +5,6 @@ I23: CJK Compatibility Ideographs 유니코드 이스케이프 적용
 I24: _score_sentence CJK-aware word_count — 순수 CJK 문장 패널티 제거
 """
 
-
 from src.compressor import _score_sentence, estimate_tokens
 
 # ---------------------------------------------------------------------------
@@ -25,6 +24,7 @@ class TestI20TransactionRefactor:
 
     def _make_db(self, tmp_path):
         from src.server import call_dag_thinking, init_db
+
         db = str(tmp_path / "test.db")
         init_db(db)
         return db, call_dag_thinking
@@ -33,8 +33,12 @@ class TestI20TransactionRefactor:
         """첫 번째 think 후 session_total_saved == 해당 노드의 tokens_saved."""
         db, cdt = self._make_db(tmp_path)
         r = cdt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         assert r["compression"]["session_total_saved"] == r["compression"]["tokens_saved"]
 
@@ -42,12 +46,20 @@ class TestI20TransactionRefactor:
         """두 번째 think 이후 session_total_saved ≥ 첫 번째 session_total_saved."""
         db, cdt = self._make_db(tmp_path)
         r1 = cdt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         r2 = cdt(
-            action="think", session_id="s1", node_name="n2",
-            thought_type="Evidence", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n2",
+            thought_type="Evidence",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         assert r2["compression"]["session_total_saved"] >= r1["compression"]["session_total_saved"]
 
@@ -55,12 +67,20 @@ class TestI20TransactionRefactor:
         """동일 노드 동일 payload 재think: session_total_saved 변화 없음 (delta=0)."""
         db, cdt = self._make_db(tmp_path)
         r1 = cdt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         r2 = cdt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         assert r2["compression"]["session_total_saved"] == r1["compression"]["session_total_saved"]
 
@@ -68,12 +88,20 @@ class TestI20TransactionRefactor:
         """think 응답의 session_total_saved가 status().metrics.tokens_saved와 일치."""
         db, cdt = self._make_db(tmp_path)
         cdt(
-            action="think", session_id="s1", node_name="n1",
-            thought_type="Objective", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n1",
+            thought_type="Objective",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         r2 = cdt(
-            action="think", session_id="s1", node_name="n2",
-            thought_type="Evidence", payload=self._LONG_PAYLOAD, db_path=db,
+            action="think",
+            session_id="s1",
+            node_name="n2",
+            thought_type="Evidence",
+            payload=self._LONG_PAYLOAD,
+            db_path=db,
         )
         status = cdt(action="status", session_id="s1", db_path=db)
         assert r2["compression"]["session_total_saved"] == status["metrics"]["tokens_saved"]
@@ -83,41 +111,43 @@ class TestI20TransactionRefactor:
 # I23: estimate_tokens — CJK Compatibility 유니코드 이스케이프 검증
 # ---------------------------------------------------------------------------
 
+
 class TestI23UnicodeEscapeCompatibility:
     """CJK Compatibility Ideographs(U+F900–U+FAFF) 범위가 정확하게 2토큰을 반환한다."""
 
     def test_f900_is_cjk_compat(self):
         """U+F900 (CJK Compatibility 첫 문자) → 2 토큰."""
-        assert estimate_tokens('豈') == 2
+        assert estimate_tokens("豈") == 2
 
     def test_faff_is_cjk_compat(self):
         """U+FAFF (CJK Compatibility 마지막 문자) → 2 토큰."""
-        assert estimate_tokens('﫿') == 2
+        assert estimate_tokens("﫿") == 2
 
     def test_f950_is_cjk_compat(self):
         """U+F950 (CJK Compatibility 중간 문자) → 2 토큰."""
-        assert estimate_tokens('縷') == 2
+        assert estimate_tokens("縷") == 2
 
     def test_f8ff_not_cjk_compat(self):
         """U+F8FF (PUA 블록, Compatibility 직전) → 2 토큰이 아닌 1 토큰."""
         # U+F8FF는 Private Use Area — CJK가 아님
-        result = estimate_tokens('')
+        result = estimate_tokens("")
         assert result == 1, f"U+F8FF should not count as CJK, got {result}"
 
     def test_fb00_not_cjk_compat(self):
         """U+FB00 (Alphabetic Presentation Forms, Compatibility 직후) → 1 토큰."""
-        result = estimate_tokens('ﬀ')
+        result = estimate_tokens("ﬀ")
         assert result == 1, f"U+FB00 should not count as CJK, got {result}"
 
     def test_compat_range_boundary_regression(self):
         """U+F900 and U+FAFF boundary chars return 2 tokens (escape form)."""
-        assert estimate_tokens('豈') == 2, 'U+F900 should be 2 tokens'
-        assert estimate_tokens('﫿') == 2, 'U+FAFF should be 2 tokens'
+        assert estimate_tokens("豈") == 2, "U+F900 should be 2 tokens"
+        assert estimate_tokens("﫿") == 2, "U+FAFF should be 2 tokens"
 
 
 # ---------------------------------------------------------------------------
 # I24: _score_sentence — CJK-aware word_count
 # ---------------------------------------------------------------------------
+
 
 class TestI24ScoreSentenceCJKAware:
     """순수 CJK 문장에서 word_count가 0으로 처리되어 균일 패널티를 받지 않아야 한다."""
@@ -132,7 +162,9 @@ class TestI24ScoreSentenceCJKAware:
         long_cjk = "가나다라마바사아자차카타파하하"  # 15자
         score = _score_sentence(long_cjk, position=1, total=3)
         # position=1이고 total=3이면 중간 → bonus 없음, length factor +0.5 기대
-        assert score >= 0.0, f"15-char CJK sentence should not have negative base score, got {score}"
+        assert score >= 0.0, (
+            f"15-char CJK sentence should not have negative base score, got {score}"
+        )
 
     def test_short_cjk_sentence_length_penalty(self):
         """3자 CJK 문장은 길이 팩터 패널티(-0.5)를 받아야 한다 (< 5)."""
@@ -169,10 +201,13 @@ class TestI24ScoreSentenceCJKAware:
     def test_cjk_sentence_with_extra_keywords_no_boost(self):
         """순수 CJK 문장에서 extra_keywords(English) 가중치는 0 (CJK에 적용 불가)."""
         from src.compressor import _TYPE_KEYWORDS
+
         cjk_sentence = "핵심 결론을 도출하고 통합 분석을 수행한다."
         score_no_extra = _score_sentence(cjk_sentence, position=1, total=3)
         score_with_extra = _score_sentence(
-            cjk_sentence, position=1, total=3,
+            cjk_sentence,
+            position=1,
+            total=3,
             extra_keywords=_TYPE_KEYWORDS["Synthesis"],
         )
         # 순수 CJK에서는 extra_keywords 가중치가 0이어야 함 (English words만 있음)

@@ -7,43 +7,90 @@ import hashlib
 import re
 
 IMPORTANCE_KEYWORDS = frozenset({
-    "error", "critical", "key", "conclusion", "therefore",
-    "must", "result", "finding", "risk", "assumption",
-    "important", "required", "warning", "failure", "success",
-    "evidence", "hypothesis", "objective", "synthesis", "action",
-    "problem", "solution", "issue", "fix", "cause", "effect",
-    "primary", "main", "core", "essential", "fundamental",
-    "because", "since", "thus", "hence", "consequently",
+    "error",
+    "critical",
+    "key",
+    "conclusion",
+    "therefore",
+    "must",
+    "result",
+    "finding",
+    "risk",
+    "assumption",
+    "important",
+    "required",
+    "warning",
+    "failure",
+    "success",
+    "evidence",
+    "hypothesis",
+    "objective",
+    "synthesis",
+    "action",
+    "problem",
+    "solution",
+    "issue",
+    "fix",
+    "cause",
+    "effect",
+    "primary",
+    "main",
+    "core",
+    "essential",
+    "fundamental",
+    "because",
+    "since",
+    "thus",
+    "hence",
+    "consequently",
 })
 
 # I06: thought_type별 가중 키워드 — ContentRouter 유사 압축 특화
 # IMPORTANCE_KEYWORDS와 중복 없는 단어만 포함 (추가 정보량 확보)
 _TYPE_KEYWORDS: dict[str, frozenset] = {
-    "Objective":  frozenset({"goal", "aim", "target", "achieve", "scope", "purpose"}),
+    "Objective": frozenset({"goal", "aim", "target", "achieve", "scope", "purpose"}),
     "Hypothesis": frozenset({
-        "predict", "expect", "theory", "propose", "suggest", "might", "could",
+        "predict",
+        "expect",
+        "theory",
+        "propose",
+        "suggest",
+        "might",
+        "could",
     }),
     "Assumption": frozenset({"assume", "given", "premise", "constraint", "presume", "baseline"}),
-    "Evidence":   frozenset({"data", "shows", "measured", "observed", "metric", "found", "test"}),
-    "Critique":   frozenset({
-        "flaw", "weakness", "however", "counter", "limit", "gap", "challenge",
+    "Evidence": frozenset({"data", "shows", "measured", "observed", "metric", "found", "test"}),
+    "Critique": frozenset({
+        "flaw",
+        "weakness",
+        "however",
+        "counter",
+        "limit",
+        "gap",
+        "challenge",
     }),
-    "Synthesis":  frozenset({
-        "conclude", "summary", "overall", "combine", "integrate", "reconcile",
+    "Synthesis": frozenset({
+        "conclude",
+        "summary",
+        "overall",
+        "combine",
+        "integrate",
+        "reconcile",
     }),
-    "Action":     frozenset({"implement", "deploy", "execute", "apply", "step", "plan", "proceed"}),
+    "Action": frozenset({"implement", "deploy", "execute", "apply", "step", "plan", "proceed"}),
 }
 
 _PASSTHROUGH_LEN = 100
-_SAVINGS_THRESHOLD = 0.10    # skip if savings < 10%
-_RATIO_TINY = 0.70           # 100–280 chars → keep 70%
-_RATIO_SHORT = 0.58          # 280–700 chars → keep 58%
-_RATIO_LONG = 0.42           # 700+ chars → keep 42%
+_SAVINGS_THRESHOLD = 0.10  # skip if savings < 10%
+_RATIO_TINY = 0.70  # 100–280 chars → keep 70%
+_RATIO_SHORT = 0.58  # 280–700 chars → keep 58%
+_RATIO_LONG = 0.42  # 700+ chars → keep 42%
 
 
 # ---------------------------------------------------------------------------
 # T06: ccr_hash — sha256 first 24 hex chars
 # ---------------------------------------------------------------------------
+
 
 def ccr_hash(text: str) -> str:
     return hashlib.sha256(text.encode()).hexdigest()[:24]
@@ -53,23 +100,25 @@ def ccr_hash(text: str) -> str:
 # I25: _is_cjk_char
 # ---------------------------------------------------------------------------
 
+
 def _is_cjk_char(ch: str) -> bool:
     """CJK/Hangul/Kana char check used by estimate_tokens and _score_sentence."""
     cp = ord(ch)
     return (
-        0x3400 <= cp <= 0x4DBF   # CJK Extension A
+        0x3400 <= cp <= 0x4DBF  # CJK Extension A
         or 0x4E00 <= cp <= 0x9FFF  # CJK Unified Ideographs
         or 0xF900 <= cp <= 0xFAFF  # CJK Compatibility Ideographs
         or 0xAC00 <= cp <= 0xD7A3  # Hangul Syllables
         or 0x3040 <= cp <= 0x309F  # Hiragana
         or 0x30A0 <= cp <= 0x30FF  # Katakana
-        or cp >= 0x20000            # CJK Extension B/C/D/E/F/I (SMP)
+        or cp >= 0x20000  # CJK Extension B/C/D/E/F/I (SMP)
     )
 
 
 # ---------------------------------------------------------------------------
 # T07: estimate_tokens
 # ---------------------------------------------------------------------------
+
 
 def estimate_tokens(text: str) -> int:
     cjk_count = sum(1 for ch in text if _is_cjk_char(ch))
@@ -81,12 +130,14 @@ def estimate_tokens(text: str) -> int:
 # T08: _is_list_content — detect bullet / numbered list
 # ---------------------------------------------------------------------------
 
+
 def _is_list_content(text: str) -> bool:
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     if len(lines) < 3:
         return False
     list_lines = sum(
-        1 for line in lines
+        1
+        for line in lines
         if re.match(r"^[+\-*•]\s+", line) or re.match(r"^\d+[.)]\s+", line)  # I44: GFM `+` 불릿
     )
     return list_lines / len(lines) >= 0.5
@@ -96,6 +147,7 @@ def _is_list_content(text: str) -> bool:
 # T09: _score_sentence — keyword + position + length scoring
 # ---------------------------------------------------------------------------
 
+
 def _score_sentence(
     sentence: str,
     position: int,
@@ -104,8 +156,8 @@ def _score_sentence(
 ) -> float:
     words = re.findall(r"\b\w+\b", sentence.lower())
     keyword_hits = sum(1 for w in words if w in IMPORTANCE_KEYWORDS)
-    extra_hits = sum(1 for w in words if w in extra_keywords)   # I06
-    score = keyword_hits * 1.5 + extra_hits * 1.0               # I06
+    extra_hits = sum(1 for w in words if w in extra_keywords)  # I06
+    score = keyword_hits * 1.5 + extra_hits * 1.0  # I06
 
     # position bonus: first and last sentences are important
     if total > 1:
@@ -133,6 +185,7 @@ def _score_sentence(
 # ---------------------------------------------------------------------------
 # T10: _compress_list — importance-based top-K item sampling
 # ---------------------------------------------------------------------------
+
 
 def _compress_list(
     text: str,
@@ -213,6 +266,7 @@ def _compress_prose(
 # ---------------------------------------------------------------------------
 # T12: compress — main entry point
 # ---------------------------------------------------------------------------
+
 
 def compress(text: str, thought_type: str | None = None) -> tuple[str, str, int]:
     """

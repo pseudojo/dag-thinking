@@ -5,7 +5,6 @@ RED-phase tests for I09 and I10.
   I10: _action_restore INVALIDATED 노드 복원 경고
 """
 
-
 from src.compressor import estimate_tokens
 from tests.helpers import invalidate, restore, think
 
@@ -22,8 +21,8 @@ _LONG_PAYLOAD = (
 # I09: estimate_tokens CJK-aware
 # ---------------------------------------------------------------------------
 
-class TestEstimateTokensCJK:
 
+class TestEstimateTokensCJK:
     # T1: 순수 한글 — Hangul Syllables (U+AC00-U+D7A3)
     def test_hangul_syllables_counted_as_two_tokens_each(self):
         """I09-T1: 한글 5자 → 10토큰 (5 × 2).
@@ -32,8 +31,7 @@ class TestEstimateTokensCJK:
         """
         result = estimate_tokens("안녕하세요")
         assert result == 10, (
-            f"한글 5자는 10토큰이어야 함, 실제: {result} "
-            "(현재 len//4=1, CJK×2 미적용 — RED)"
+            f"한글 5자는 10토큰이어야 함, 실제: {result} (현재 len//4=1, CJK×2 미적용 — RED)"
         )
 
     # T2: 순수 한자 — CJK Unified Ideographs (U+4E00-U+9FFF)
@@ -57,7 +55,7 @@ class TestEstimateTokensCJK:
     # T4: 순수 ASCII 회귀 — 기존 동작 유지
     def test_ascii_unchanged(self):
         """I09-T4: 순수 ASCII는 기존 len//4 동작 유지 (회귀 없음)."""
-        assert estimate_tokens("hello") == 1        # 5//4=1
+        assert estimate_tokens("hello") == 1  # 5//4=1
         assert estimate_tokens("hello world") == 2  # 11//4=2
 
     # T5: 혼합 한글+ASCII
@@ -68,9 +66,7 @@ class TestEstimateTokensCJK:
         """
         text = "안녕 hello"  # 한글 2자 + 공백 + ASCII 5자 = 총 8자
         result = estimate_tokens(text)
-        assert result == 5, (
-            f'"안녕 hello" → 한글2×2=4 + 비CJK6//4=1 → 5, 실제: {result}'
-        )
+        assert result == 5, f'"안녕 hello" → 한글2×2=4 + 비CJK6//4=1 → 5, 실제: {result}'
 
     # T6: 빈 문자열 경계 보호
     def test_empty_string_returns_one(self):
@@ -103,8 +99,8 @@ class TestEstimateTokensCJK:
 # I10: _action_restore INVALIDATED 노드 복원 경고
 # ---------------------------------------------------------------------------
 
-class TestRestoreInvalidatedWarning:
 
+class TestRestoreInvalidatedWarning:
     # T9: COMPLETED 노드 복원 — warning 없음 (정상 경로 회귀)
     def test_completed_node_restore_has_no_warning(self, db_path):
         """I10-T9: COMPLETED 노드 복원 → 'warning' 키 없음."""
@@ -124,9 +120,7 @@ class TestRestoreInvalidatedWarning:
         h = r["ccr_hash"]
         invalidate(db_path, "s1", "node_a")
         result = restore(db_path, "s1", h)
-        assert "warning" in result, (
-            "INVALIDATED 노드 복원 시 'warning' 키가 없음 — RED"
-        )
+        assert "warning" in result, "INVALIDATED 노드 복원 시 'warning' 키가 없음 — RED"
 
     # T11: warning 메시지에 "INVALIDATED" 포함
     def test_invalidated_restore_warning_mentions_invalidated(self, db_path):
@@ -136,9 +130,7 @@ class TestRestoreInvalidatedWarning:
         invalidate(db_path, "s1", "node_a")
         result = restore(db_path, "s1", h)
         warning = result.get("warning", "")
-        assert "INVALIDATED" in warning, (
-            f"warning 메시지에 'INVALIDATED' 없음: {warning!r}"
-        )
+        assert "INVALIDATED" in warning, f"warning 메시지에 'INVALIDATED' 없음: {warning!r}"
 
     # T12: INVALIDATED여도 payload 정상 반환 (비파괴성)
     def test_invalidated_node_payload_still_returned(self, db_path):
