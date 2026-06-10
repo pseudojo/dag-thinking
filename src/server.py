@@ -168,7 +168,7 @@ _MAX_NOTE_LEN = 500
 
 # I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
 _PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
-_PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
+_PRESSURE_HIGH = 15  # 이 수 이상이면 "high" 경보
 
 # I05: thought_type별 컨텍스트 힌트 (LLM 다음 단계 안내)
 _NEXT_HINTS: dict[str, str] = {

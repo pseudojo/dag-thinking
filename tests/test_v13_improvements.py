@@ -11,14 +11,14 @@ import sqlite3
 
 import pytest
 
-from src.compressor import _score_sentence, _split_sentences, compress, _TYPE_KEYWORDS
-from src.server import call_dag_thinking, init_db
-from tests.helpers import think, status, invalidate, PAYLOAD
-
+from src.compressor import _TYPE_KEYWORDS, _score_sentence, _split_sentences, compress
+from src.server import init_db
+from tests.helpers import PAYLOAD, invalidate, status, think
 
 # ---------------------------------------------------------------------------
 # I31: whitespace-only payload 차단
 # ---------------------------------------------------------------------------
+
 
 class TestWhitespacePayloadValidation:
     """I31: _validate_think_inputs — 공백 전용 payload ValueError"""

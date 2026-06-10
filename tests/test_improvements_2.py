@@ -8,15 +8,14 @@ TDD RED phase — written before implementation.
   I08: DAG 수렴 상태 진단 — dag_health in status
 """
 
-import pytest
 
 from src.compressor import _score_sentence, compress
-from tests.helpers import think, status, PAYLOAD
-
+from tests.helpers import PAYLOAD, status, think
 
 # ---------------------------------------------------------------------------
 # I06: thought_type-aware keyword scoring
 # ---------------------------------------------------------------------------
+
 
 class TestThoughtTypeAwareCompression:
     """IC16-IC20: thought_type 기반 압축 특화"""

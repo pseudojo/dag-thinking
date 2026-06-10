@@ -8,10 +8,7 @@ Covers:
 
 import sqlite3
 
-import pytest
-
-from tests.helpers import think, status, restore, invalidate
-
+from tests.helpers import invalidate, restore, status, think
 
 PAYLOAD_A = (
     "The key objective is to reduce system latency. "

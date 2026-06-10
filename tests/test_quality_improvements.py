@@ -7,18 +7,17 @@ R-3: 노드별 tokens_original/tokens_saved 저장 + _action_status payload 스�
 R-4: _resolve_parent_context 독립 함수 추출 (SRP)
 """
 
-import sqlite3
 import contextlib
 
 import pytest
 
-from src.server import init_db, call_dag_thinking, _db
-from tests.helpers import think, status, invalidate, PAYLOAD
-
+from src.server import _db, init_db
+from tests.helpers import PAYLOAD, invalidate, status, think
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def fresh_db(tmp_path):
@@ -76,6 +75,7 @@ class TestInitDbDDLSafety:
     def test_r2_t5_executescript_not_used(self):
         """R2-T5: server.py 소스에 executescript 미사용"""
         import inspect
+
         import src.server as server_module
         source = inspect.getsource(server_module)
         assert "executescript" not in source, (
@@ -150,6 +150,7 @@ class TestPerNodeTokenStorage:
     def test_r3_t5_status_query_excludes_payload_column(self):
         """R3-T5: _action_status의 node_rows 쿼리에 payload/compressed 컬럼 미포함"""
         import inspect
+
         import src.server as server_module
         source = inspect.getsource(server_module._action_status)
         # node_rows SELECT 쿼리에 payload나 compressed가 없어야 함
@@ -201,7 +202,7 @@ class TestResolveParentContext:
 
     def test_r4_t3_existing_parent_returns_required_fields(self, fresh_db):
         """R4-T3: 존재하는 부모 → thought_type, ccr_hash, is_compressed, payload 모두 포함"""
-        from src.server import _resolve_parent_context, _ensure_session
+        from src.server import _ensure_session, _resolve_parent_context
         think(fresh_db, "s1", "parent_node", "Objective")
         with contextlib.closing(_db(fresh_db)) as conn:
             _ensure_session(conn, "s1")
@@ -213,7 +214,7 @@ class TestResolveParentContext:
 
     def test_r4_t4_missing_parent_returns_error_key(self, fresh_db):
         """R4-T4: 존재하지 않는 부모 → {"error": "Node '...' not found"}"""
-        from src.server import _resolve_parent_context, _ensure_session
+        from src.server import _ensure_session, _resolve_parent_context
         with contextlib.closing(_db(fresh_db)) as conn:
             _ensure_session(conn, "s1")
             result = _resolve_parent_context(conn, "s1", ["ghost_node"])
@@ -225,7 +226,7 @@ class TestResolveParentContext:
 
     def test_r4_t5_invalidated_parent_returns_warning(self, fresh_db):
         """R4-T5: INVALIDATED 부모 → warning + is_invalidated=True"""
-        from src.server import _resolve_parent_context, _ensure_session
+        from src.server import _ensure_session, _resolve_parent_context
         think(fresh_db, "s1", "bad_node", "Objective")
         invalidate(fresh_db, "s1", "bad_node")
         with contextlib.closing(_db(fresh_db)) as conn:

@@ -8,13 +8,13 @@ I22: _validate_think_inputs node_name 길이 상한 (200자)
 
 import pytest
 
-from src.compressor import _join_sentences, estimate_tokens, compress
+from src.compressor import _join_sentences, compress, estimate_tokens
 from src.server import _validate_think_inputs
-
 
 # ---------------------------------------------------------------------------
 # I21: _join_sentences — CJK 재결합 공백 제거
 # ---------------------------------------------------------------------------
+
 
 class TestI21JoinSentences:
     """CJK 종결 문장은 공백 없이, ASCII 종결 문장은 공백으로 재결합해야 한다."""
@@ -147,7 +147,7 @@ class TestI20SessionTotalSavedRegression:
     ) * 3
 
     def _make_db(self, tmp_path):
-        from src.server import init_db, call_dag_thinking
+        from src.server import call_dag_thinking, init_db
         db = str(tmp_path / "test.db")
         init_db(db)
         return db, call_dag_thinking

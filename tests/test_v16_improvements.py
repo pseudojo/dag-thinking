@@ -7,16 +7,14 @@ I44: _is_list_content — `+` 불릿 프리픽스 지원 (GFM)
 I45: _compute_dag_health — total_nodes 카운트 추가
 """
 
-import pytest
 
 from src.compressor import _is_list_content
-from src.server import call_dag_thinking
-from tests.helpers import think, status, invalidate, PAYLOAD
-
+from tests.helpers import PAYLOAD, invalidate, status, think
 
 # ---------------------------------------------------------------------------
 # I42: think 응답에 thought_type 필드
 # ---------------------------------------------------------------------------
+
 
 class TestThinkResponseThoughtType:
     """I42: action='think' 응답에 thought_type 필드가 포함되어야 한다."""

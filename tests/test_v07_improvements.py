@@ -13,9 +13,8 @@ import sqlite3
 
 import pytest
 
-from src.server import _db, _compute_dag_health
-from tests.helpers import think, status, restore
-
+from src.server import _compute_dag_health, _db
+from tests.helpers import restore, status, think
 
 PAYLOAD = (
     "The key finding from this analysis is that the authentication module lacks rate limiting. "

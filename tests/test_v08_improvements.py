@@ -9,7 +9,7 @@ Covers:
 
 import pytest
 
-from tests.helpers import think, status, invalidate
+from tests.helpers import invalidate, status, think
 
 # I11 임포트 — _split_sentences 존재하지 않으면 RED 단계에서 ImportError
 try:

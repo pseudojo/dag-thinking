@@ -9,14 +9,14 @@ I41: _action_invalidate target_node 공백 전용 방어
 
 import pytest
 
-from src.compressor import _split_sentences, _compress_prose, _RATIO_LONG, _RATIO_SHORT
+from src.compressor import _RATIO_LONG, _RATIO_SHORT, _compress_prose, _split_sentences
 from src.server import call_dag_thinking
-from tests.helpers import think, status, invalidate, PAYLOAD
-
+from tests.helpers import PAYLOAD, invalidate, think
 
 # ---------------------------------------------------------------------------
 # I38: _split_sentences 줄임표+공백 false-split 수정
 # ---------------------------------------------------------------------------
+
 
 class TestSplitSentencesEllipsisWithSpace:
     """I38: 줄임표 뒤 공백이 있어도 문장 경계로 오인 분리되지 않아야 함"""
@@ -63,7 +63,7 @@ class TestSplitSentencesEllipsisWithSpace:
 
 def _make_prose(n: int, chars_per_sent: int = 60) -> str:
     """n개 문장으로 구성된 산문 텍스트 생성."""
-    sentences = [f"The analysis shows that finding number {i+1} is important and critical here." for i in range(n)]
+    sentences = [f"The analysis shows that finding number {i + 1} is important and critical here." for i in range(n)]
     return " ".join(sentences)
 
 

@@ -8,8 +8,7 @@ RED-phase tests for:
 import pytest
 
 from src.server import _PRESSURE_MEDIUM
-from tests.helpers import think, invalidate, status
-
+from tests.helpers import invalidate, status, think
 
 # ---------------------------------------------------------------------------
 # BUG-1: tokens_saved must NOT double-count on node update

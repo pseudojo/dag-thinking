@@ -5,9 +5,8 @@ RED-phase tests for I11 and I12.
   I12: _compute_dag_health INVALIDATED 노드를 구조 분석에서 제외
 """
 
-import pytest
 
-from tests.helpers import think, invalidate, restore, status
+from tests.helpers import invalidate, restore, status, think
 
 _LONG_PAYLOAD = (
     "The key finding from this analysis is that the current architecture has a critical bottleneck "

@@ -8,12 +8,12 @@ I30: session_id 길이 상한 — _MAX_SESSION_ID_LEN=200
 
 import pytest
 
-from src.compressor import _is_cjk_char, estimate_tokens, _score_sentence
-
+from src.compressor import _is_cjk_char, _score_sentence, estimate_tokens
 
 # ---------------------------------------------------------------------------
 # I25: _is_cjk_char 헬퍼 — CJK 정의 통일
 # ---------------------------------------------------------------------------
+
 
 class TestI25IsCjkChar:
     """_is_cjk_char이 estimate_tokens와 동일한 7개 범위를 커버한다."""
@@ -140,7 +140,7 @@ class TestI28RestoreJoin:
     """_action_restore가 단일 LEFT JOIN 쿼리로 ccr_store와 node status를 함께 조회한다."""
 
     def _make_db(self, tmp_path):
-        from src.server import init_db, call_dag_thinking
+        from src.server import call_dag_thinking, init_db
         db = str(tmp_path / "test.db")
         init_db(db)
         return db, call_dag_thinking
@@ -213,7 +213,7 @@ class TestI29DependsOnDedup:
     ) * 2
 
     def _make_db(self, tmp_path):
-        from src.server import init_db, call_dag_thinking
+        from src.server import call_dag_thinking, init_db
         db = str(tmp_path / "test.db")
         init_db(db)
         return db, call_dag_thinking
@@ -283,7 +283,7 @@ class TestI30SessionIdLength:
     _PAYLOAD = "a" * 80
 
     def _make_db(self, tmp_path):
-        from src.server import init_db, call_dag_thinking
+        from src.server import call_dag_thinking, init_db
         db = str(tmp_path / "test.db")
         init_db(db)
         return db, call_dag_thinking

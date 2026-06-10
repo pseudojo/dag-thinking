@@ -5,14 +5,14 @@ RED phase: written before implementation.
 
 import pytest
 
-from src.compressor import compress, ccr_hash, estimate_tokens
+from src.compressor import ccr_hash, compress
 from src.server import call_dag_thinking
-from tests.helpers import think, status, restore, invalidate
-
+from tests.helpers import invalidate, restore, status, think
 
 # ---------------------------------------------------------------------------
 # T21: think → status → restore round-trip
 # ---------------------------------------------------------------------------
+
 
 class TestThinkStatusRestoreRoundtrip:
     LONG_PAYLOAD = (

@@ -5,14 +5,13 @@ I23: CJK Compatibility Ideographs 유니코드 이스케이프 적용
 I24: _score_sentence CJK-aware word_count — 순수 CJK 문장 패널티 제거
 """
 
-import pytest
 
-from src.compressor import _score_sentence, estimate_tokens, compress
-
+from src.compressor import _score_sentence, estimate_tokens
 
 # ---------------------------------------------------------------------------
 # I20: session_total_saved — 트랜잭션 구조 검증 (행동 동일성)
 # ---------------------------------------------------------------------------
+
 
 class TestI20TransactionRefactor:
     """session_total_saved가 트랜잭션 리팩토링 후에도 정확하게 누적된다."""
@@ -25,7 +24,7 @@ class TestI20TransactionRefactor:
     ) * 3
 
     def _make_db(self, tmp_path):
-        from src.server import init_db, call_dag_thinking
+        from src.server import call_dag_thinking, init_db
         db = str(tmp_path / "test.db")
         init_db(db)
         return db, call_dag_thinking

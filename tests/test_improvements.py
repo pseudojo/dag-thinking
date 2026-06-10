@@ -12,12 +12,12 @@ IMPROVEMENTS.md 명세 기준:
 
 import pytest
 
-from tests.helpers import think, status, invalidate, PAYLOAD
-
+from tests.helpers import invalidate, status, think
 
 # ---------------------------------------------------------------------------
 # I01: _has_cycle — 3-hop 전이 사이클 및 다이아몬드 구조
 # ---------------------------------------------------------------------------
+
 
 class TestHasCycleSimplified:
     """IC01-IC04: _has_cycle 정확성 검증"""

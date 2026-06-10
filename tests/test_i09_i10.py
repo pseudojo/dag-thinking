@@ -5,10 +5,9 @@ RED-phase tests for I09 and I10.
   I10: _action_restore INVALIDATED 노드 복원 경고
 """
 
-import pytest
 
 from src.compressor import estimate_tokens
-from tests.helpers import think, invalidate, restore
+from tests.helpers import invalidate, restore, think
 
 _LONG_PAYLOAD = (
     "The key finding from this analysis is that the current architecture has a critical bottleneck "

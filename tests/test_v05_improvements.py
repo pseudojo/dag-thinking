@@ -5,12 +5,11 @@ v0.5 품질 개선 테스트 — Q-1 ~ Q-6
 
 import re
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
 
-from tests.helpers import invalidate, status, think
+from tests.helpers import think
 
 # ---------------------------------------------------------------------------
 # Q-1: session_total_saved 정확성 (SEV-3 — old_contribution 공식 버그)

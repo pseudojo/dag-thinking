@@ -7,13 +7,13 @@ I17: _validate_think_inputs depends_on 길이 상한
 
 import pytest
 
-from src.compressor import _split_sentences, _is_list_content
+from src.compressor import _is_list_content, _split_sentences
 from src.server import _validate_think_inputs
-
 
 # ---------------------------------------------------------------------------
 # I12: _split_sentences — CJK 공백 없는 분리
 # ---------------------------------------------------------------------------
+
 
 class TestI12SplitSentencesCJKNoSpace:
     """_split_sentences가 CJK 종결 문자 뒤 공백 없이도 분리해야 한다."""

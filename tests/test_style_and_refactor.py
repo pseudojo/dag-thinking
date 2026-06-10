@@ -9,10 +9,8 @@ RED-phase tests for STYLE-1, QUAL-1, QUAL-2 refactoring.
 import os
 import subprocess
 
-import pytest
-
-from src.compressor import _is_list_content, _compress_list
-from tests.helpers import think, status
+from src.compressor import _compress_list, _is_list_content
+from tests.helpers import think
 
 _PROJECT_ROOT = os.path.join(os.path.dirname(__file__), "..")
 

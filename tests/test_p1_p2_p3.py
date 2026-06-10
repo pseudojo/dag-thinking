@@ -10,10 +10,10 @@ import pytest
 
 from tests.helpers import PAYLOAD, invalidate, restore, status, think
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _conn(db_path):
     conn = sqlite3.connect(db_path)

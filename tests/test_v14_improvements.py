@@ -7,14 +7,13 @@ I37: _compress_list 최소 k=2 (다중 아이템 과잉 압축 방지)
 
 import pytest
 
-from src.compressor import _compress_list, _RATIO_LONG, _RATIO_SHORT, _RATIO_TINY
-from src.server import call_dag_thinking, init_db
-from tests.helpers import think, status, PAYLOAD
-
+from src.compressor import _RATIO_LONG, _RATIO_SHORT, _compress_list
+from tests.helpers import PAYLOAD, status, think
 
 # ---------------------------------------------------------------------------
 # I35: _action_think PERF-2 완성 — 동작 동등성 보장
 # ---------------------------------------------------------------------------
+
 
 class TestActionThinkPerf2Reads:
     """I35: reads moved outside write transaction — behavior unchanged"""
@@ -99,7 +98,7 @@ class TestNoteLengthValidation:
 
 def _make_list_text(n: int, chars_per_item: int = 80) -> str:
     """n개의 bullet 아이템으로 구성된 목록 텍스트 생성."""
-    return "\n".join(f"- Item {i+1}: {'x' * (chars_per_item - 12)}" for i in range(n))
+    return "\n".join(f"- Item {i + 1}: {'x' * (chars_per_item - 12)}" for i in range(n))
 
 
 class TestCompressListMinK:
