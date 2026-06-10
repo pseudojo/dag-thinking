@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.12
+# dag-thinking 설계 문서 v0.15
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -15,6 +15,9 @@
 | v0.10 | I18 estimate_tokens CJK Extension A/Compat/SMP, I21 _join_sentences CJK 재결합, I22 node_name 길이 상한 |
 | v0.11 | I20 session_total_saved SELECT 트랜잭션 외부 이동(PERF-2 완성), I23 CJK Compatibility 유니코드 이스케이프, I24 _score_sentence CJK 길이 패널티 제거 |
 | v0.12 | I25 _is_cjk_char 헬퍼 추출(CJK 정의 통일), I28 _action_restore LEFT JOIN(N+1 제거), I29 depends_on 중복 제거, I30 session_id 길이 상한 |
+| v0.13 | I31 whitespace-only payload 차단, I32 idx_edges_child 인덱스, I33 _split_sentences 줄임표 false-split 수정, I34 edges 루프→executemany+가드 정리 |
+| v0.14 | I35 _action_think PERF-2 완성(읽기 쿼리 트랜잭션 외부), I36 note 길이 상한(_MAX_NOTE_LEN=500), I37 _compress_list 최소 k=2 |
+| v0.15 | I38 _split_sentences 줄임표+공백 false-split 수정(2-char lookbehind), I39 _compress_prose 최소 k=2, I40 depends_on 빈 경우 cycle check 스킵, I41 _action_invalidate target_node 공백 전용 방어 |
 
 ---
 
@@ -434,6 +437,45 @@ dag-thinking/
         list(dict.fromkeys(depends_on)) 로 중복 제거 후 하위 함수에 전달
 □ I30. server.py: call_dag_thinking — session_id 길이 상한 _MAX_SESSION_ID_LEN=200 추가
         node_name과 동일한 200자 제한, blank 검증 직후 실행
+
+[ v0.13 입력 방어 / 인덱스 / 알고리즘 수정 — I31/I32/I33/I34 ]
+□ I31. server.py: _validate_think_inputs — 공백 전용 payload 차단
+        `if not payload.strip()` 검증 추가 (node_name 공백 검증과 동일 패턴)
+        " " * 100 등 의미 없는 페이로드가 80자 최소 길이 검증을 우회하는 버그 수정
+□ I32. server.py: init_db() — idx_edges_child 인덱스 추가
+        `CREATE INDEX IF NOT EXISTS idx_edges_child ON edges(session_id, child)`
+        `DELETE FROM edges WHERE session_id=? AND child=?` (upsert 시 incoming edge 초기화)
+        기존 PK(session_id, parent, child) — child 단독 조회 시 풀스캔 발생 수정
+□ I33. compressor.py: _split_sentences — 연속 구두점(줄임표 `...`) false-split 수정
+        기존: `r"(?<=[.!?])\s+|(?<=[。！？])"`
+        변경: `r"(?<=[.!?])(?=[^.!?])\s+|(?<=[。！？])"` — lookahead 추가
+        "Wait...really?" → ["Wait", "really?"] 오분리 방지
+□ I34. server.py: _action_think — 엣지 삽입 루프 → executemany + 가드 명확화
+        기존: `for parent in depends_on: if "error" not in ...: conn.execute(...)`
+        변경: 유효 부모 목록 선별 후 `conn.executemany(...)` 1회 호출
+        가드 조건: `parent_context.get(p, {}).get("error") is None` (키 유무 vs 빈값 혼동 해소)
+
+[ v0.14 PERF-2 완성 / 입력 방어 / 압축 품질 — I35/I36/I37 ]
+□ I35. server.py: _action_think — 읽기 쿼리 트랜잭션 외부 이동 (PERF-2 완성)
+        forward_graph, parent_context, prev_row SELECT → with conn: 블록 이전으로 이동
+□ I36. server.py: _validate_think_inputs — note 필드 길이 상한 _MAX_NOTE_LEN=500
+        비압축 scratchpad 필드의 무제한 입력 방어
+□ I37. compressor.py: _compress_list — 최소 k=2 (다중 아이템 과잉 압축 방지)
+        `floor_k = min(2, len(lines))`, `k = max(floor_k, round(...))`
+        3-item 목록 ratio=0.42: round(1.26)=1 → max(2,1)=2 보존
+
+[ v0.15 압축 정확성 / 성능 / 입력 방어 — I38/I39/I40/I41 ]
+□ I38. compressor.py: _split_sentences — 줄임표+공백 false-split 수정 (2-char lookbehind)
+        기존: `r"(?<=[.!?])\s+|(?<=[。！？])"`
+        변경: `r"(?<=[^.!?][.!?])\s+|(?<=[。！？])"` — 2-char 포지티브 룩비하인드
+        "Wait... really?" (공백 있음) → 분리 안 됨 / "Hello. World." → 정상 분리 유지
+□ I39. compressor.py: _compress_prose — 최소 k=2 (I37 _compress_list 유사)
+        `floor_k = min(2, len(sentences))`, `k = max(floor_k, round(...))`
+        2문장 산문 ratio=0.42: round(0.84)=1 → max(2,1)=2 보존
+□ I40. server.py: _action_think — depends_on 빈 경우 cycle check 스킵
+        `if depends_on:` 가드 추가 — _load_forward_edges DB 조회 불필요 시 생략
+□ I41. server.py: _action_invalidate — target_node 공백 전용 방어
+        `if not target_node or not target_node.strip()` — node_name 검증과 동일 패턴
 ```
 
 ---
@@ -505,6 +547,23 @@ dag-thinking/
 □ C39. Synthesis COMPLETED 노드 존재 → is_converging == True
 □ C40. A→B→C 체인 → max_depth == 2
 □ C41. 연결 없는 2개 노드 → orphan_nodes 비-빈 리스트
+
+[ v0.13 입력 방어 — I31 ]
+□ C42. payload 공백 전용(" " * 100) → ValueError 발생
+□ C43. payload 정확히 79자 → ValueError (80자 미만 경계값)
+□ C44. payload 정확히 80자 → 정상 처리 (경계값 통과)
+□ C45. payload 정확히 1500자 → 정상 처리 (상한 경계값 통과)
+□ C46. node_name 정확히 200자 → 정상 처리 (상한 경계값 통과)
+□ C47. node_name 정확히 201자 → ValueError
+□ C48. depends_on 정확히 20개 → 정상 처리 (상한 경계값 통과)
+□ C49. depends_on 정확히 21개 → ValueError
+
+[ v0.13 인덱스 / 알고리즘 — I32/I33/I34 ]
+□ C50. idx_edges_child 인덱스 존재 확인 (sqlite_master 쿼리)
+□ C51. _split_sentences("Wait...really?") → ["Wait...really?"] 또는 2개 이하 분리
+        (줄임표가 문장 구분자로 오인 분리되지 않아야 함)
+□ C52. _split_sentences("Hello. World.") → ["Hello.", "World."] (정상 분리)
+□ C53. depends_on 중복 포함 think() 성공 → 엣지가 정확히 1개만 생성 (I34 executemany)
 ```
 
 ---

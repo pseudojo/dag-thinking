@@ -78,6 +78,10 @@ def init_db(path: str = _DEFAULT_DB) -> None:
                 CREATE INDEX IF NOT EXISTS idx_nodes_session_status
                 ON nodes(session_id, status)
             """)
+            conn.execute("""
+                CREATE INDEX IF NOT EXISTS idx_edges_child
+                ON edges(session_id, child)
+            """)
 
 
 # ---------------------------------------------------------------------------
@@ -159,6 +163,9 @@ _MAX_NODE_NAME_LEN = 200
 # I30: session_id 길이 상한 — node_name과 동일 기준
 _MAX_SESSION_ID_LEN = 200
 
+# I36: note 길이 상한 — 비압축 scratchpad 무제한 입력 방어
+_MAX_NOTE_LEN = 500
+
 # I07: 세션 컨텍스트 압박 경보 임계값 (노드 수 기반)
 _PRESSURE_MEDIUM = 8   # 이 수 이상이면 "medium" 경보
 _PRESSURE_HIGH   = 15  # 이 수 이상이면 "high" 경보
@@ -184,6 +191,7 @@ def _validate_think_inputs(
     thought_type: str | None,
     payload: str | None,
     depends_on: list[str] | None = None,
+    note: str = "",
 ) -> None:
     """action='think' 입력 유효성 검사. 실패 시 ValueError 즉시 raise."""
     if not node_name or not node_name.strip():
@@ -195,8 +203,8 @@ def _validate_think_inputs(
         )
     if not thought_type or thought_type not in VALID_THOUGHT_TYPES:
         raise ValueError(f"thought_type must be one of: {sorted(VALID_THOUGHT_TYPES)}")
-    if not payload:
-        raise ValueError("payload is required for action='think'")
+    if not payload or not payload.strip():
+        raise ValueError("payload cannot be blank or whitespace-only")
     if len(payload) < 80:
         raise ValueError("payload must be at least 80 characters")
     if len(payload) > 1500:
@@ -205,6 +213,12 @@ def _validate_think_inputs(
         raise ValueError(
             f"depends_on exceeds maximum of {_MAX_DEPENDS_ON} parents "
             f"(got {len(depends_on)})"
+        )
+    # I36: note 길이 상한 — 비압축 scratchpad DoS 방어
+    if len(note) > _MAX_NOTE_LEN:
+        raise ValueError(
+            f"note exceeds maximum length of {_MAX_NOTE_LEN} characters "
+            f"(got {len(note)})"
         )
 
 
@@ -476,8 +490,8 @@ def _action_think(
     depends_on: list[str],
     note: str,
 ) -> dict:
-    # Q-3: 입력 유효성 검사 — 분리된 순수 함수로 위임
-    _validate_think_inputs(node_name, thought_type, payload, depends_on)
+    # Q-3: 입력 유효성 검사 — 분리된 순수 함수로 위임 (I36: note 전달)
+    _validate_think_inputs(node_name, thought_type, payload, depends_on, note)
 
     # PERF-1: CPU 연산을 DB 락 획득 전에 선실행 (SHA-256 + 문장 스코어링)
     tokens_original_val = estimate_tokens(payload)
@@ -485,26 +499,27 @@ def _action_think(
     is_compressed = compressed_text != payload
 
     with contextlib.closing(_db(db_path)) as conn:
-        # I20: PERF-2 완성 — session total을 쓰기 트랜잭션 이전에 읽어 SELECT를 락 밖으로 이동
+        # I20: PERF-2 — session total을 쓰기 트랜잭션 이전에 읽어 SELECT를 락 밖으로 이동
         prev_row = conn.execute(
             "SELECT tokens_saved FROM sessions WHERE id=?", (session_id,)
         ).fetchone()
         prev_session_total = prev_row["tokens_saved"] if prev_row else 0
         delta = 0  # with conn: 내에서 갱신됨
 
-        with conn:
-            _ensure_session(conn, session_id)
-
-            # Q-2: edge를 1회만 fetch해 사이클 감지 (N×DB → 1×DB)
+        # I40: depends_on 빈 경우 DB 조회·사이클 검사 스킵 (불필요한 full-scan 방지)
+        if depends_on:
             forward_graph = _load_forward_edges(conn, session_id)
             for parent in depends_on:
                 if _has_cycle_graph(forward_graph, parent, node_name):
                     raise ValueError(
                         f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
                     )
-
-            # R-4: 부모 컨텍스트 자동 resolve
             parent_context = _resolve_parent_context(conn, session_id, depends_on)
+        else:
+            parent_context = {}
+
+        with conn:
+            _ensure_session(conn, session_id)
 
             # --- upsert node ---
             existing = conn.execute(
@@ -560,12 +575,15 @@ def _action_think(
                 (hash_val, session_id, node_name, payload),
             )
 
-            for parent in depends_on:
-                if "error" not in parent_context.get(parent, {"error": ""}):
-                    conn.execute(
-                        "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?,?,?)",
-                        (session_id, parent, node_name),
-                    )
+            # I34: executemany 1회 + .get("error") is None 가드 명확화
+            valid_parents = [
+                p for p in depends_on
+                if parent_context.get(p, {}).get("error") is None
+            ]
+            conn.executemany(
+                "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?,?,?)",
+                [(session_id, p, node_name) for p in valid_parents],
+            )
 
             # Q-1: delta = 새 savings - 이전 savings (SUM(tokens_saved) 누적 정확성)
             delta = tokens_saved - old_tokens_saved
@@ -688,7 +706,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
 def _action_invalidate(
     *, db_path: str, session_id: str, target_node: str | None, reason: str
 ) -> dict:
-    if not target_node:
+    if not target_node or not target_node.strip():
         raise ValueError("target_node is required for action='invalidate'")
 
     with contextlib.closing(_db(db_path)) as conn:

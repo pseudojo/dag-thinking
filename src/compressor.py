@@ -140,7 +140,9 @@ def _compress_list(
     extra_keywords: frozenset = frozenset(),  # I06
 ) -> str:
     lines = [item for item in text.splitlines() if item.strip()]
-    k = max(1, round(len(lines) * target_ratio))
+    # I37: 다중 아이템 목록 최소 2개 보존 — 1개로 과잉 압축 방지
+    floor_k = min(2, len(lines))
+    k = max(floor_k, round(len(lines) * target_ratio))
     scored = [
         (_score_sentence(item, i, len(lines), extra_keywords), i, item)
         for i, item in enumerate(lines)
@@ -179,10 +181,11 @@ def _join_sentences(sentences: list[str]) -> str:
 def _split_sentences(text: str) -> list[str]:
     """텍스트를 문장 단위로 분리.
 
-    ASCII (.!?): 종결자 뒤 공백(whitespace+) 기준 분리
+    ASCII (.!?): 비-종결자 뒤의 단일 종결자 + 공백 기준 분리
+                 연속 종결자(줄임표 `...`) 뒤 공백은 경계로 인정하지 않음
     CJK (。！？): 공백 없이도 종결자 자체로 즉시 분리
     """
-    sentences = re.split(r"(?<=[.!?])\s+|(?<=[。！？])", text.strip())
+    sentences = re.split(r"(?<=[^.!?][.!?])\s+|(?<=[。！？])", text.strip())
     return [s.strip() for s in sentences if s.strip()]
 
 
@@ -196,7 +199,8 @@ def _compress_prose(
     if not sentences:
         return text
 
-    k = max(1, round(len(sentences) * target_ratio))
+    floor_k = min(2, len(sentences))
+    k = max(floor_k, round(len(sentences) * target_ratio))
     scored = [
         (_score_sentence(s, i, len(sentences), extra_keywords), i, s)
         for i, s in enumerate(sentences)
