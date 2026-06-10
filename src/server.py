@@ -6,9 +6,10 @@ import contextlib
 import os
 import sqlite3
 from collections import deque
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastmcp import FastMCP
+from pydantic import Field
 
 try:
     from .compressor import compress, estimate_tokens
@@ -878,19 +879,90 @@ mcp = FastMCP("dag-thinking")
     },
 )
 def dag_thinking(
-    action: Literal["think", "status", "invalidate", "restore"],
-    session_id: str,
-    node_name: str | None = None,
-    thought_type: Literal[
-        "Objective", "Hypothesis", "Assumption", "Evidence", "Critique", "Synthesis", "Action"
-    ]
-    | None = None,
-    payload: str | None = None,
-    depends_on: list[str] | None = None,
-    note: str = "",
-    target_node: str | None = None,
-    reason: str = "",
-    ccr_hash: str | None = None,
+    action: Annotated[
+        Literal["think", "status", "invalidate", "restore"],
+        Field(description=(
+            "Operation to perform. "
+            "'think': create/update a reasoning node "
+            "(requires node_name, thought_type, payload). "
+            "'status': view DAG topology, metrics, and restoration manifest. "
+            "'invalidate': cascade-mark a node and descendants as INVALIDATED "
+            "(requires target_node). "
+            "'restore': retrieve original payload by ccr_hash; "
+            "omit hash to list all restorable nodes."
+        )),
+    ],
+    session_id: Annotated[
+        str,
+        Field(description=(
+            "Unique session identifier. Use a consistent ID across all calls "
+            "in one reasoning session (e.g. 'analysis_2026_01'). Max 200 chars."
+        )),
+    ],
+    node_name: Annotated[
+        str | None,
+        Field(description=(
+            "Reasoning node name (required for action='think'). "
+            "Must be unique within the session. "
+            "Leading/trailing spaces are stripped. Max 200 chars."
+        )),
+    ] = None,
+    thought_type: Annotated[
+        Literal[
+            "Objective", "Hypothesis", "Assumption", "Evidence", "Critique", "Synthesis", "Action"
+        ]
+        | None,
+        Field(description=(
+            "Reasoning node type (required for action='think'). "
+            "Recommended flow: Objective → Hypothesis/Assumption → Evidence → Synthesis → Action. "
+            "Use Critique to challenge any node."
+        )),
+    ] = None,
+    payload: Annotated[
+        str | None,
+        Field(description=(
+            "Content of this reasoning step (required for action='think'). "
+            "80–1500 characters. Long content is automatically compressed and cached via CCR."
+        )),
+    ] = None,
+    depends_on: Annotated[
+        list[str] | None,
+        Field(description=(
+            "Parent node names whose context this node builds upon (action='think'). "
+            "Parent payloads are auto-resolved into parent_context in the response. "
+            "Max 20 parents. Duplicates and surrounding spaces are stripped automatically."
+        )),
+    ] = None,
+    note: Annotated[
+        str,
+        Field(description=(
+            "Scratchpad text for this node — not compressed, not indexed. "
+            "Use for temporary annotations or reasoning metadata. Max 500 chars."
+        )),
+    ] = "",
+    target_node: Annotated[
+        str | None,
+        Field(description=(
+            "Node name to cascade-invalidate (required for action='invalidate'). "
+            "All descendant nodes are also marked INVALIDATED. "
+            "Use action='status' to see available node names."
+        )),
+    ] = None,
+    reason: Annotated[
+        str,
+        Field(description=(
+            "Human-readable reason for invalidation (action='invalidate'). "
+            "Optional — included in the response for audit trail."
+        )),
+    ] = "",
+    ccr_hash: Annotated[
+        str | None,
+        Field(description=(
+            "24-char hex hash to restore (action='restore'). "
+            "Omit to list all restorable nodes in the session. "
+            "Find hashes in the restoration_manifest returned by action='status'."
+        )),
+    ] = None,
 ) -> dict:
     """
     Single entry point for DAG-structured reasoning with automatic CCR context compression.

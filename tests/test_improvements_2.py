@@ -133,28 +133,5 @@ class TestDagHealth:
             "Synthesis 없는데 is_converging이 True"
         )
 
-    def test_ic27_synthesis_node_marks_converging(self, db_path):
-        """IC27: Synthesis 노드 추가 → is_converging == True"""
-        think(db_path, "s1", "n1", "Objective")
-        think(db_path, "s1", "syn", "Synthesis")
-        result = status(db_path, "s1")
-        assert result["dag_health"]["is_converging"] is True, (
-            "Synthesis 노드 있는데 is_converging이 False"
-        )
-
-    def test_ic28_orphan_nodes_detected(self, db_path):
-        """IC28: 연결 없는 2개 노드 → orphan_nodes 포함"""
-        think(db_path, "s1", "n1", "Objective")  # depends_on 없음
-        think(db_path, "s1", "n2", "Hypothesis")  # depends_on 없음
-        result = status(db_path, "s1")
-        orphans = result["dag_health"]["orphan_nodes"]
-        assert len(orphans) >= 1, f"연결 없는 2개 노드임에도 orphan_nodes가 비어있음: {orphans}"
-
-    def test_ic29_max_depth_chain(self, db_path):
-        """IC29: A→B→C 체인 → max_depth == 2"""
-        think(db_path, "s1", "a", "Objective")
-        think(db_path, "s1", "b", "Hypothesis", depends_on=["a"])
-        think(db_path, "s1", "c", "Evidence", depends_on=["b"])
-        result = status(db_path, "s1")
-        depth = result["dag_health"]["max_depth"]
-        assert depth == 2, f"A→B→C 체인의 max_depth가 2가 아님: {depth}"
+    # IC27/IC28/IC29 — test_v13_improvements.py C39/C41/C40에서 커버
+    # is_converging/orphan_nodes/max_depth는 v13 TestContextPressureAndDagHealth 참조

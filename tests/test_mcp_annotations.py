@@ -18,6 +18,13 @@ def _get_dag_tool():
     return asyncio.run(_fetch())
 
 
+def _get_input_schema() -> dict:
+    """dag_thinking 툴의 MCP inputSchema(JSON Schema dict) 반환."""
+    tool = _get_dag_tool()
+    assert tool is not None, "dag_thinking 툴이 MCP 서버에 등록되어 있지 않음"
+    return tool.to_mcp_tool().inputSchema
+
+
 def _get_mcp_tool_annotations():
     """dag_thinking 툴의 MCP ToolAnnotations 객체를 반환."""
     tool = _get_dag_tool()
@@ -74,3 +81,43 @@ class TestMcpToolAnnotations:
         result = think(db_path, "s1", "n1", "Objective")
         assert "thought_type" in result, "thought_type 필드가 think 응답에서 사라짐"
         assert result["thought_type"] == "Objective"
+
+
+class TestMcpParameterDescriptions:
+    """P1-P6: MCP inputSchema 파라미터 description — LLM 가이던스 품질 검증."""
+
+    def test_action_param_has_description(self):
+        """P1: action 파라미터에 description 있어야 한다 (LLM이 4개 동작을 구분 가능)."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("action", {})
+        assert "description" in prop, "action 파라미터에 description 없음 — Field(description=...) 미설정"
+
+    def test_session_id_param_has_description(self):
+        """P2: session_id 파라미터에 description 있어야 한다."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("session_id", {})
+        assert "description" in prop, "session_id 파라미터에 description 없음"
+
+    def test_payload_param_has_description(self):
+        """P3: payload 파라미터에 description 있어야 한다 (80-1500자 제약 안내)."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("payload", {})
+        assert "description" in prop, "payload 파라미터에 description 없음"
+
+    def test_depends_on_param_has_description(self):
+        """P4: depends_on 파라미터에 description 있어야 한다."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("depends_on", {})
+        assert "description" in prop, "depends_on 파라미터에 description 없음"
+
+    def test_target_node_param_has_description(self):
+        """P5: target_node 파라미터에 description 있어야 한다."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("target_node", {})
+        assert "description" in prop, "target_node 파라미터에 description 없음"
+
+    def test_ccr_hash_param_has_description(self):
+        """P6: ccr_hash 파라미터에 description 있어야 한다."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("ccr_hash", {})
+        assert "description" in prop, "ccr_hash 파라미터에 description 없음"
