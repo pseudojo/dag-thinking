@@ -24,8 +24,8 @@ class TestI12SplitSentencesCJKNoSpace:
         assert len(result) == 3, f"expected 3 sentences, got {len(result)}: {result}"
 
     def test_ascii_with_space_regression(self):
-        """ASCII 종결자 + 공백 → 기존 동작 회귀 없음."""
-        result = _split_sentences("A. B. C.")
+        """ASCII 종결자 + 공백 → 소문자 3자+ 뒤 분리 (I49: 약어 방지로 단일 대문자 제외)."""
+        result = _split_sentences("The test passed. Results look good. Analysis done.")
         assert len(result) == 3, f"expected 3 sentences, got {len(result)}: {result}"
 
     def test_cjk_mixed_no_space(self):

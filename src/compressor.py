@@ -242,13 +242,24 @@ def _join_sentences(sentences: list[str]) -> str:
 def _split_sentences(text: str) -> list[str]:
     """텍스트를 문장 단위로 분리.
 
-    ASCII (.!?): 비-종결자 뒤의 단일 종결자 + 공백 기준 분리
-                 연속 종결자(줄임표 `...`) 뒤 공백은 경계로 인정하지 않음
+    ASCII (.!?): 소문자 3글자 이상 뒤 단일 종결자 + 공백 → 문장 경계
+                 약어(Dr., e.g., vs., Fig.) — 앞에 대문자·공백·점이 있어 3-소문자 조건 불충족
+                 연속 종결자(줄임표 `...`) — 내부 점이 소문자가 아니라 불매치
+    복합 종결자: ?!/!!/??  등 두 글자 종결자 뒤 공백도 경계 인식 (I48)
     CJK (。！？): 공백 없이도 종결자 자체로 즉시 분리
+
+    I49: re.sub 마킹 방식 — Python re 고정폭 룩비하인드 제약(대안 길이 동일 요구) 우회
     """
-    # I48: [!?]{2} 대안 추가 — ?!/!!/??  등 복합 종결자 뒤 공백도 경계 인식
-    sentences = re.split(r"(?<=[^.!?][.!?]|[!?]{2})\s+|(?<=[。！？])", text.strip())
-    return [s.strip() for s in sentences if s.strip()]
+    t = text.strip()
+    if not t:
+        return []
+    _M = "\x00"
+    t = re.sub(r"(?<=[。！？])", _M, t)  # CJK 즉시 분리
+    t = re.sub(r"([!?]{2})\s+", r"\1" + _M, t)  # 복합 종결자 먼저 (I48)
+    t = re.sub(r"([a-z][!?])\s+", r"\1" + _M, t)  # !? 단일: 소문자 1개 충분
+    t = re.sub(r"([a-z][a-z][a-z]\.)\s+", r"\1" + _M, t)  # . 소문자 3개+ (약어 방지)
+    t = re.sub(r"([A-Z]{2,}\.)\s+", r"\1" + _M, t)  # . 대문자 약어: RPS./API.
+    return [s.strip() for s in t.split(_M) if s.strip()]
 
 
 def _compress_prose(

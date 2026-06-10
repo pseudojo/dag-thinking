@@ -240,31 +240,46 @@ def _validate_think_inputs(
 # ---------------------------------------------------------------------------
 
 
-def _cascade_invalidate(conn: sqlite3.Connection, session_id: str, root: str) -> list[str]:
-    rows = conn.execute(
-        "SELECT parent, child FROM edges WHERE session_id=?", (session_id,)
-    ).fetchall()
-    children: dict[str, list[str]] = {}
-    for row in rows:
-        children.setdefault(row["parent"], []).append(row["child"])
+def _cascade_invalidate(
+    conn: sqlite3.Connection,
+    session_id: str,
+    root: str,
+    edges_graph: dict[str, list[str]] | None = None,
+) -> list[str]:
+    # I53: edges_graph 파라미터 — 호출자 제공 시 중복 DB 조회 제거
+    children = edges_graph if edges_graph is not None else _load_forward_edges(conn, session_id)
 
-    affected = []
+    reachable: list[str] = []
     stack = [root]
-    visited = set()
+    visited: set[str] = set()
     while stack:
         node = stack.pop()
         if node in visited:
             continue
         visited.add(node)
-        affected.append(node)
+        reachable.append(node)
         for child in children.get(node, []):
             stack.append(child)
 
+    if not reachable:
+        return []
+
+    # I53: 이미 INVALIDATED인 노드 제외 — 신규 무효화 노드만 반환
+    placeholders = ", ".join("?" * len(reachable))
+    status_rows = conn.execute(
+        f"SELECT name, status FROM nodes WHERE session_id=? AND name IN ({placeholders})",
+        [session_id, *reachable],
+    ).fetchall()
+    newly = [r["name"] for r in status_rows if r["status"] != "INVALIDATED"]
+
+    if not newly:
+        return []
+
     conn.executemany(
         "UPDATE nodes SET status='INVALIDATED' WHERE session_id=? AND name=?",
-        [(session_id, n) for n in affected],
+        [(session_id, n) for n in newly],
     )
-    return affected
+    return newly
 
 
 # ---------------------------------------------------------------------------
@@ -342,8 +357,15 @@ def call_dag_thinking(
             f"(got {len(session_id)})"
         )
 
+    # I51: node_name 공백 정규화 — DB 저장 전 strip
+    if node_name is not None:
+        node_name = node_name.strip()
+
     # I29: depends_on 중복 항목 순서 보존 제거 — 불필요한 중복 엣지/사이클감지 방지
-    deduped_depends_on = list(dict.fromkeys(depends_on)) if depends_on else []
+    # I51: 각 항목 strip 후 dedup (공백 포함 부모 이름 참조 방어)
+    deduped_depends_on = (
+        list(dict.fromkeys(p.strip() for p in depends_on if p.strip())) if depends_on else []
+    )
 
     if action == "think":
         return _action_think(
@@ -523,20 +545,21 @@ def _action_think(
         prev_session_total = prev_row["tokens_saved"] if prev_row else 0
         delta = 0  # with conn: 내에서 갱신됨
 
-        # I40: depends_on 빈 경우 DB 조회·사이클 검사 스킵 (불필요한 full-scan 방지)
-        if depends_on:
-            forward_graph = _load_forward_edges(conn, session_id)
-            for parent in depends_on:
-                if _has_cycle_graph(forward_graph, parent, node_name):
-                    raise ValueError(
-                        f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
-                    )
-            parent_context = _resolve_parent_context(conn, session_id, depends_on)
-        else:
-            parent_context = {}
-
         with conn:
             _ensure_session(conn, session_id)
+
+            # I50: cycle check를 with conn: 내부로 이동 — read-then-write TOCTOU gap 제거
+            # I40: depends_on 빈 경우 DB 조회·사이클 검사 스킵 (불필요한 full-scan 방지)
+            if depends_on:
+                forward_graph = _load_forward_edges(conn, session_id)
+                for parent in depends_on:
+                    if _has_cycle_graph(forward_graph, parent, node_name):
+                        raise ValueError(
+                            f"Cycle detected: adding edge {parent}→{node_name} would create a cycle"
+                        )
+                parent_context = _resolve_parent_context(conn, session_id, depends_on)
+            else:
+                parent_context = {}
 
             # --- upsert node ---
             existing = conn.execute(
@@ -818,7 +841,13 @@ def _action_restore(*, db_path: str, session_id: str, ccr_hash_val: str | None) 
             "tokens": tokens,
         }
 
-        if row["status"] == "INVALIDATED":
+        if row["status"] is None:
+            # I52: LEFT JOIN 미매칭 — nodes 행 없음(삭제된 노드)
+            result["warning"] = (
+                f"Node '{row['node_name']}' was deleted. "
+                "This payload is from a node that no longer exists in the session."
+            )
+        elif row["status"] == "INVALIDATED":
             result["warning"] = (
                 f"Node '{row['node_name']}' is INVALIDATED. "
                 "This payload may be stale or superseded."
