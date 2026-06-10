@@ -74,7 +74,6 @@ class TestCompressProseMinK:
         """I39-T1: 2문장, ratio=0.42 → k=max(2,round(0.84))=2 (최소 2개 보존)"""
         text = _make_prose(2)
         result = _compress_prose(text, _RATIO_LONG)
-        sentences_out = [s for s in result.split(". ") if s.strip()]
         # 결과가 원문보다 적으면 안 됨 — 최소 2문장 구성 요소 확인
         assert len(result.strip()) > 0
         # 2문장 입력에서 압축 후 원문 대비 최소 절반 이상 유지 (2/2 = 100% 또는 양쪽 보존)

@@ -23,9 +23,10 @@ except ImportError:
 
 PAYLOAD = (
     "The key finding from this analysis is that the current architecture has a critical bottleneck "
-    "in the data pipeline. The assumption is that horizontal scaling will resolve the throughput issue. "
-    "Evidence from load tests shows that latency doubles beyond 500 concurrent connections. "
-    "Therefore, the conclusion is to implement a message queue to decouple producers from consumers. "
+    "in the data pipeline. The assumption is that horizontal scaling will resolve the throughput "
+    "issue. Evidence from load tests shows that latency doubles beyond 500 concurrent connections. "
+    "Therefore, the conclusion is to implement a message queue to decouple producers "
+    "from consumers. "
     "This result must be addressed before the next production release to avoid system failure."
 )
 
@@ -75,7 +76,7 @@ class TestI09ContextPressureRegression:
 
 
 class TestI10DagHealthInvalidatedFilter:
-    """I10: INVALIDATED 노드를 경유하는 엣지가 max_depth / orphan_nodes 계산을 오염하는 버그 수정."""
+    """I10: INVALIDATED 엣지가 max_depth / orphan_nodes 계산을 오염하는 버그 수정."""
 
     def test_max_depth_excludes_path_through_invalidated_node(self, db_path):
         """I10-1: A→B→C, B invalidate(cascade: C도) → D 단독 생성.

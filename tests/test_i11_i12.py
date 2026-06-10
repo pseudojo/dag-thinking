@@ -9,9 +9,10 @@ from tests.helpers import invalidate, restore, status, think
 
 _LONG_PAYLOAD = (
     "The key finding from this analysis is that the current architecture has a critical bottleneck "
-    "in the data pipeline. The assumption is that horizontal scaling will resolve the throughput issue. "
-    "Evidence from load tests shows that latency doubles beyond 500 concurrent connections. "
-    "Therefore, the conclusion is to implement a message queue to decouple producers from consumers. "
+    "in the data pipeline. The assumption is that horizontal scaling will resolve the throughput "
+    "issue. Evidence from load tests shows that latency doubles beyond 500 concurrent connections. "
+    "Therefore, the conclusion is to implement a message queue to decouple producers "
+    "from consumers. "
     "This result must be addressed before the next production release to avoid system failure."
 )
 

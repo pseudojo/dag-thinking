@@ -84,7 +84,6 @@ class TestSessionTotalSaved:
         # 먼저 긴 노드로 누적값 만들기
         think(db_path, "s1", "n1", "Objective")
         # 짧은 노드 (passthrough)
-        short = "This is a short payload for passthrough testing. No compression." * 1
         # 80자 이상이지만 압축 안 되는 경우 확인
         short_payload = (
             "Key finding: system stable. No errors. All metrics nominal. Status: green." + " " * 10

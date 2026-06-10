@@ -212,7 +212,8 @@ class TestThoughtTypeKeywords:
             "We combine evidence from multiple sources to reconcile the hypothesis. "
             "The summary is that the system requires a fundamental redesign. "
             "This synthesis represents the core result of our analysis phase. "
-            "The final integration of all evidence points to a clear direction forward for the team."
+            "The final integration of all evidence points to a clear direction forward for "
+            "the team."
         )
         result = compress(text, "Synthesis")
         assert isinstance(result, tuple) and len(result) == 3

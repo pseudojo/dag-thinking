@@ -103,7 +103,6 @@ class TestPerNodeTokenStorage:
     def test_r3_t3_update_refreshes_tokens_original(self, fresh_db):
         """R3-T3: 같은 노드를 다른 payload로 재생성 → tokens_original 갱신"""
         short_payload = PAYLOAD  # 기본 payload
-        long_payload = PAYLOAD * 2  # 더 긴 payload — tokens_original이 달라야 함
         # 첫 번째 생성
         think(fresh_db, "s1", "n1", "Objective", payload=short_payload)
         with contextlib.closing(_db(fresh_db)) as conn:

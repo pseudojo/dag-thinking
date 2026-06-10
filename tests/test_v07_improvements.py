@@ -18,18 +18,24 @@ from tests.helpers import restore, status, think
 
 PAYLOAD = (
     "The key finding from this analysis is that the authentication module lacks rate limiting. "
-    "This is a critical vulnerability that must be addressed immediately as the result of penetration testing. "
+    "This is a critical vulnerability that must be addressed immediately as the result "
+    "of penetration testing. "
     "The assumption is that implementing token bucket algorithm will be sufficient. "
     "Therefore we conclude that a middleware-based solution is the fastest path to remediation. "
     "The error was introduced during the last refactor when the old rate limiter was removed."
 )
 
 PAYLOAD_B = (
-    "The comprehensive analysis of the distributed system performance reveals multiple critical bottlenecks. "
-    "First, the key finding is that network latency between microservices accounts for 40% of total request time. "
-    "Second, the assumption that in-memory caching would be sufficient has proven incorrect under load. "
-    "Therefore, we must implement a distributed cache layer such as Redis to address this critical issue. "
-    "The evidence from load testing shows that without caching, the error rate exceeds 5% at 1000 RPS."
+    "The comprehensive analysis of the distributed system performance reveals multiple "
+    "critical bottlenecks. "
+    "First, the key finding is that network latency between microservices accounts for "
+    "40% of total request time. "
+    "Second, the assumption that in-memory caching would be sufficient has proven incorrect "
+    "under load. "
+    "Therefore, we must implement a distributed cache layer such as Redis to address "
+    "this critical issue. "
+    "The evidence from load testing shows that without caching, the error rate exceeds "
+    "5% at 1000 RPS."
 )
 
 

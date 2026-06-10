@@ -17,10 +17,12 @@ from tests.helpers import invalidate, restore, status, think
 class TestThinkStatusRestoreRoundtrip:
     LONG_PAYLOAD = (
         "We need to analyze the root cause of the performance degradation observed in production. "
-        "The key finding is that database queries are not using the correct index on the user_id column. "
-        "Therefore, we must add a composite index covering user_id and created_at to resolve this critical issue. "
-        "The assumption is that the table has fewer than 10M rows, which is a safe estimate based on current growth. "
-        "This is a result of the migration script that ran last week and dropped the old index accidentally. "
+        "The key finding is that database queries are not using the correct index on the user_id "
+        "column. Therefore, we must add a composite index covering user_id and created_at "
+        "to resolve this critical issue. "
+        "The assumption is that the table has fewer than 10M rows, which is a safe estimate "
+        "based on current growth. "
+        "This is a result of the migration script that ran last week and dropped the old index. "
         "The conclusion is to roll out the fix during the next maintenance window to minimize risk."
     )
 
@@ -79,16 +81,21 @@ class TestDependsOnParentContext:
     PAYLOAD_A = (
         "The objective is to reduce API latency below 200ms. "
         "This is a critical requirement from the SLA agreement with enterprise customers. "
-        "Key findings show that 80% of slow requests are caused by synchronous database calls in the hot path. "
-        "The assumption here is that we can safely move these calls to async without breaking existing contracts. "
+        "Key findings show that 80% of slow requests are caused by synchronous database calls "
+        "in the hot path. "
+        "The assumption here is that we can safely move these calls to async without breaking "
+        "existing contracts. "
         "Therefore the result of this analysis points to async refactoring as the primary lever."
     )
     PAYLOAD_B = (
-        "Hypothesis: replacing synchronous DB calls with async alternatives will reduce p99 latency by 60%. "
-        "Evidence from the staging environment shows that async queries complete in under 50ms on average. "
+        "Hypothesis: replacing synchronous DB calls with async alternatives will reduce p99 "
+        "latency by 60%. "
+        "Evidence from the staging environment shows that async queries complete in under 50ms "
+        "on average. "
         "The risk is that connection pool exhaustion could occur under high concurrency. "
         "We must monitor pool usage carefully and set conservative limits initially. "
-        "The conclusion is that this approach is viable and should be tested in a canary deployment first."
+        "The conclusion is that this approach is viable and should be tested in a canary "
+        "deployment first."
     )
 
     def test_no_depends_on_no_parent_context(self, db_path):
@@ -140,10 +147,11 @@ class TestDependsOnParentContext:
 
 class TestCycleDetection:
     PAYLOAD = (
-        "This is an analysis of the system architecture. The key finding is that the current design "
-        "creates a circular dependency between modules A and B. The conclusion is that we need to "
-        "introduce an interface layer to break this cycle. This is a critical architectural decision "
-        "that must be resolved before the next release. The result would be a cleaner separation."
+        "This is an analysis of the system architecture. The key finding is that the current "
+        "design creates a circular dependency between modules A and B. The conclusion is that "
+        "we need to introduce an interface layer to break this cycle. "
+        "This is a critical architectural decision that must be resolved before the next release. "
+        "The result would be a cleaner separation."
     )
 
     def test_self_cycle_rejected(self, db_path):
@@ -210,10 +218,13 @@ class TestCascadeInvalidation:
 
 class TestRestore:
     PAYLOAD = (
-        "The key finding from our security audit is that the authentication module lacks rate limiting. "
-        "This is a critical vulnerability that must be addressed immediately as the result of penetration testing. "
+        "The key finding from our security audit is that the authentication module lacks "
+        "rate limiting. "
+        "This is a critical vulnerability that must be addressed immediately as the result "
+        "of penetration testing. "
         "The assumption is that implementing token bucket algorithm will be sufficient. "
-        "Therefore we conclude that a middleware-based solution is the fastest path to remediation. "
+        "Therefore we conclude that a middleware-based solution is the fastest path to "
+        "remediation. "
         "The error was introduced during the last refactor when the old rate limiter was removed."
     )
 
@@ -277,14 +288,22 @@ class TestMetrics:
     """T27: 압축 메트릭 정확성 검증 (C22, C23)"""
 
     LONG_PAYLOAD = (
-        "The comprehensive analysis of the distributed system performance reveals multiple critical bottlenecks. "
-        "First, the key finding is that network latency between microservices accounts for 40% of total request time. "
-        "Second, the assumption that in-memory caching would be sufficient has proven incorrect under load. "
-        "Therefore, we must implement a distributed cache layer such as Redis to address this critical issue. "
-        "The evidence from load testing shows that without caching, the error rate exceeds 5% at 1000 RPS. "
-        "The conclusion is that a phased migration approach is the safest path, starting with read-heavy endpoints. "
-        "The result of our analysis points to three key areas: caching, connection pooling, and query optimization. "
-        "This risk assessment concludes that the proposed changes carry minimal operational risk if rolled out incrementally."
+        "The comprehensive analysis of the distributed system performance reveals multiple "
+        "critical bottlenecks. "
+        "First, the key finding is that network latency between microservices accounts for "
+        "40% of total request time. "
+        "Second, the assumption that in-memory caching would be sufficient has proven incorrect "
+        "under load. "
+        "Therefore, we must implement a distributed cache layer such as Redis to address "
+        "this critical issue. "
+        "The evidence from load testing shows that without caching, the error rate exceeds "
+        "5% at 1000 RPS. "
+        "The conclusion is that a phased migration approach is the safest path, starting with "
+        "read-heavy endpoints. "
+        "The result of our analysis points to three key areas: caching, connection pooling, "
+        "and query optimization. "
+        "This risk assessment concludes that the proposed changes carry minimal operational "
+        "risk if rolled out incrementally."
     )
 
     def test_tokens_saved_accurate_in_status(self, db_path):
@@ -345,13 +364,20 @@ class TestEdgeCases:
         """C11/T12: 700자+ payload → 75% 이하로 압축 (목표 42% 유지율 ±허용치)"""
         # C11: 700+ chars → ~42% retained (±10%)
         long_text = (
-            "The comprehensive analysis of the distributed system performance reveals multiple critical bottlenecks. "
-            "First, the key finding is that network latency between microservices accounts for 40% of total request time. "
-            "Second, the assumption that in-memory caching would be sufficient has proven incorrect under load. "
-            "Therefore, we must implement a distributed cache layer such as Redis to address this critical issue. "
-            "The evidence from load testing shows that without caching, the error rate exceeds 5% at 1000 RPS. "
-            "The conclusion is that a phased migration approach is the safest path, starting with read-heavy endpoints. "
-            "The result of our analysis points to three key areas: caching, connection pooling, and query optimization. "
+            "The comprehensive analysis of the distributed system performance reveals multiple "
+            "critical bottlenecks. "
+            "First, the key finding is that network latency between microservices accounts for "
+            "40% of total request time. "
+            "Second, the assumption that in-memory caching would be sufficient has proven "
+            "incorrect under load. "
+            "Therefore, we must implement a distributed cache layer such as Redis to address "
+            "this critical issue. "
+            "The evidence from load testing shows that without caching, the error rate exceeds "
+            "5% at 1000 RPS. "
+            "The conclusion is that a phased migration approach is the safest path, starting "
+            "with read-heavy endpoints. "
+            "The result of our analysis points to three key areas: caching, connection pooling, "
+            "and query optimization. "
         )
         assert len(long_text) >= 700
         compressed, _, _ = compress(long_text)

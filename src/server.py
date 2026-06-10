@@ -153,15 +153,17 @@ def _has_cycle_graph(
 # Module-level constants — defined before first use
 # ---------------------------------------------------------------------------
 
-VALID_THOUGHT_TYPES = frozenset({
-    "Objective",
-    "Hypothesis",
-    "Assumption",
-    "Evidence",
-    "Critique",
-    "Synthesis",
-    "Action",
-})
+VALID_THOUGHT_TYPES = frozenset(
+    {
+        "Objective",
+        "Hypothesis",
+        "Assumption",
+        "Evidence",
+        "Critique",
+        "Synthesis",
+        "Action",
+    }
+)
 
 # I17: depends_on 상한 — SQLite 바인딩 파라미터 제한(999) 안전 마진
 _MAX_DEPENDS_ON = 20
@@ -678,17 +680,19 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
     # restoration manifest
     manifest_nodes = []
     for row in node_rows:
-        manifest_nodes.append({
-            "name": row["name"],
-            "type": row["thought_type"],
-            "status": row["status"],
-            "ccr_hash": row["ccr_hash"],
-            "restore_cmd": (
-                f"dag_thinking(action='restore', "
-                f"session_id={repr(session_id)}, "
-                f"ccr_hash={repr(row['ccr_hash'])})"
-            ),
-        })
+        manifest_nodes.append(
+            {
+                "name": row["name"],
+                "type": row["thought_type"],
+                "status": row["status"],
+                "ccr_hash": row["ccr_hash"],
+                "restore_cmd": (
+                    f"dag_thinking(action='restore', "
+                    f"session_id={repr(session_id)}, "
+                    f"ccr_hash={repr(row['ccr_hash'])})"
+                ),
+            }
+        )
 
     return {
         "session_id": session_id,

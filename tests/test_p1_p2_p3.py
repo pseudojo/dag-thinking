@@ -23,10 +23,13 @@ def _conn(db_path):
 
 PAYLOAD2 = (
     "This alternative analysis reveals a different architectural bottleneck in the message broker. "
-    "The corrected hypothesis is that vertical scaling addresses the throughput limitation more cost-effectively. "
-    "New evidence from load tests shows that connection pooling reduces latency by 70 percent at peak load. "
-    "The revised conclusion is to implement connection pooling before considering queue decoupling. "
-    "This updated finding must be validated in the staging environment before the next production release."
+    "The corrected hypothesis is that vertical scaling addresses the throughput limitation "
+    "more cost-effectively. "
+    "New evidence from load tests shows that connection pooling reduces latency by 70 percent "
+    "at peak load. "
+    "The revised conclusion is to implement connection pooling before considering queue "
+    "decoupling. "
+    "This updated finding must be validated in the staging environment before the next release."
 )
 
 
@@ -92,7 +95,7 @@ class TestP13RestoreCmdEscape:
     def test_session_id_with_quote_valid_syntax_in_restore(self, db_path):
         """P1-3: restore(ccr_hash=None) 목록의 restore_cmd도 valid Python."""
         sid = "it's_a_test"
-        r = think(db_path, sid, "node_a", "Objective")
+        think(db_path, sid, "node_a", "Objective")
         result = restore(db_path, sid)
         cmd = result["restorable_nodes"][0]["restore_cmd"]
         try:

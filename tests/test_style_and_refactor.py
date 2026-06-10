@@ -108,7 +108,7 @@ class TestCompressListBehavior:
         lines = [f"- item {i} with some content" for i in range(10)]
         text = "\n".join(lines)
         result = _compress_list(text, 0.5)
-        result_lines = [l for l in result.splitlines() if l.strip()]
+        result_lines = [line for line in result.splitlines() if line.strip()]
         assert len(result_lines) == 5  # round(10 * 0.5)
 
     def test_compress_list_preserves_order(self):

@@ -43,29 +43,32 @@ class TestTokensSavedOnUpdate:
         actual = s["metrics"]["tokens_saved"]
         assert actual == expected, (
             f"노드 업데이트 후 tokens_saved 이중 집계: actual={actual}, expected={expected}. "
-            f"r1.saved={r1['compression']['tokens_saved']}, r2.saved={r2['compression']['tokens_saved']}"
+            f"r1.saved={r1['compression']['tokens_saved']}, "
+            f"r2.saved={r2['compression']['tokens_saved']}"
         )
 
     def test_update_same_payload_no_double_count(self, db_path):
         """BUG-1 변형: 동일 payload로 재생성해도 이중 집계 없음."""
-        r1 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
+        think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
         r2 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
         s = status(db_path, "s1")
         expected = r2["compression"]["tokens_saved"]
         assert s["metrics"]["tokens_saved"] == expected, (
-            f"동일 payload 재생성 후 이중 집계: total={s['metrics']['tokens_saved']}, expected={expected}"
+            f"동일 payload 재생성 후 이중 집계: "
+            f"total={s['metrics']['tokens_saved']}, expected={expected}"
         )
 
     def test_multi_node_update_accumulates_correctly(self, db_path):
         """BUG-1: 두 노드 중 하나를 업데이트해도 session total이 올바름."""
-        r1 = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
+        think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_A)
         r2 = think(db_path, "s1", "n2", "Hypothesis", payload=_PAYLOAD_A)
         # n1을 새 payload로 업데이트
         r1b = think(db_path, "s1", "n1", "Objective", payload=_PAYLOAD_B)
         s = status(db_path, "s1")
         expected = r1b["compression"]["tokens_saved"] + r2["compression"]["tokens_saved"]
         assert s["metrics"]["tokens_saved"] == expected, (
-            f"멀티 노드 업데이트 후 집계 오류: actual={s['metrics']['tokens_saved']}, expected={expected}"
+            f"멀티 노드 업데이트 후 집계 오류: "
+            f"actual={s['metrics']['tokens_saved']}, expected={expected}"
         )
 
 

@@ -61,7 +61,8 @@ class TestSessionTotalSavedAccuracy:
             r1["compression"]["session_total_saved"] == r2["compression"]["session_total_saved"]
         ), (
             f"QC-3: changed on same-payload update: "
-            f"{r1['compression']['session_total_saved']} → {r2['compression']['session_total_saved']}"
+            f"{r1['compression']['session_total_saved']} "
+            f"→ {r2['compression']['session_total_saved']}"
         )
 
 

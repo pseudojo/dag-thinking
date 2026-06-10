@@ -108,33 +108,33 @@ class TestCompressListMinK:
         """T37-1: 1-item 목록 → k=1 (변경 없음)"""
         text = _make_list_text(1, 100)
         result = _compress_list(text, _RATIO_LONG)
-        lines = [l for l in result.splitlines() if l.strip()]
+        lines = [line for line in result.splitlines() if line.strip()]
         assert len(lines) == 1
 
     def test_two_item_list_ratio_42_keeps_2(self):
         """T37-2: 2-item 목록, ratio=0.42 → k=max(2,round(0.84))=max(2,1)=2"""
         text = _make_list_text(2, 100)
         result = _compress_list(text, _RATIO_LONG)
-        lines = [l for l in result.splitlines() if l.strip()]
+        lines = [line for line in result.splitlines() if line.strip()]
         assert len(lines) == 2
 
     def test_three_item_list_ratio_42_keeps_at_least_2(self):
         """T37-3: 3-item 목록, ratio=0.42 → k=max(2,1)=2 (버그 픽스 핵심)"""
         text = _make_list_text(3, 100)
         result = _compress_list(text, _RATIO_LONG)
-        lines = [l for l in result.splitlines() if l.strip()]
+        lines = [line for line in result.splitlines() if line.strip()]
         assert len(lines) >= 2, f"3-item 목록을 {len(lines)}개로 과잉 압축함 (최소 2개 보존 필요)"
 
     def test_three_item_list_ratio_58_keeps_2(self):
         """T37-4: 3-item 목록, ratio=0.58 → k=max(2,round(1.74))=max(2,2)=2"""
         text = _make_list_text(3, 100)
         result = _compress_list(text, _RATIO_SHORT)
-        lines = [l for l in result.splitlines() if l.strip()]
+        lines = [line for line in result.splitlines() if line.strip()]
         assert len(lines) == 2
 
     def test_ten_item_list_ratio_42_keeps_4(self):
         """T37-5: 10-item 목록, ratio=0.42 → k=max(2,4)=4 (기존 동일)"""
         text = _make_list_text(10, 80)
         result = _compress_list(text, _RATIO_LONG)
-        lines = [l for l in result.splitlines() if l.strip()]
+        lines = [line for line in result.splitlines() if line.strip()]
         assert len(lines) == 4
