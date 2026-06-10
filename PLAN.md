@@ -18,6 +18,7 @@
 | v0.13 | I31 whitespace-only payload 차단, I32 idx_edges_child 인덱스, I33 _split_sentences 줄임표 false-split 수정, I34 edges 루프→executemany+가드 정리 |
 | v0.14 | I35 _action_think PERF-2 완성(읽기 쿼리 트랜잭션 외부), I36 note 길이 상한(_MAX_NOTE_LEN=500), I37 _compress_list 최소 k=2 |
 | v0.15 | I38 _split_sentences 줄임표+공백 false-split 수정(2-char lookbehind), I39 _compress_prose 최소 k=2, I40 depends_on 빈 경우 cycle check 스킵, I41 _action_invalidate target_node 공백 전용 방어 |
+| v0.16 | I42 think 응답 thought_type 필드 추가, I43 status dag.nodes ccr_hash 필드 추가, I44 _is_list_content `+` 불릿 지원(GFM), I45 _compute_dag_health total_nodes 카운트 추가 |
 
 ---
 
@@ -463,6 +464,20 @@ dag-thinking/
 □ I37. compressor.py: _compress_list — 최소 k=2 (다중 아이템 과잉 압축 방지)
         `floor_k = min(2, len(lines))`, `k = max(floor_k, round(...))`
         3-item 목록 ratio=0.42: round(1.26)=1 → max(2,1)=2 보존
+
+[ v0.16 응답 풍부화 / 압축 정확성 — I42/I43/I44/I45 ]
+□ I42. server.py: _action_think — 응답에 thought_type 필드 추가
+        기존: {status, node, ccr_hash, compression, next_hint, context_pressure}
+        변경: thought_type 필드 삽입 → LLM이 별도 status() 없이 생성 결과 확인 가능
+□ I43. server.py: _action_status — dag.nodes 항목에 ccr_hash 필드 추가
+        기존: {name, thought_type, status, created_at}
+        변경: ccr_hash 필드 추가 → restoration_manifest 교차 참조 없이 직접 접근
+□ I44. compressor.py: _is_list_content — `+` 불릿 프리픽스 지원 (GFM)
+        기존: r"^[-*•]\s+"
+        변경: r"^[+\-*•]\s+" — GitHub Flavored Markdown `+` 불릿 인정
+□ I45. server.py: _compute_dag_health — total_nodes(COMPLETED 노드 수) 추가
+        기존 반환 없음 → "total_nodes": len(completed_names) 추가
+        빈 세션 경우 total_nodes=0 포함
 
 [ v0.15 압축 정확성 / 성능 / 입력 방어 — I38/I39/I40/I41 ]
 □ I38. compressor.py: _split_sentences — 줄임표+공백 false-split 수정 (2-char lookbehind)

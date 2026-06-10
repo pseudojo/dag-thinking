@@ -87,7 +87,7 @@ def _is_list_content(text: str) -> bool:
         return False
     list_lines = sum(
         1 for line in lines
-        if re.match(r"^[-*•]\s+", line) or re.match(r"^\d+[.)]\s+", line)
+        if re.match(r"^[+\-*•]\s+", line) or re.match(r"^\d+[.)]\s+", line)  # I44: GFM `+` 불릿
     )
     return list_lines / len(lines) >= 0.5
 

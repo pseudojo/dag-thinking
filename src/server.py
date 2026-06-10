@@ -402,6 +402,7 @@ def _compute_dag_health(
             "orphan_nodes": [],
             "thought_type_distribution": {},
             "health_hint": "No nodes yet. Start with an Objective node.",
+            "total_nodes": 0,  # I45: COMPLETED 노드 수 (빈 세션)
         }
 
     # COMPLETED 노드만 구조 분석 대상 (INVALIDATED 제외)
@@ -477,6 +478,7 @@ def _compute_dag_health(
         "orphan_nodes": orphan_nodes,
         "thought_type_distribution": type_dist,
         "health_hint": health_hint,
+        "total_nodes": len(completed_names),  # I45: COMPLETED 노드 수
     }
 
 
@@ -602,6 +604,7 @@ def _action_think(
     result: dict = {
         "status": op_status,
         "node": node_name,
+        "thought_type": thought_type,  # I42: 생성 결과 확인을 위한 타입 필드
         "ccr_hash": hash_val,
         "compression": {
             "tokens_saved": tokens_saved,
@@ -678,6 +681,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
                     "thought_type": r["thought_type"],
                     "status": r["status"],
                     "created_at": r["created_at"],  # I04
+                    "ccr_hash": r["ccr_hash"],      # I43: 복원 해시 직접 접근
                 }
                 for r in node_rows
             ],
