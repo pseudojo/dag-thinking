@@ -21,36 +21,16 @@ from tests.helpers import PAYLOAD, invalidate, think
 class TestSplitSentencesEllipsisWithSpace:
     """I38: 줄임표 뒤 공백이 있어도 문장 경계로 오인 분리되지 않아야 함"""
 
-    def test_ellipsis_with_space_not_split(self):
-        """I38-T1: 'Wait... really?' (공백 있음) → 1개 (false-split 방지)"""
-        result = _split_sentences("Wait... really?")
-        assert len(result) == 1, f"줄임표+공백을 문장 경계로 오인 분리: {result}"
-
     def test_multiple_ellipsis_with_space_not_split(self):
         """I38-T2: 'Go... wait... stop.' (공백 있는 줄임표 연속) → 1개"""
         result = _split_sentences("Go... wait... stop.")
         assert len(result) == 1, f"줄임표 연속 공백 분리 오류: {result}"
-
-    def test_normal_ascii_split_preserved(self):
-        """I38-T3: 'Hello. World.' → ['Hello.', 'World.'] (정상 분리 유지)"""
-        result = _split_sentences("Hello. World.")
-        assert result == ["Hello.", "World."]
-
-    def test_cjk_split_preserved(self):
-        """I38-T4: CJK 종결자 즉시 분리 유지"""
-        result = _split_sentences("결론이다。다음 단계다。")
-        assert len(result) == 2
-        assert "결론이다" in result[0]
-        assert "다음 단계다" in result[1]
 
     def test_ellipsis_no_space_still_works(self):
         """I38-T5: 'Wait...really?' (공백 없음) → 여전히 1개"""
         result = _split_sentences("Wait...really?")
         assert len(result) == 1
 
-    def test_empty_string_returns_empty(self):
-        """I38-T6: 빈 문자열 → []"""
-        assert _split_sentences("") == []
 
 
 # ---------------------------------------------------------------------------

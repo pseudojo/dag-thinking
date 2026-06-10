@@ -120,20 +120,6 @@ class TestSplitSentencesEllipsis:
         assert result[0] == "No...really?"
         assert result[1] == "Yes."
 
-    def test_normal_split_preserved(self):
-        """T11: 'Hello. World.' → 정상 분리 유지"""
-        result = _split_sentences("Hello. World.")
-        assert len(result) == 2
-        assert result[0] == "Hello."
-        assert result[1] == "World."
-
-    def test_cjk_split_preserved(self):
-        """T12: CJK 종결자 즉시 분리 유지"""
-        result = _split_sentences("결론이다。다음은 단계다。")
-        assert len(result) == 2
-        assert "결론이다" in result[0]
-        assert "다음은" in result[1]
-
     def test_single_sentence_no_split(self):
         """T13: 단일 문장 → 분리 없음"""
         result = _split_sentences("End!")

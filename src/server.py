@@ -863,7 +863,20 @@ def _action_restore(*, db_path: str, session_id: str, ccr_hash_val: str | None) 
 mcp = FastMCP("dag-thinking")
 
 
-@mcp.tool()
+@mcp.tool(
+    name="dag_thinking",
+    annotations={
+        "title": "DAG-structured reasoning with CCR compression",
+        # readOnlyHint=False: think/invalidate perform DB writes
+        "readOnlyHint": False,
+        # destructiveHint=True: invalidate cascades — descendants become INVALIDATED
+        "destructiveHint": True,
+        # idempotentHint=False: repeated think calls change node state (created→updated)
+        "idempotentHint": False,
+        # openWorldHint=False: local SQLite only, no external systems
+        "openWorldHint": False,
+    },
+)
 def dag_thinking(
     action: Literal["think", "status", "invalidate", "restore"],
     session_id: str,
@@ -883,10 +896,16 @@ def dag_thinking(
     Single entry point for DAG-structured reasoning with automatic CCR context compression.
 
     action="think"      — create/update a reasoning node (node_name, thought_type, payload required)
+                          Returns: {status, node, thought_type, ccr_hash, compression,
+                                    next_hint, context_pressure, parent_context?}
     action="status"     — show DAG topology, metrics, and restoration manifest
+                          Returns: {session_id, dag, metrics, restoration_manifest, dag_health}
     action="invalidate" — cascade-invalidate a node and its descendants (target_node required)
+                          Returns: {invalidated: [names], reason, hint}
     action="restore"    — retrieve original payload by ccr_hash;
                           omit hash to list all restorable nodes
+                          Returns (hash given): {node_name, original_payload, tokens, warning?}
+                          Returns (no hash):    {restorable_nodes: [{name, ccr_hash, restore_cmd}]}
     """
     return call_dag_thinking(
         action=action,

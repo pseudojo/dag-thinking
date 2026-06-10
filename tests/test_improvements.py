@@ -20,29 +20,7 @@ from tests.helpers import invalidate, status, think
 
 
 class TestHasCycleSimplified:
-    """IC01-IC04: _has_cycle 정확성 검증"""
-
-    def test_ic01_regression_a_b_a_cycle(self, db_path):
-        """IC01: 기존 A→B→A 사이클 감지 회귀 없음"""
-        think(db_path, "s1", "a", "Objective")
-        think(db_path, "s1", "b", "Hypothesis", depends_on=["a"])
-        with pytest.raises((ValueError, Exception)):
-            think(db_path, "s1", "a", "Critique", depends_on=["b"])
-
-    def test_ic02_self_reference_cycle(self, db_path):
-        """IC02: 자기 참조 사이클 A depends_on A"""
-        think(db_path, "s1", "a", "Objective")
-        with pytest.raises((ValueError, Exception)) as exc_info:
-            think(db_path, "s1", "a", "Critique", depends_on=["a"])
-        assert "cycle" in str(exc_info.value).lower() or "self" in str(exc_info.value).lower()
-
-    def test_ic03_three_hop_transitive_cycle(self, db_path):
-        """IC03: A→B→C 후 C depends_on A 시도 → 사이클"""
-        think(db_path, "s1", "a", "Objective")
-        think(db_path, "s1", "b", "Hypothesis", depends_on=["a"])
-        think(db_path, "s1", "c", "Evidence", depends_on=["b"])
-        with pytest.raises((ValueError, Exception)):
-            think(db_path, "s1", "a", "Synthesis", depends_on=["c"])
+    """IC04: _has_cycle 다이아몬드 구조 — IC01/IC02/IC03은 test_v18_improvements.py I50에서 커버"""
 
     def test_ic04_diamond_structure_allowed(self, db_path):
         """IC04: A→B, A→C, B→D, C→D 다이아몬드 구조 — 사이클 아님"""

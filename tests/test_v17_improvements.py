@@ -101,35 +101,10 @@ def test_i47_exact_name_still_works(tmp_db_with_node):
 
 
 # ── I48: _split_sentences 복합 종결자 ────────────────────────────────────────
-
-
-def test_i48_basic_ascii_split():
-    """기본 ASCII 문장 분리 — 기존 동작 유지."""
-    assert _split_sentences("Hello. World.") == ["Hello.", "World."]
-
-
-def test_i48_ellipsis_no_split():
-    """줄임표 뒤 공백 → 분리 안 함 — 기존 동작 유지."""
-    assert _split_sentences("Wait... really?") == ["Wait... really?"]
-
-
-def test_i48_question_exclamation_splits():
-    """?! 복합 종결자 뒤 공백 → 분리해야 한다."""
-    assert _split_sentences("Really?! Yes.") == ["Really?!", "Yes."]
-
-
-def test_i48_double_exclamation_splits():
-    """!! 이중 감탄 뒤 공백 → 분리해야 한다."""
-    assert _split_sentences("No!! OK.") == ["No!!", "OK."]
+# basic_ascii / ellipsis / ?! / !! / cjk — test_v18_improvements.py I49에서 커버
+# 고유 케이스: ?? 이중 물음표 (v18에 없음)
 
 
 def test_i48_double_question_splits():
     """?? 이중 물음 뒤 공백 → 분리해야 한다."""
     assert _split_sentences("Wait?? OK.") == ["Wait??", "OK."]
-
-
-def test_i48_cjk_splits():
-    """CJK 종결자 즉시 분리 — 기존 동작 유지."""
-    result = _split_sentences("완료！다음。")
-    assert "완료！" in result
-    assert len(result) >= 2
