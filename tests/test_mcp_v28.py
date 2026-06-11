@@ -5,9 +5,6 @@ S5:    server.py LOC < 500 — §4.2 code quality
 S6:    XML semantic tags in instructions — §2.2 description markup
 """
 
-import asyncio
-
-
 class TestInfoActionV28:
     """S1-S4: §3.2 info diagnostic endpoint."""
 

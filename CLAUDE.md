@@ -18,7 +18,7 @@
 
 - 항상 `src/` 디렉토리의 원본 파일을 편집할 것 (배포본 편집 금지)
 - 편집 후 반드시 `uv run ruff format src/` 실행
-- 소스 파일 목록: `src/server.py` (FastMCP 레이어), `src/actions.py` (비즈니스 로직), `src/db.py` (DB 프리미티브), `src/compressor.py` (CCR 압축기)
+- 소스 파일 목록: `src/server.py` (FastMCP 레이어), `src/actions.py` (비즈니스 로직), `src/think.py` (think 액션), `src/db.py` (DB 프리미티브), `src/compressor.py` (CCR 압축기)
 
 ## PLAN.md = 스펙 문서
 

@@ -31,6 +31,7 @@
 | v0.26 | 430 tests — MCP Resource(dag-thinking-session://{session_id}), _cascade_invalidate forward_graph 명칭 개선 |
 | v0.27 | 431 tests — Skeleton Refactor: version-tracking comment 제거, FastMCP instructions 추가 (MCP discoverability) |
 | v0.28 | 437 tests — MCP Best Practices: 3-file split (db.py+actions.py+server.py), action='info' diagnostic (§3.2), XML semantic tags in instructions (§2.2), server.py <500 LOC (§4.2) |
+| v0.29 | 443 tests — Post-review fixes: compressor.py 마커 회귀 수정, think.py 추출(actions.py <500 LOC), _action_info 동적 버전(importlib.metadata), session_id min_length 제거, test 미사용 import 제거 |
 
 ---
 

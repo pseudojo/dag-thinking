@@ -139,12 +139,16 @@ class TestMcpFieldConstraints:
             f"session_id maxLength 없음 (현재: {prop}) — Field(max_length=200) 미설정"
         )
 
-    def test_session_id_has_min_length_constraint(self):
-        """C2: session_id minLength=1 in inputSchema."""
+    def test_session_id_allows_empty_for_info_action(self):
+        """C2: session_id는 minLength 없이 빈 문자열 허용 — action='info' 지원 (v0.29)."""
         schema = _get_input_schema()
         prop = schema.get("properties", {}).get("session_id", {})
-        assert prop.get("minLength") == 1, (
-            f"session_id minLength 없음 (현재: {prop}) — Field(min_length=1) 미설정"
+        assert prop.get("minLength") is None, (
+            f"session_id에 minLength 제약 있음 (현재: {prop}) — "
+            "v0.29: action='info' 호환을 위해 min_length 제거됨"
+        )
+        assert prop.get("default") == "", (
+            "session_id default가 빈 문자열이 아님 — action='info' 호환 필요"
         )
 
     def test_note_has_max_length_constraint(self):

@@ -106,9 +106,9 @@ async def dag_thinking(
         Field(
             description=(
                 "Unique session identifier. Use a consistent ID across all calls "
-                "in one reasoning session (e.g. 'analysis_2026_01'). Max 200 chars."
+                "in one reasoning session (e.g. 'analysis_2026_01'). Max 200 chars. "
+                "Leave empty for action='info'."
             ),
-            min_length=1,
             max_length=200,
         ),
     ] = "",
