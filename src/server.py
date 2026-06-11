@@ -3,6 +3,7 @@ dag-thinking MCP server — single tool, single entry point.
 """
 
 import contextlib
+import json
 import os
 import sqlite3
 from collections import deque
@@ -248,7 +249,9 @@ def _cascade_invalidate(
     edges_graph: dict[str, list[str]] | None = None,
 ) -> list[str]:
     # I53: edges_graph 파라미터 — 호출자 제공 시 중복 DB 조회 제거
-    children = edges_graph if edges_graph is not None else _load_forward_edges(conn, session_id)
+    forward_graph = (
+        edges_graph if edges_graph is not None else _load_forward_edges(conn, session_id)
+    )
 
     reachable: list[str] = []
     stack = [root]
@@ -259,7 +262,7 @@ def _cascade_invalidate(
             continue
         visited.add(node)
         reachable.append(node)
-        for child in children.get(node, []):
+        for child in forward_graph.get(node, []):
             stack.append(child)
 
     if not reachable:
@@ -1034,6 +1037,25 @@ async def dag_thinking(
         )
     except ValueError as e:
         return {"isError": True, "error": str(e)}
+
+
+# ---------------------------------------------------------------------------
+# MCP Resource — 세션 상태 read-only 접근
+# ---------------------------------------------------------------------------
+
+
+def _get_session_resource_data(session_id: str, db_path: str = _DEFAULT_DB) -> str:
+    """세션 상태 JSON — MCP resource 함수의 테스트 가능한 헬퍼."""
+    return json.dumps(_action_status(db_path=db_path, session_id=session_id), indent=2)
+
+
+@mcp.resource("dag-thinking-session://{session_id}")
+def get_session_resource(session_id: str) -> str:
+    """Read-only snapshot of a dag-thinking session's DAG state and metrics.
+
+    Use action='status' tool for the full response including restoration manifest.
+    """
+    return _get_session_resource_data(session_id)
 
 
 def main():

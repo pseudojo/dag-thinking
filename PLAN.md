@@ -28,6 +28,7 @@
 | v0.23 | 417 tests — 불필요한 테스트 제거(inspect.getsource 기반 R2-T5/R3-T5) + node_name/reason Field max_length |
 | v0.24 | 422 tests — CLAUDE.md/Hook 환경설정 + target_node maxLength=200, payload min/maxLength=80/1500 MCP schema |
 | v0.25 | 427 tests — MCP 표준 준수: dag_thinking async+error handling(isError), server name dag_thinking_mcp, _split_sentences null byte(\x00→) |
+| v0.26 | 430 tests — MCP Resource(dag-thinking-session://{session_id}), _cascade_invalidate forward_graph 명칭 개선 |
 
 ---
 
