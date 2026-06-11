@@ -4,18 +4,13 @@ import contextlib
 import importlib.metadata
 import os
 
+from .compressor import estimate_tokens
 from .db import (
     _DEFAULT_DB,
     _cascade_invalidate,
     _db,
     _ensure_session,
 )
-
-try:
-    from .compressor import estimate_tokens
-except ImportError:
-    from src.compressor import estimate_tokens  # type: ignore[no-redef]
-
 from .think import (
     _MAX_DEPENDS_ON,
     _MAX_NODE_NAME_LEN,

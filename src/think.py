@@ -4,17 +4,13 @@ import contextlib
 import sqlite3
 from collections import deque
 
+from .compressor import compress, estimate_tokens
 from .db import (
     _db,
     _ensure_session,
     _has_cycle_graph,
     _load_forward_edges,
 )
-
-try:
-    from .compressor import compress, estimate_tokens
-except ImportError:
-    from src.compressor import compress, estimate_tokens  # type: ignore[no-redef]
 
 # ---------------------------------------------------------------------------
 # Constants (shared with actions.py via re-export)

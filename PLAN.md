@@ -32,8 +32,9 @@
 | v0.27 | 431 tests — Skeleton Refactor: version-tracking comment 제거, FastMCP instructions 추가 (MCP discoverability) |
 | v0.28 | 437 tests — MCP Best Practices: 3-file split (db.py+actions.py+server.py), action='info' diagnostic (§3.2), XML semantic tags in instructions (§2.2), server.py <500 LOC (§4.2) |
 | v0.29 | 443 tests — Post-review fixes: compressor.py 마커 회귀 수정, think.py 추출(actions.py <500 LOC), _action_info 동적 버전(importlib.metadata), session_id min_length 제거, test 미사용 import 제거 |
+| v0.30 | 459 tests — TD-5 MCP 표준 에러(ToolError → protocol isError), TD-7 prepare_release.py(§4.2 릴리스 검증), TD-4 import fallback 제거, TD-1 테스트 파일명 교정 |
 
-> **현재 버전**: v0.29 (443 tests) | 최종 갱신: 2026-06-12
+> **현재 버전**: v0.30 (459 tests) | 최종 갱신: 2026-06-12
 
 ---
 
@@ -331,21 +332,22 @@ ccr_store(
 
 ---
 
-## 6. 파일 구조 (v0.29 현재)
+## 6. 파일 구조 (v0.30 현재)
 
 ```
 dag-thinking/
 ├── src/
-│   ├── server.py        — FastMCP 얇은 레이어, 단일 툴 정의, MCP Resource   (267 LOC)
-│   ├── actions.py       — 비즈니스 로직: status/invalidate/restore/info + dispatcher  (325 LOC)
+│   ├── server.py        — FastMCP 얇은 레이어, 단일 툴 정의, MCP Resource   (269 LOC)
+│   ├── actions.py       — 비즈니스 로직: status/invalidate/restore/info + dispatcher  (320 LOC)
 │   ├── think.py         — think 액션 + 헬퍼: _action_think, _validate_think_inputs,
-│   │                      _compute_dag_health, _compute_context_pressure 등          (385 LOC)
+│   │                      _compute_dag_health, _compute_context_pressure 등          (381 LOC)
 │   ├── db.py            — DB 프리미티브: init_db, _db, _ensure_session,
 │   │                      _load_forward_edges, _has_cycle_graph, _cascade_invalidate  (155 LOC)
 │   ├── compressor.py    — 순수 Python extractive 압축기                               (281 LOC)
 │   └── __init__.py      — 빈 패키지 마커
 ├── tests/
-│   └── test_*.py        — pytest 통합 테스트 31개 파일, 443개 테스트
+│   └── test_*.py        — pytest 통합 테스트 33개 파일, 459개 테스트
+├── prepare_release.py   — §4.2 릴리스 검증 파이프라인 CLI (109 LOC)
 ├── pyproject.toml       — 프로젝트 메타데이터, 의존성, ruff 설정
 ├── PLAN.md              — 스펙 겸 설계 문서 (이 파일)
 ├── CLAUDE.md            — 개발 가이드 (TDD 원칙, 인코딩 주의사항, 의존성 원칙)
@@ -353,8 +355,9 @@ dag-thinking/
 ```
 
 **LOC 기준** (MCP Best Practices §4.2 <500 LOC per file):
-- 최대 파일: `think.py` 385 LOC ✅ (한도 내, 여유 115 LOC)
+- 최대 파일: `think.py` 381 LOC ✅ (한도 내, 여유 119 LOC)
 - 최소 파일: `db.py` 155 LOC ✅
+- 자동 검증: `prepare_release.py` check_loc_limits()가 릴리스 시 강제
 
 **의존성**: `fastmcp>=3.3.1`, `pydantic>=2.13.4`, Python ≥ 3.13, 표준 라이브러리만
 - ML 라이브러리 (torch, transformers 등) **금지**
@@ -607,6 +610,55 @@ dag-thinking/
 ✅ _action_info 동적 버전 (importlib.metadata)
 ✅ session_id min_length 제거 (info action 호환)
 ✅ compressor.py 마커 회귀 수정
+
+[ v0.30 MCP 표준 에러 + §4.2 릴리스 검증 — TD-5/TD-7/TD-4/TD-1 ] (완료 — 459 tests)
+
+✅ TD-5. server.py: dag_thinking 에러 응답 → MCP protocol-level isError
+   문제: 현재 `except ValueError → return {"isError": True, "error": str(e)}` 는
+         일반 dict 반환 — MCP 클라이언트는 "성공한 툴 결과"로 인식 (표준 위반).
+   해결: `raise ToolError(str(e)) from e` (fastmcp.exceptions.ToolError)
+         → FastMCP가 protocol-level isError=True + content[{type:text}] 로 변환.
+   시그니처: async def dag_thinking(...) -> dict  (불변 — 에러 경로만 raise로 변경)
+   예외 조건: call_dag_thinking이 ValueError를 던지는 모든 입력
+             (빈 session_id, 잘못된 thought_type, payload 범위 위반, 미존재 노드 등)
+   의사코드:
+     BEGIN
+       TRY: RETURN call_dag_thinking(action, session_id, ...)
+       CATCH ValueError as e: RAISE ToolError(str(e)) FROM e
+     END
+   영향: tests/test_mcp_v25.py H1 (isError dict 검증) → ToolError raise 검증으로 수정.
+
+✅ TD-7. prepare_release.py (repo 루트) — §4.2 릴리스 검증 파이프라인
+   책임: 릴리스 전 검증 체크 4종을 순차 실행하는 단일 CLI 스크립트.
+        각 함수는 정확히 하나의 검증만 수행 (SRP).
+   의존성: 표준 라이브러리(subprocess/pathlib/sys/asyncio) + fastmcp(기존 의존성) only.
+   시그니처:
+     def check_loc_limits(src_dir: str, max_loc: int = 500) -> list[str]
+        — src_dir 내 *.py 중 총 라인 수 > max_loc 인 파일 경로 목록 (정렬).
+          경계: LOC == max_loc → 통과(미포함). 빈 디렉토리 → [].
+     def check_git_clean(repo_dir: str) -> tuple[bool, str]
+        — git status --porcelain 비면 (True, "working tree clean"),
+          더티면 (False, <파일 목록>), git 실패/비-repo → (False, <stderr>).
+     def run_tests(repo_dir: str) -> tuple[bool, str]
+        — subprocess pytest tests/ -q. 종료코드 0 → (True, 요약 마지막 줄),
+          비0 → (False, 출력 끝부분).
+     async def smoke_test() -> tuple[bool, str]
+        — in-memory Client(mcp)로 list_tools == ["dag_thinking"] 확인 +
+          action='info' 호출 is_error=False 확인. 위반 시 (False, 사유).
+     def main() -> int — 4종 체크 실행, [PASS]/[FAIL] 출력, 전부 통과 0 / 하나라도 실패 1.
+   의사코드(main):
+     BEGIN
+       results = [check_git_clean(.), check_loc_limits(src), run_tests(.), asyncio.run(smoke_test())]
+       FOR (ok, detail) IN results: PRINT "[PASS]" or "[FAIL]" + detail
+       RETURN 0 IF all ok ELSE 1
+     END
+   주: CLI 스크립트는 MCP 서버 프로세스가 아니므로 stdout 출력 허용 (§3.1 비적용).
+
+✅ TD-4. actions.py / think.py: `try: from .compressor ... except ImportError` 폴백 제거
+   — 단일 relative import 경로로 정리 (동작 불변, REFACTOR 단계).
+
+✅ TD-1. tests/test_i11_i12.py → tests/test_restore_list_health.py 파일명 교정
+   — PLAN.md I11/I12(compressor 문장 분리)와의 명칭 충돌 해소 (동작 불변, REFACTOR 단계).
 ```
 
 ---
@@ -701,9 +753,17 @@ dag-thinking/
 □ C55. action='info' 응답에 server/version/db_path/db_exists/actions/status 필드 포함
 □ C56. version 필드 값이 pyproject.toml [project].version과 일치
 □ C57. dag-thinking-session://{session_id} Resource 호출 → JSON 세션 상태 반환
-□ C58. ValueError 발생 시 `{"isError": True, "error": "..."}` 형식으로 반환
+□ C58. ValueError 발생 시 ToolError raise → 클라이언트 측 protocol-level isError=True (v0.30)
 □ C59. src/ 디렉토리 내 print() 호출 없음 (grep 검증 — §3.1 STDIO 경계 준수)
 □ C60. ToolAnnotations 4종 (readOnlyHint=False/destructiveHint=True/idempotentHint=False/openWorldHint=False) 확인
+
+[ v0.30 MCP 표준 에러 / 릴리스 검증 ]
+□ C61. in-memory Client 경유 잘못된 호출 → CallToolResult.is_error == True (protocol-level)
+□ C62. in-memory Client 경유 정상 호출 → is_error == False (회귀 방지)
+□ C63. check_loc_limits: 경계값 — LOC == max_loc 통과, LOC > max_loc 검출
+□ C64. check_git_clean: clean → True / dirty → False(파일명 포함) / 비-git → False
+□ C65. smoke_test: list_tools == ['dag_thinking'] + info 실행 성공
+□ C66. main(): 전부 통과 → exit 0, 하나라도 실패 → exit 1
 ```
 
 ---
@@ -722,7 +782,7 @@ dag-thinking/
 | §3.1 STDIO 경계 통제 | stdout에 `print()` 없음 | ✅ 완전 준수 | 검증: `grep "print(" src/` → 0건 |
 | §3.2 info 진단 엔드포인트 | `action='info'` — 동적 버전, DB 상태 반환 | ✅ 완전 준수 | `importlib.metadata.version("dag-thinking")` |
 | §4.1 컨테이너 패키징 | Docker 미구성 | ❌ 미준수 | 개발 단계 — 향후 배포 시 필요 |
-| §4.2 릴리스 검증 파이프라인 | 자동화 스크립트 없음 | ⚠️ 부분 준수 | LOC <500 ✅, 443 tests ✅, 스크립트 미구성 |
+| §4.2 릴리스 검증 파이프라인 | `prepare_release.py` — git/LOC/tests/smoke 4종 | ✅ 완전 준수 | v0.30 신설, 459 tests |
 
 ### 9.2 mcp-builder 품질 체크리스트
 
@@ -733,11 +793,11 @@ dag-thinking/
 | `async def` 툴 함수 | ✅ | `async def dag_thinking(...)` |
 | Field 타입+설명+제약 완비 | ✅ | min/maxLength 전 파라미터 |
 | `Use when:/Don't use when:` 예시 | ✅ | 툴 docstring 6개 예시 |
-| `isError: True` 에러 패턴 | ✅ | ValueError → `{"isError": True, "error": ...}` |
+| protocol-level isError 에러 패턴 | ✅ | ValueError → `raise ToolError` → FastMCP가 isError=True + content 변환 (v0.30) |
 | stdout 오염 없음 (§3.1) | ✅ | `print()` 0건 확인 |
 | Pydantic BaseModel 입력 검증 | ⚠️ | FastMCP의 `Annotated[..., Field()]` 사용 — 유효 패턴 |
 | MCP Resource 등록 | ✅ | `dag-thinking-session://{session_id}` (v0.26) |
-| 에러 content 형식 MCP 표준 | ⚠️ | `{"error": "..."}` vs `{"content": [{"type":"text",...}]}` — 향후 개선 대상 |
+| 에러 content 형식 MCP 표준 | ✅ | ToolError → `content[{type:text}]` + isError=True (v0.30 TD-5 해소) |
 
 ### 9.3 경량성 원칙 (Lightweight)
 
@@ -750,35 +810,31 @@ dag-thinking/
 
 ---
 
-## 10. 기술 부채 (Tech Debt) — v0.29
+## 10. 기술 부채 (Tech Debt) — v0.30
 
 **Priority = (영향도 + 위험도) × (6 - 난이도)**  
 영향도/위험도/난이도: 1(낮음)~5(높음)
 
 | ID | 항목 | 영향도 | 위험도 | 난이도 | 우선순위 | 비고 |
 |----|------|--------|--------|--------|---------|------|
-| TD-1 | `test_i11_i12.py` 파일명-스펙 충돌 | 1 | 2 | 1 | 15 | PLAN.md I11/I12와 명칭 혼동 |
+| ~~TD-1~~ | ~~`test_i11_i12.py` 파일명-스펙 충돌~~ | — | — | — | 해소 | v0.30: `test_restore_list_health.py`로 rename |
 | TD-2 | P/R2/R3/STYLE/QUAL/BUG 시리즈 PLAN.md 미등재 | 2 | 2 | 2 | 16 | IMPROVEMENTS.md 신설 필요 |
 | TD-3 | `server.py __all__` 내부 심볼 노출 | 2 | 2 | 3 | 12 | 테스트 backward-compat 목적 — 직접 import로 교체 필요 |
-| TD-4 | double import fallback `try/except ImportError` | 2 | 1 | 2 | 12 | `actions.py`, `think.py` 양쪽 — 빌드 정상화 후 제거 가능 |
-| TD-5 | 에러 응답 형식 불일치 (ValueError→isError) | 3 | 2 | 4 | 10 | MCP 표준 `content[{type,text}]` 형식 — ~50+ 테스트 영향, 대형 변경 |
+| ~~TD-4~~ | ~~double import fallback~~ | — | — | — | 해소 | v0.30: `.compressor` 단일 relative import |
+| ~~TD-5~~ | ~~에러 응답 형식 불일치~~ | — | — | — | 해소 | v0.30: `raise ToolError` — 실측 영향 테스트 3건(50+ 추정은 과대) |
 | TD-6 | Docker 컨테이너 미구성 (§4.1) | 2 | 1 | 4 | 6 | 배포 단계에서 필요 |
-| TD-7 | 릴리스 검증 스크립트 미구성 (§4.2) | 2 | 2 | 3 | 12 | `prepare-release.py` 구성 필요 |
+| ~~TD-7~~ | ~~릴리스 검증 스크립트 미구성~~ | — | — | — | 해소 | v0.30: `prepare_release.py` — git/LOC/tests/smoke 4종 |
 
 ### 해소 로드맵
-
-**Phase 1 — 즉시 (현재 사이클):**
-- [ ] TD-1. `test_i11_i12.py` 파일명 교정 (명칭 충돌 해소)
 
 **Phase 2 — 다음 사이클:**
 - [ ] TD-2. `IMPROVEMENTS.md` 신설 — P/R2/R3/STYLE/QUAL/BUG 시리즈 문서화
 - [ ] TD-3. `server.py __all__` 정리 — 테스트가 실제 모듈에서 직접 import
-- [ ] TD-4. double import fallback 제거 — 빌드 정상화 후 `.compressor` 단일 경로로
 
 **Phase 3 — 배포 준비 시:**
-- [ ] TD-5. `isError` 응답 형식 → MCP 표준 `{"content": [{"type": "text", "text": "..."}]}` 전환 (50+ 테스트 수정)
 - [ ] TD-6. Docker 컨테이너 구성 (§4.1 준수)
-- [ ] TD-7. `prepare-release.py` 구성 (§4.2 준수)
+
+**해소 완료 (v0.30):** TD-1(파일명), TD-4(import fallback), TD-5(ToolError), TD-7(prepare_release.py)
 
 ---
 

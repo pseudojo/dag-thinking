@@ -1,8 +1,11 @@
 """
-RED-phase tests for I11 and I12.
+restore 목록 status 필드 + dag_health INVALIDATED 제외 검증.
 
-  I11: _action_restore(ccr_hash=None) 목록에 status 필드 추가
-  I12: _compute_dag_health INVALIDATED 노드를 구조 분석에서 제외
+(구 test_i11_i12.py — PLAN.md I11/I12(compressor 문장 분리)와의
+ 명칭 충돌을 피해 v0.30 TD-1에서 rename)
+
+  - _action_restore(ccr_hash=None) 목록에 status 필드 추가
+  - _compute_dag_health INVALIDATED 노드를 구조 분석에서 제외
 """
 
 from tests.helpers import invalidate, restore, status, think

@@ -1,12 +1,15 @@
 """
 v0.25 MCP 표준 준수 개선 검증:
-H1: dag_thinking 툴 error handling — ValueError 프로토콜 오류 대신 result dict 반환
+H1: dag_thinking 툴 error handling — ValueError를 ToolError로 변환 (v0.30 TD-5 갱신)
 H2: FastMCP server 명명 규칙 — dag_thinking_mcp
 H3: _split_sentences null byte 취약점 수정
 H4: _split_sentences 정상 동작 회귀 없음
 """
 
 import asyncio
+
+import pytest
+from fastmcp.exceptions import ToolError
 
 from src.compressor import _split_sentences
 from src.server import dag_thinking, mcp
@@ -15,23 +18,24 @@ from src.server import dag_thinking, mcp
 class TestMcpErrorHandlingV25:
     """H1-H2: MCP 툴 에러 핸들링 및 서버 명명 규칙."""
 
-    def test_think_without_node_name_returns_error_dict(self):
-        """H1: action='think' + node_name=None → isError:True dict 반환 (ValueError 미전파)."""
-        result = asyncio.run(
-            dag_thinking(
-                action="think",
-                session_id="test_h1_session",
-                node_name=None,
-                thought_type="Hypothesis",
-                payload="x" * 80,
+    def test_think_without_node_name_raises_tool_error(self):
+        """H1: action='think' + node_name=None → ToolError raise (v0.30 TD-5).
+
+        v0.29까지는 isError dict를 반환했으나, MCP 클라이언트가 이를 성공
+        결과로 인식하는 표준 위반이 있어 protocol-level isError로 전환됐다.
+        """
+        with pytest.raises(ToolError) as exc_info:
+            asyncio.run(
+                dag_thinking(
+                    action="think",
+                    session_id="test_h1_session",
+                    node_name=None,
+                    thought_type="Hypothesis",
+                    payload="x" * 80,
+                )
             )
-        )
-        assert result.get("isError") is True, (
-            f"node_name=None이면 isError:True를 반환해야 함, 실제 결과: {result}"
-        )
-        assert "error" in result, "error 키가 반환 dict에 있어야 함"
-        assert "node_name" in result["error"].lower(), (
-            f"error 메시지에 'node_name' 언급 필요, 실제: {result['error']}"
+        assert "node_name" in str(exc_info.value).lower(), (
+            f"에러 메시지에 'node_name' 언급 필요, 실제: {exc_info.value}"
         )
 
     def test_server_name_follows_mcp_convention(self):

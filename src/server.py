@@ -4,6 +4,7 @@ import json
 from typing import Annotated, Literal
 
 from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from .actions import (
@@ -236,7 +237,8 @@ async def dag_thinking(
             ccr_hash=ccr_hash,
         )
     except ValueError as e:
-        return {"isError": True, "error": str(e)}
+        # MCP 표준: protocol-level isError + content block (FastMCP가 ToolError를 변환)
+        raise ToolError(str(e)) from e
 
 
 # ---------------------------------------------------------------------------
