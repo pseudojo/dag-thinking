@@ -3,8 +3,7 @@
 import pytest
 
 from src.compressor import _split_sentences
-from tests.helpers import PAYLOAD, think, status
-
+from tests.helpers import status, think
 
 # ── I49: _split_sentences 약어 false-split 수정 ──────────────────────────────
 
@@ -173,9 +172,12 @@ class TestNodeNameWhitespaceNormalization:
         """T5: 공백 포함 이름으로 생성 후 깨끗한 이름으로 invalidate 성공."""
         think(db_path, "s1", " mynode ", "Objective")
         from src.server import call_dag_thinking
+
         result = call_dag_thinking(
-            db_path=db_path, action="invalidate",
-            session_id="s1", target_node="mynode",
+            db_path=db_path,
+            action="invalidate",
+            session_id="s1",
+            target_node="mynode",
         )
         assert "mynode" in result["invalidated"]
 
@@ -208,48 +210,48 @@ class TestRestoreDeletedNodeWarning:
     def test_normal_restore_no_warning(self, db_path):
         """T1: COMPLETED 노드 정상 복원 — warning 없음."""
         from src.server import call_dag_thinking
+
         r = think(db_path, "s1", "n1", "Objective")
         h = r.get("ccr_hash")
         if h is None:
             pytest.skip("passthrough (no compression) — hash not available")
-        result = call_dag_thinking(
-            db_path=db_path, action="restore", session_id="s1", ccr_hash=h
-        )
+        result = call_dag_thinking(db_path=db_path, action="restore", session_id="s1", ccr_hash=h)
         assert "original_payload" in result
         assert "warning" not in result
 
     def test_invalidated_node_restore_has_warning(self, db_path):
         """T2: INVALIDATED 노드 복원 → warning 포함 (기존 동작 회귀 방지)."""
         from src.server import call_dag_thinking
+
         r = think(db_path, "s1", "n1", "Objective")
         h = r.get("ccr_hash")
         if h is None:
             pytest.skip("passthrough — no ccr_hash")
-        call_dag_thinking(
-            db_path=db_path, action="invalidate", session_id="s1", target_node="n1"
-        )
-        result = call_dag_thinking(
-            db_path=db_path, action="restore", session_id="s1", ccr_hash=h
-        )
+        call_dag_thinking(db_path=db_path, action="invalidate", session_id="s1", target_node="n1")
+        result = call_dag_thinking(db_path=db_path, action="restore", session_id="s1", ccr_hash=h)
         assert "warning" in result
 
     def test_deleted_node_restore_has_warning(self, db_path):
         """T3: nodes 행 없는(삭제된) ccr_hash 복원 → warning 키 + 'deleted' 텍스트."""
-        import sqlite3, contextlib
+        import contextlib
+        import sqlite3
+
         from src.server import call_dag_thinking
+
         # ccr_store에 직접 삽입 — 대응하는 nodes 행 없음 (삭제 시뮬레이션)
         with contextlib.closing(sqlite3.connect(db_path)) as conn:
             conn.row_factory = sqlite3.Row
             # 세션 생성
             call_dag_thinking(db_path=db_path, action="status", session_id="s1")
             conn.execute(
-                "INSERT INTO ccr_store (hash, session_id, node_name, original) "
-                "VALUES (?, ?, ?, ?)",
+                "INSERT INTO ccr_store (hash, session_id, node_name, original) VALUES (?, ?, ?, ?)",
                 ("deadbeef000000000000000a", "s1", "ghost_node", "original text"),
             )
             conn.commit()
         result = call_dag_thinking(
-            db_path=db_path, action="restore", session_id="s1",
+            db_path=db_path,
+            action="restore",
+            session_id="s1",
             ccr_hash="deadbeef000000000000000a",
         )
         assert "warning" in result
@@ -258,6 +260,7 @@ class TestRestoreDeletedNodeWarning:
     def test_invalid_hash_raises(self, db_path):
         """T4: 없는 hash → ValueError."""
         from src.server import call_dag_thinking
+
         call_dag_thinking(db_path=db_path, action="status", session_id="s1")
         with pytest.raises(ValueError):
             call_dag_thinking(
@@ -267,6 +270,7 @@ class TestRestoreDeletedNodeWarning:
     def test_none_hash_returns_restorable_nodes(self, db_path):
         """T5: ccr_hash=None → restorable_nodes 키 반환."""
         from src.server import call_dag_thinking
+
         think(db_path, "s1", "n1", "Objective")
         result = call_dag_thinking(db_path=db_path, action="restore", session_id="s1")
         assert "restorable_nodes" in result
@@ -287,6 +291,7 @@ class TestCascadeInvalidateImproved:
     def test_simple_chain_all_newly_invalidated(self, db_path):
         """T1: A→B→C, invalidate A → A·B·C 모두 신규 무효화."""
         from src.server import call_dag_thinking
+
         self._setup_chain(db_path)
         result = call_dag_thinking(
             db_path=db_path, action="invalidate", session_id="s1", target_node="A"
@@ -295,8 +300,10 @@ class TestCascadeInvalidateImproved:
 
     def test_already_invalidated_excluded(self, db_path):
         """T2: B가 이미 INVALIDATED인 상태에서 A 무효화 → B는 newly에 포함되지 않음."""
-        from src.server import call_dag_thinking, _cascade_invalidate, _load_forward_edges, _db
         import contextlib
+
+        from src.server import _cascade_invalidate, _db, call_dag_thinking
+
         self._setup_chain(db_path)
         # B를 먼저 무효화
         call_dag_thinking(db_path=db_path, action="invalidate", session_id="s1", target_node="B")
@@ -309,8 +316,10 @@ class TestCascadeInvalidateImproved:
 
     def test_edges_graph_provided_same_result(self, db_path):
         """T3: edges_graph 직접 제공 시 동일 결과."""
-        from src.server import _cascade_invalidate, _load_forward_edges, _db, _ensure_session
         import contextlib
+
+        from src.server import _cascade_invalidate, _db, _ensure_session, _load_forward_edges
+
         self._setup_chain(db_path)
 
         with contextlib.closing(_db(db_path)) as conn:
@@ -322,8 +331,10 @@ class TestCascadeInvalidateImproved:
 
     def test_leaf_node_only_itself(self, db_path):
         """T4: 자식 없는 리프 노드 → 자기 자신만 반환."""
-        from src.server import _cascade_invalidate, _db, _ensure_session
         import contextlib
+
+        from src.server import _cascade_invalidate, _db, _ensure_session
+
         self._setup_chain(db_path)
 
         with contextlib.closing(_db(db_path)) as conn:
@@ -334,8 +345,10 @@ class TestCascadeInvalidateImproved:
 
     def test_nonexistent_node_returns_empty(self, db_path):
         """T5: DB에 없는 노드 → []."""
-        from src.server import _cascade_invalidate, _db, _ensure_session
         import contextlib
+
+        from src.server import _cascade_invalidate, _db, _ensure_session
+
         with contextlib.closing(_db(db_path)) as conn:
             with conn:
                 _ensure_session(conn, "s1")
@@ -344,8 +357,10 @@ class TestCascadeInvalidateImproved:
 
     def test_all_already_invalidated_returns_empty(self, db_path):
         """T6: 전체 이미 INVALIDATED → 빈 리스트."""
-        from src.server import call_dag_thinking, _cascade_invalidate, _db, _ensure_session
         import contextlib
+
+        from src.server import _cascade_invalidate, _db, _ensure_session, call_dag_thinking
+
         self._setup_chain(db_path)
         # 전체 무효화
         call_dag_thinking(db_path=db_path, action="invalidate", session_id="s1", target_node="A")

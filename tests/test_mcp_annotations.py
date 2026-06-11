@@ -5,8 +5,6 @@ FastMCP tool.to_mcp_tool().annotations → ToolAnnotations 객체로 접근.
 
 import asyncio
 
-import pytest
-
 
 def _get_dag_tool():
     """dag_thinking FunctionTool 객체를 동기 컨텍스트에서 반환."""
@@ -90,7 +88,9 @@ class TestMcpParameterDescriptions:
         """P1: action 파라미터에 description 있어야 한다 (LLM이 4개 동작을 구분 가능)."""
         schema = _get_input_schema()
         prop = schema.get("properties", {}).get("action", {})
-        assert "description" in prop, "action 파라미터에 description 없음 — Field(description=...) 미설정"
+        assert "description" in prop, (
+            "action 파라미터에 description 없음 — Field(description=...) 미설정"
+        )
 
     def test_session_id_param_has_description(self):
         """P2: session_id 파라미터에 description 있어야 한다."""
@@ -121,3 +121,37 @@ class TestMcpParameterDescriptions:
         schema = _get_input_schema()
         prop = schema.get("properties", {}).get("ccr_hash", {})
         assert "description" in prop, "ccr_hash 파라미터에 description 없음"
+
+
+class TestMcpFieldConstraints:
+    """C1-C4: MCP inputSchema Field 제약조건 — session_id, note 범위 스키마 노출 검증."""
+
+    def test_session_id_has_max_length_constraint(self):
+        """C1: session_id maxLength=200 in inputSchema."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("session_id", {})
+        assert prop.get("maxLength") == 200, (
+            f"session_id maxLength 없음 (현재: {prop}) — Field(max_length=200) 미설정"
+        )
+
+    def test_session_id_has_min_length_constraint(self):
+        """C2: session_id minLength=1 in inputSchema."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("session_id", {})
+        assert prop.get("minLength") == 1, (
+            f"session_id minLength 없음 (현재: {prop}) — Field(min_length=1) 미설정"
+        )
+
+    def test_note_has_max_length_constraint(self):
+        """C3: note maxLength=500 in inputSchema."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("note", {})
+        assert prop.get("maxLength") == 500, (
+            f"note maxLength 없음 (현재: {prop}) — Field(max_length=500) 미설정"
+        )
+
+    def test_session_id_description_regression(self):
+        """C4: Field 제약 추가 후 session_id description 회귀 없음."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("session_id", {})
+        assert "description" in prop, "session_id description 누락 — Field 수정 후 회귀"

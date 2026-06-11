@@ -102,26 +102,7 @@ class TestEstimateTokensCJK:
 
 
 class TestRestoreInvalidatedWarning:
-    # T9: COMPLETED 노드 복원 — warning 없음 (정상 경로 회귀)
-    def test_completed_node_restore_has_no_warning(self, db_path):
-        """I10-T9: COMPLETED 노드 복원 → 'warning' 키 없음."""
-        r = think(db_path, "s1", "node_a", "Objective", payload=_LONG_PAYLOAD)
-        result = restore(db_path, "s1", r["ccr_hash"])
-        assert "warning" not in result, (
-            f"COMPLETED 노드 복원에 불필요한 warning 포함: {result.get('warning')}"
-        )
-
-    # T10: INVALIDATED 노드 복원 — warning 있어야 함
-    def test_invalidated_node_restore_has_warning(self, db_path):
-        """I10-T10: INVALIDATED 노드 복원 → 'warning' 키 존재.
-
-        현재: warning 키 없음 → RED.
-        """
-        r = think(db_path, "s1", "node_a", "Objective", payload=_LONG_PAYLOAD)
-        h = r["ccr_hash"]
-        invalidate(db_path, "s1", "node_a")
-        result = restore(db_path, "s1", h)
-        assert "warning" in result, "INVALIDATED 노드 복원 시 'warning' 키가 없음 — RED"
+    # T9/T10 — test_v18_improvements.py TestRestoreDeletedNodeWarning T1/T2에서 커버
 
     # T11: warning 메시지에 "INVALIDATED" 포함
     def test_invalidated_restore_warning_mentions_invalidated(self, db_path):
