@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.15
+# dag-thinking 설계 문서 v0.24
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -19,6 +19,14 @@
 | v0.14 | I35 _action_think PERF-2 완성(읽기 쿼리 트랜잭션 외부), I36 note 길이 상한(_MAX_NOTE_LEN=500), I37 _compress_list 최소 k=2 |
 | v0.15 | I38 _split_sentences 줄임표+공백 false-split 수정(2-char lookbehind), I39 _compress_prose 최소 k=2, I40 depends_on 빈 경우 cycle check 스킵, I41 _action_invalidate target_node 공백 전용 방어 |
 | v0.16 | I42 think 응답 thought_type 필드 추가, I43 status dag.nodes ccr_hash 필드 추가, I44 _is_list_content `+` 불릿 지원(GFM), I45 _compute_dag_health total_nodes 카운트 추가 |
+| v0.17 | I46 note=None 방어(None→"" 변환), I47 target_node 공백 정규화(strip), I48 _split_sentences 복합 종결자(?.!/!? 등) 지원 |
+| v0.18 | I49 _split_sentences 약어 false-split 방지(Mr./Dr. 등), I50 cycle check 트랜잭션 내부 이동, I51 node_name 공백 정규화(strip), I52 복원 시 삭제 노드 warning, I53 _cascade_invalidate BFS 개선 |
+| v0.19 | 중복 테스트 14건 제거 + MCP ToolAnnotations(readOnlyHint/destructiveHint/idempotentHint/openWorldHint) |
+| v0.20 | 중복 테스트 제거(IC27/IC28/IC29) + MCP inputSchema Field descriptions(10개 파라미터 전체) |
+| v0.21 | 416 tests — 중복 제거(test_i09_i10 T9/T10) + Field 제약(session_id min/maxLength=1/200, note maxLength=500) |
+| v0.22 | 415 tests — 중복 제거(test_v12 I28 x2, test_v10 I20 x3) + docstring "Use when:/Don't use when:" 예시 |
+| v0.23 | 417 tests — 불필요한 테스트 제거(inspect.getsource 기반 R2-T5/R3-T5) + node_name/reason Field max_length |
+| v0.24 | 422 tests — CLAUDE.md/Hook 환경설정 + target_node maxLength=200, payload min/maxLength=80/1500 MCP schema |
 
 ---
 

@@ -30,6 +30,11 @@ def _get_mcp_tool_annotations():
     return tool.to_mcp_tool().annotations
 
 
+def _get_anyof_string_schema(prop: dict) -> dict:
+    """anyOf 구조에서 type='string' 브랜치를 추출. Optional 파라미터 스키마 탐색에 사용."""
+    return next((s for s in prop.get("anyOf", []) if s.get("type") == "string"), {})
+
+
 class TestMcpToolAnnotations:
     """MCP 표준 tool annotations 검증 (readOnly / destructive / idempotent / openWorld)."""
 
@@ -189,16 +194,11 @@ class TestMcpToolDescription:
 class TestMcpFieldConstraintsV23:
     """E1-E4: node_name, reason Field 제약조건 — MCP inputSchema 노출 검증."""
 
-    def _get_anyof_string_schema(self, prop: dict) -> dict:
-        """anyOf 구조에서 type='string' 브랜치를 추출."""
-        any_of = prop.get("anyOf", [])
-        return next((s for s in any_of if s.get("type") == "string"), {})
-
     def test_node_name_anyof_has_max_length(self):
         """E1: node_name anyOf string 브랜치에 maxLength=200 노출."""
         schema = _get_input_schema()
         prop = schema.get("properties", {}).get("node_name", {})
-        str_schema = self._get_anyof_string_schema(prop)
+        str_schema = _get_anyof_string_schema(prop)
         assert str_schema.get("maxLength") == 200, (
             f"node_name anyOf string 브랜치에 maxLength=200 없음 — "
             f"Field(max_length=200) 미설정. anyOf={prop.get('anyOf')}"
@@ -223,3 +223,49 @@ class TestMcpFieldConstraintsV23:
         schema = _get_input_schema()
         prop = schema.get("properties", {}).get("reason", {})
         assert "description" in prop, "reason description 누락 — Field 수정 후 회귀"
+
+
+class TestMcpFieldConstraintsV24:
+    """G1-G5: target_node, payload Field 제약조건 — MCP inputSchema 노출 검증."""
+
+    def test_target_node_anyof_has_max_length(self):
+        """G1: target_node anyOf string 브랜치에 maxLength=200 노출."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("target_node", {})
+        str_schema = _get_anyof_string_schema(prop)
+        assert str_schema.get("maxLength") == 200, (
+            f"target_node anyOf string 브랜치에 maxLength=200 없음 — "
+            f"Field(max_length=200) 미설정. anyOf={prop.get('anyOf')}"
+        )
+
+    def test_target_node_description_regression(self):
+        """G2: target_node Field 제약 추가 후 description 회귀 없음."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("target_node", {})
+        assert "description" in prop, "target_node description 누락 — Field 수정 후 회귀"
+
+    def test_payload_anyof_has_max_length(self):
+        """G3: payload anyOf string 브랜치에 maxLength=1500 노출."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("payload", {})
+        str_schema = _get_anyof_string_schema(prop)
+        assert str_schema.get("maxLength") == 1500, (
+            f"payload anyOf string 브랜치에 maxLength=1500 없음 — "
+            f"Field(max_length=1500) 미설정. anyOf={prop.get('anyOf')}"
+        )
+
+    def test_payload_anyof_has_min_length(self):
+        """G4: payload anyOf string 브랜치에 minLength=80 노출."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("payload", {})
+        str_schema = _get_anyof_string_schema(prop)
+        assert str_schema.get("minLength") == 80, (
+            f"payload anyOf string 브랜치에 minLength=80 없음 — "
+            f"Field(min_length=80) 미설정. anyOf={prop.get('anyOf')}"
+        )
+
+    def test_payload_description_regression(self):
+        """G5: payload Field 제약 추가 후 description 회귀 없음."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("payload", {})
+        assert "description" in prop, "payload description 누락 — Field 수정 후 회귀"

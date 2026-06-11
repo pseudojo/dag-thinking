@@ -936,7 +936,9 @@ def dag_thinking(
             description=(
                 "Content of this reasoning step (required for action='think'). "
                 "80–1500 characters. Long content is automatically compressed and cached via CCR."
-            )
+            ),
+            min_length=80,
+            max_length=1500,
         ),
     ] = None,
     depends_on: Annotated[
@@ -965,8 +967,9 @@ def dag_thinking(
             description=(
                 "Node name to cascade-invalidate (required for action='invalidate'). "
                 "All descendant nodes are also marked INVALIDATED. "
-                "Use action='status' to see available node names."
-            )
+                "Use action='status' to see available node names. Max 200 chars."
+            ),
+            max_length=200,
         ),
     ] = None,
     reason: Annotated[

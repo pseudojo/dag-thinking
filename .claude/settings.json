@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run ruff check src/ --fix --quiet && uv run ruff format src/ --quiet"
+          }
+        ]
+      }
+    ]
+  }
+}
