@@ -253,7 +253,7 @@ def _split_sentences(text: str) -> list[str]:
     t = text.strip()
     if not t:
         return []
-    _M = "\x00"
+    _M = ""  # Unicode PUA — 일반 텍스트에서 사용 불가능한 코드포인트
     t = re.sub(r"(?<=[。！？])", _M, t)  # CJK 즉시 분리
     t = re.sub(r"([!?]{2})\s+", r"\1" + _M, t)  # 복합 종결자 먼저 (I48)
     t = re.sub(r"([a-z][!?])\s+", r"\1" + _M, t)  # !? 단일: 소문자 1개 충분

@@ -861,7 +861,7 @@ def _action_restore(*, db_path: str, session_id: str, ccr_hash_val: str | None) 
 # FastMCP tool — C01: exactly one tool exposed
 # ---------------------------------------------------------------------------
 
-mcp = FastMCP("dag-thinking")
+mcp = FastMCP("dag_thinking_mcp")
 
 
 @mcp.tool(
@@ -878,7 +878,7 @@ mcp = FastMCP("dag-thinking")
         "openWorldHint": False,
     },
 )
-def dag_thinking(
+async def dag_thinking(
     action: Annotated[
         Literal["think", "status", "invalidate", "restore"],
         Field(
@@ -1019,18 +1019,21 @@ def dag_thinking(
           → action='restore', ccr_hash='<hash from status restoration_manifest>'
         - Don't use when: you only need simple key-value storage without DAG reasoning structure
     """
-    return call_dag_thinking(
-        action=action,
-        session_id=session_id,
-        node_name=node_name,
-        thought_type=thought_type,
-        payload=payload,
-        depends_on=depends_on,
-        note=note,
-        target_node=target_node,
-        reason=reason,
-        ccr_hash=ccr_hash,
-    )
+    try:
+        return call_dag_thinking(
+            action=action,
+            session_id=session_id,
+            node_name=node_name,
+            thought_type=thought_type,
+            payload=payload,
+            depends_on=depends_on,
+            note=note,
+            target_node=target_node,
+            reason=reason,
+            ccr_hash=ccr_hash,
+        )
+    except ValueError as e:
+        return {"isError": True, "error": str(e)}
 
 
 def main():
