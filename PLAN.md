@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.29
+# dag-thinking 설계 문서 v0.31
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -33,8 +33,10 @@
 | v0.28 | 437 tests — MCP Best Practices: 3-file split (db.py+actions.py+server.py), action='info' diagnostic (§3.2), XML semantic tags in instructions (§2.2), server.py <500 LOC (§4.2) |
 | v0.29 | 443 tests — Post-review fixes: compressor.py 마커 회귀 수정, think.py 추출(actions.py <500 LOC), _action_info 동적 버전(importlib.metadata), session_id min_length 제거, test 미사용 import 제거 |
 | v0.30 | 459 tests — TD-5 MCP 표준 에러(ToolError → protocol isError), TD-7 prepare_release.py(§4.2 릴리스 검증), TD-4 import fallback 제거, TD-1 테스트 파일명 교정 |
+| v0.31 | 459 tests (코드 불변 — 문서 리비전) — mcp-builder/Best Practices 전면 재리뷰: §9 준수 현황 갱신(§4.2 부분 준수로 정정), TD-8/TD-9 신규 등재, TD-2 해소(IMPROVEMENTS.md 전면 갱신), README.md 동기화, §4 압축 100–280자 단계 등재 |
 
-> **현재 버전**: v0.30 (459 tests) | 최종 갱신: 2026-06-12
+> **현재 버전**: v0.31 (459 tests) | 최종 갱신: 2026-06-12
+> 주: v0.31은 코드 불변 문서 리비전 — 패키지 버전(pyproject.toml)은 0.30 유지, 다음 코드 변경 시 일괄 인상.
 
 ---
 
@@ -290,8 +292,9 @@ session_id 불필요. 서버 상태 및 설정을 동적으로 반환.
     기타 7개 타입 각각 6-7개 단어 — IMPORTANCE_KEYWORDS와 중복 없음
 
 압축 목표:
-  280–700자 → 58% 유지
-  700자+    → 42% 유지
+  100–280자 → 70% 유지 (_RATIO_TINY)
+  280–700자 → 58% 유지 (_RATIO_SHORT)
+  700자+    → 42% 유지 (_RATIO_LONG)
   절약 <10% → passthrough (Headroom 규칙)
 
 반환: (compressed_text, ccr_hash_24char, tokens_saved)
@@ -332,31 +335,33 @@ ccr_store(
 
 ---
 
-## 6. 파일 구조 (v0.30 현재)
+## 6. 파일 구조 (v0.31 현재)
 
 ```
 dag-thinking/
 ├── src/
 │   ├── server.py        — FastMCP 얇은 레이어, 단일 툴 정의, MCP Resource   (269 LOC)
-│   ├── actions.py       — 비즈니스 로직: status/invalidate/restore/info + dispatcher  (320 LOC)
+│   ├── actions.py       — 비즈니스 로직: status/invalidate/restore/info + dispatcher  (321 LOC)
 │   ├── think.py         — think 액션 + 헬퍼: _action_think, _validate_think_inputs,
-│   │                      _compute_dag_health, _compute_context_pressure 등          (381 LOC)
+│   │                      _compute_dag_health, _compute_context_pressure 등          (382 LOC)
 │   ├── db.py            — DB 프리미티브: init_db, _db, _ensure_session,
-│   │                      _load_forward_edges, _has_cycle_graph, _cascade_invalidate  (155 LOC)
-│   ├── compressor.py    — 순수 Python extractive 압축기                               (281 LOC)
+│   │                      _load_forward_edges, _has_cycle_graph, _cascade_invalidate  (156 LOC)
+│   ├── compressor.py    — 순수 Python extractive 압축기                               (282 LOC)
 │   └── __init__.py      — 빈 패키지 마커
 ├── tests/
 │   └── test_*.py        — pytest 통합 테스트 33개 파일, 459개 테스트
-├── prepare_release.py   — §4.2 릴리스 검증 파이프라인 CLI (109 LOC)
+├── prepare_release.py   — §4.2 릴리스 검증 파이프라인 CLI (110 LOC)
 ├── pyproject.toml       — 프로젝트 메타데이터, 의존성, ruff 설정
 ├── PLAN.md              — 스펙 겸 설계 문서 (이 파일)
+├── README.md            — 사용자 문서 (설치, MCP 설정, 사용법)
+├── IMPROVEMENTS.md      — 개선 이력 전체 등재 (I/Q/R/P/BUG/STYLE/QUAL/TD 시리즈)
 ├── CLAUDE.md            — 개발 가이드 (TDD 원칙, 인코딩 주의사항, 의존성 원칙)
 └── .claude/settings.json — PostToolUse hook: ruff 자동 실행
 ```
 
 **LOC 기준** (MCP Best Practices §4.2 <500 LOC per file):
-- 최대 파일: `think.py` 381 LOC ✅ (한도 내, 여유 119 LOC)
-- 최소 파일: `db.py` 155 LOC ✅
+- 최대 파일: `think.py` 382 LOC ✅ (한도 내, 여유 118 LOC)
+- 최소 파일: `db.py` 156 LOC ✅
 - 자동 검증: `prepare_release.py` check_loc_limits()가 릴리스 시 강제
 
 **의존성**: `fastmcp>=3.3.1`, `pydantic>=2.13.4`, Python ≥ 3.13, 표준 라이브러리만
@@ -768,7 +773,11 @@ dag-thinking/
 
 ---
 
-## 9. MCP 표준 준수 현황 (v0.29 기준)
+## 9. MCP 표준 준수 현황 (v0.31 기준)
+
+> v0.31 재리뷰 (2026-06-12): mcp-builder 스킬 + MCP Best Practices 문서 전면 대조.
+> 검증 실측 — 459 tests 통과, `grep "print(" src/` 0건, 전 소스 파일 <500 LOC.
+> 리뷰 기준 문서 CCR 캐시: `headroom_retrieve(hash="9498bc77e6ad95daaf938cf1")`
 
 ### 9.1 MCP Best Practices & Lessons Learned 체크리스트
 
@@ -776,13 +785,13 @@ dag-thinking/
 |------|------|------|------|
 | §1.1 단일 툴 설계 | `dag_thinking(action=...)` 1개 | ✅ 완전 준수 | v0.2에서 5개→1개로 통합 |
 | §1.2 연결 생명주기 | 툴 호출 당 DB 연결 (per-invocation) | ✅ 완전 준수 | `contextlib.closing(_db(...))` |
-| §2.1 스키마/명명 | snake_case, 서버명 `dag_thinking_mcp` | ✅ 완전 준수 | Field 설명+제약 10개 파라미터 전체 |
+| §2.1 스키마/명명 | snake_case, 서버명 `dag_thinking_mcp` | ✅ 완전 준수 | 엄격 스키마 + 관대한 파싱 (strip/dedup) |
 | §2.2 의미론적 설명 | XML 시맨틱 태그 (`<use_case>`, `<important_notes>`) | ✅ 완전 준수 | FastMCP `instructions=` 파라미터 |
 | §2.3 Not-found 부정적 조향 제거 | 노드/해시 미발견 에러 최소화 | ✅ 보안경계 예외 | 노드 존재 확인 = 세션 소유 검증 (보안경계) |
 | §3.1 STDIO 경계 통제 | stdout에 `print()` 없음 | ✅ 완전 준수 | 검증: `grep "print(" src/` → 0건 |
 | §3.2 info 진단 엔드포인트 | `action='info'` — 동적 버전, DB 상태 반환 | ✅ 완전 준수 | `importlib.metadata.version("dag-thinking")` |
-| §4.1 컨테이너 패키징 | Docker 미구성 | ❌ 미준수 | 개발 단계 — 향후 배포 시 필요 |
-| §4.2 릴리스 검증 파이프라인 | `prepare_release.py` — git/LOC/tests/smoke 4종 | ✅ 완전 준수 | v0.30 신설, 459 tests |
+| §4.1 컨테이너 패키징 | Docker 미구성 | ❌ 미준수 | 개발 단계 — 향후 배포 시 필요 (TD-6) |
+| §4.2 릴리스 검증 파이프라인 | `prepare_release.py` — git/LOC/tests/smoke 4종 | ⚠️ 부분 준수 | 취약점 감사(pip-audit)+SBOM 미구현 (TD-8) |
 
 ### 9.2 mcp-builder 품질 체크리스트
 
@@ -798,8 +807,20 @@ dag-thinking/
 | Pydantic BaseModel 입력 검증 | ⚠️ | FastMCP의 `Annotated[..., Field()]` 사용 — 유효 패턴 |
 | MCP Resource 등록 | ✅ | `dag-thinking-session://{session_id}` (v0.26) |
 | 에러 content 형식 MCP 표준 | ✅ | ToolError → `content[{type:text}]` + isError=True (v0.30 TD-5 해소) |
+| outputSchema / 구조화 출력 모델 | ⚠️ | 반환 타입 plain `dict` — TypedDict/Pydantic 모델 미정의 (TD-9) |
 
-### 9.3 경량성 원칙 (Lightweight)
+### 9.3 의도적 미적용 (Intentional Deviations)
+
+mcp-builder 체크리스트 중 아래 항목은 검토 후 **의도적으로 적용하지 않음**. 부채가 아니라 설계 결정이다.
+
+| 항목 | mcp-builder 권고 | 미적용 근거 |
+|------|------|------|
+| `response_format` (markdown/json) | 데이터 반환 툴은 양식 선택 지원 | 소비자가 LLM 단일 — 구조화 dict가 곧 응답. `next_hint`/`restoration_manifest` 등 필드 단위 소비라 markdown 변환은 정보 손실만 발생 |
+| 페이지네이션 (`limit`/`offset`) | 목록 반환 툴은 페이지네이션 필수 | 세션 노드 수가 `context_pressure`(≥15 = high, 즉시 수렴 권고)로 구조적으로 상한 — 단일 세션이 수백 노드에 도달하지 않는 설계 |
+| Lifespan 영속 연결 | 서버 수명 주기 리소스 관리 | Best Practices §1.2와 정면 충돌 — per-invocation 연결이 우선 (degraded state에서도 서버 기동 보장) |
+| Context 주입 (progress/elicit) | 장기 작업 진행률 보고 | 모든 액션이 ms 단위 로컬 SQLite 연산 — 진행률 보고 무의미 |
+
+### 9.4 경량성 원칙 (Lightweight)
 
 | 의존성 | 버전 | 역할 |
 |--------|------|------|
@@ -810,31 +831,34 @@ dag-thinking/
 
 ---
 
-## 10. 기술 부채 (Tech Debt) — v0.30
+## 10. 기술 부채 (Tech Debt) — v0.31
 
 **Priority = (영향도 + 위험도) × (6 - 난이도)**  
 영향도/위험도/난이도: 1(낮음)~5(높음)
 
-| ID | 항목 | 영향도 | 위험도 | 난이도 | 우선순위 | 비고 |
-|----|------|--------|--------|--------|---------|------|
-| ~~TD-1~~ | ~~`test_i11_i12.py` 파일명-스펙 충돌~~ | — | — | — | 해소 | v0.30: `test_restore_list_health.py`로 rename |
-| TD-2 | P/R2/R3/STYLE/QUAL/BUG 시리즈 PLAN.md 미등재 | 2 | 2 | 2 | 16 | IMPROVEMENTS.md 신설 필요 |
-| TD-3 | `server.py __all__` 내부 심볼 노출 | 2 | 2 | 3 | 12 | 테스트 backward-compat 목적 — 직접 import로 교체 필요 |
-| ~~TD-4~~ | ~~double import fallback~~ | — | — | — | 해소 | v0.30: `.compressor` 단일 relative import |
-| ~~TD-5~~ | ~~에러 응답 형식 불일치~~ | — | — | — | 해소 | v0.30: `raise ToolError` — 실측 영향 테스트 3건(50+ 추정은 과대) |
-| TD-6 | Docker 컨테이너 미구성 (§4.1) | 2 | 1 | 4 | 6 | 배포 단계에서 필요 |
-| ~~TD-7~~ | ~~릴리스 검증 스크립트 미구성~~ | — | — | — | 해소 | v0.30: `prepare_release.py` — git/LOC/tests/smoke 4종 |
+| ID | 항목 | 분류 | 영향도 | 위험도 | 난이도 | 우선순위 | 비고 |
+|----|------|------|--------|--------|--------|---------|------|
+| ~~TD-1~~ | ~~`test_i11_i12.py` 파일명-스펙 충돌~~ | 문서 | — | — | — | 해소 | v0.30: `test_restore_list_health.py`로 rename |
+| ~~TD-2~~ | ~~P/R/STYLE/QUAL/BUG 시리즈 미등재~~ | 문서 | — | — | — | 해소 | v0.31: IMPROVEMENTS.md 전면 갱신 (v0.13~v0.30 + 전 시리즈 등재) |
+| TD-3 | `server.py __all__` 내부 심볼 노출 | 코드 | 2 | 2 | 3 | 12 | 테스트 backward-compat 목적 — 직접 import로 교체 필요 |
+| ~~TD-4~~ | ~~double import fallback~~ | 코드 | — | — | — | 해소 | v0.30: `.compressor` 단일 relative import |
+| ~~TD-5~~ | ~~에러 응답 형식 불일치~~ | 코드 | — | — | — | 해소 | v0.30: `raise ToolError` — 실측 영향 테스트 3건(50+ 추정은 과대) |
+| TD-6 | Docker 컨테이너 미구성 (§4.1) | 인프라 | 2 | 1 | 4 | 6 | 배포 단계에서 필요 |
+| ~~TD-7~~ | ~~릴리스 검증 스크립트 미구성~~ | 인프라 | — | — | — | 해소 | v0.30: `prepare_release.py` — git/LOC/tests/smoke 4종 |
+| TD-8 | prepare_release.py 공급망 검증 누락 (§4.2-2) | 의존성 | 2 | 3 | 2 | 20 | `pip-audit` 취약점 감사 + SBOM 생성 단계 추가. 의존성 2개뿐이라 난이도 낮음 — 표준 라이브러리 원칙 유지 위해 pip-audit는 dev 그룹으로 |
+| TD-9 | 툴 반환 outputSchema 미정의 | 코드 | 2 | 1 | 3 | 9 | 반환 타입 plain `dict` — action별 TypedDict 모델 정의 시 클라이언트가 응답 구조 사전 인지 가능. action 분기별 반환 구조가 달라 union 모델 설계 필요 |
 
 ### 해소 로드맵
 
 **Phase 2 — 다음 사이클:**
-- [ ] TD-2. `IMPROVEMENTS.md` 신설 — P/R2/R3/STYLE/QUAL/BUG 시리즈 문서화
+- [ ] TD-8. `prepare_release.py`에 `pip-audit` 취약점 감사 + SBOM 생성 단계 추가 (§4.2 완전 준수)
 - [ ] TD-3. `server.py __all__` 정리 — 테스트가 실제 모듈에서 직접 import
 
 **Phase 3 — 배포 준비 시:**
 - [ ] TD-6. Docker 컨테이너 구성 (§4.1 준수)
+- [ ] TD-9. action별 outputSchema (TypedDict) 정의 — Docker 배포와 함께 클라이언트 호환성 검증
 
-**해소 완료 (v0.30):** TD-1(파일명), TD-4(import fallback), TD-5(ToolError), TD-7(prepare_release.py)
+**해소 완료:** TD-1(v0.30 파일명), TD-2(v0.31 IMPROVEMENTS.md), TD-4(v0.30 import fallback), TD-5(v0.30 ToolError), TD-7(v0.30 prepare_release.py)
 
 ---
 
@@ -862,7 +886,7 @@ sequential_think로 먼저 구현 계획 수립 후 작성.
 - ccr_hash(), estimate_tokens(), _is_list_content()
 - _score_sentence(), _compress_list(), _compress_prose()
 - compress() → (text, hash, tokens_saved) 반환
-- 주요 조건: 280자 미만 passthrough, 절약 <10% passthrough
+- 주요 조건: 100자 미만 passthrough, 절약 <10% passthrough
 
 **Step 2 — server.py (DB + 헬퍼)**
 sequential_think로 먼저 구현 계획 수립 후 작성.

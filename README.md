@@ -54,8 +54,8 @@ pip install -e .
 
 ```python
 dag_thinking(
-    action: "think" | "status" | "invalidate" | "restore",
-    session_id: str,
+    action: "think" | "status" | "invalidate" | "restore" | "info",
+    session_id: str,          # action="info"는 생략 가능
 
     # action="think" 전용
     node_name: str | None,
@@ -147,6 +147,22 @@ dag_thinking(action="restore", session_id="my_session")
 dag_thinking(action="restore", session_id="my_session", ccr_hash="a3f8c2d1e5b9f0a2c7d4")
 ```
 
+#### `info` — 서버 진단 (MCP Best Practices §3.2)
+
+```python
+dag_thinking(action="info")  # session_id 불필요
+```
+
+응답: 서버명, 동적 버전(pyproject.toml 기준), DB 경로/존재 여부, 사용 가능한 액션 목록.
+
+### MCP Resource
+
+세션 상태는 읽기 전용 Resource로도 노출됩니다:
+
+```
+dag-thinking-session://{session_id}
+```
+
 ### thought_type 가이드
 
 | thought_type | 용도 | 다음 권장 타입 |
@@ -172,12 +188,17 @@ dag_thinking(action="restore", session_id="my_session", ccr_hash="a3f8c2d1e5b9f0
 ```
 dag-thinking/
 ├── src/
-│   ├── server.py      # FastMCP 서버, 단일 툴, DB 로직
-│   └── compressor.py  # 순수 Python extractive 압축기
-├── tests/
-│   └── test_server.py # pytest 통합 테스트
+│   ├── server.py        # FastMCP 얇은 레이어 — 단일 툴, MCP Resource, 에러 변환
+│   ├── actions.py       # 비즈니스 로직 — status/invalidate/restore/info + dispatcher
+│   ├── think.py         # think 액션 — 검증, 사이클 감지, DAG 진단, 압박 경보
+│   ├── db.py            # DB 프리미티브 — 스키마, 연결, 그래프 유틸리티
+│   └── compressor.py    # 순수 Python extractive 압축기
+├── tests/               # pytest 통합 테스트 (33개 파일, 459 tests)
+├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/tests/MCP smoke
 └── pyproject.toml
 ```
+
+모든 소스 파일은 500 LOC 미만을 유지하며 (MCP Best Practices §4.2), `prepare_release.py`가 릴리스 시 자동 검증합니다. DB 연결은 툴 호출 단위로 생성됩니다 (per-invocation, §1.2).
 
 ### 압축 알고리즘
 
@@ -213,6 +234,24 @@ uv run ruff check src/
 테스트는 임시 SQLite DB를 사용하며 격리 실행됩니다.
 
 ## 변경 이력
+
+> v0.13 이후 전체 이력은 PLAN.md(버전 변경 내역 표)와 IMPROVEMENTS.md를 참조하세요. 아래는 요약입니다.
+
+### v0.31 (2026-06-12) — MCP 표준 재리뷰 (문서 리비전)
+- mcp-builder 스킬 + MCP Best Practices 문서 전면 대조 리뷰 — 준수 현황 PLAN.md §9 갱신
+- IMPROVEMENTS.md 전면 갱신 (미등재 시리즈 P/BUG/R/STYLE/QUAL 등재, TD-2 해소)
+- 잔여 부채: 공급망 감사+SBOM(TD-8), outputSchema(TD-9), Docker(TD-6), `__all__` 정리(TD-3)
+
+### v0.25 ~ v0.30 — MCP 프로토콜 표준 준수
+- `async def` 툴 + protocol-level isError (`ToolError`), 서버명 `dag_thinking_mcp`
+- MCP Resource `dag-thinking-session://{session_id}`, FastMCP instructions XML 시맨틱 태그
+- `action='info'` 진단 엔드포인트 (동적 버전), 3+1 파일 분리 (<500 LOC/파일)
+- `prepare_release.py` 릴리스 검증 파이프라인 — 459 tests
+
+### v0.13 ~ v0.24 — 입력 방어 / 압축 정확성 / 스키마 풍부화
+- 공백 전용 payload 차단, 길이 상한(note 500자), 엣지 인덱스 추가
+- `_split_sentences` 줄임표·약어 false-split 수정, 최소 보존 k=2
+- ToolAnnotations 4종 + 전 파라미터 Field 설명·제약, "Use when:" docstring 예시
 
 ### v0.12
 - **I25**: `_is_cjk_char()` 헬퍼 추출 — `estimate_tokens`와 `_score_sentence` CJK 범위 정의 통일 (DRY)
