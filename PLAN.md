@@ -1,4 +1,4 @@
-# dag-thinking 설계 문서 v0.24
+# dag-thinking 설계 문서 v0.29
 
 ### 버전 변경 내역
 | 버전 | 변경 내용 |
@@ -32,6 +32,8 @@
 | v0.27 | 431 tests — Skeleton Refactor: version-tracking comment 제거, FastMCP instructions 추가 (MCP discoverability) |
 | v0.28 | 437 tests — MCP Best Practices: 3-file split (db.py+actions.py+server.py), action='info' diagnostic (§3.2), XML semantic tags in instructions (§2.2), server.py <500 LOC (§4.2) |
 | v0.29 | 443 tests — Post-review fixes: compressor.py 마커 회귀 수정, think.py 추출(actions.py <500 LOC), _action_info 동적 버전(importlib.metadata), session_id min_length 제거, test 미사용 import 제거 |
+
+> **현재 버전**: v0.29 (443 tests) | 최종 갱신: 2026-06-12
 
 ---
 
@@ -246,6 +248,27 @@ target_node 기준 캐스케이드 무효화 (DFS)
 → ValueError: "Node '{target_node}' not found in session '{session_id}'. Use action='status' to see available nodes."
 ```
 
+#### `action="info"` — §3.2 서버 진단 (MCP Best Practices §3.2)
+
+```
+session_id 불필요. 서버 상태 및 설정을 동적으로 반환.
+
+응답:
+{
+  "server": "dag_thinking_mcp",
+  "version": "<pyproject.toml에서 동적 읽기>",   ← importlib.metadata 사용
+  "db_path": "<절대 경로>",
+  "db_exists": true | false,
+  "actions": ["think", "status", "invalidate", "restore", "info"],
+  "status": "ready"
+}
+
+사용 시점:
+- MCP 클라이언트가 서버 버전 검증 시
+- DB 경로/존재 여부 진단 시
+- 사용 가능한 액션 목록 확인 시
+```
+
 ---
 
 ## 4. 압축 알고리즘 (compressor.py)
@@ -308,19 +331,33 @@ ccr_store(
 
 ---
 
-## 6. 파일 구조
+## 6. 파일 구조 (v0.29 현재)
 
 ```
 dag-thinking/
 ├── src/
-│   ├── server.py        — FastMCP 서버, 단일 툴, DB 로직   (~420줄)
-│   └── compressor.py    — 순수 Python 압축 유틸            (~130줄)
+│   ├── server.py        — FastMCP 얇은 레이어, 단일 툴 정의, MCP Resource   (267 LOC)
+│   ├── actions.py       — 비즈니스 로직: status/invalidate/restore/info + dispatcher  (325 LOC)
+│   ├── think.py         — think 액션 + 헬퍼: _action_think, _validate_think_inputs,
+│   │                      _compute_dag_health, _compute_context_pressure 등          (385 LOC)
+│   ├── db.py            — DB 프리미티브: init_db, _db, _ensure_session,
+│   │                      _load_forward_edges, _has_cycle_graph, _cascade_invalidate  (155 LOC)
+│   ├── compressor.py    — 순수 Python extractive 압축기                               (281 LOC)
+│   └── __init__.py      — 빈 패키지 마커
 ├── tests/
-│   └── test_server.py   — pytest 기반 통합 테스트          (~120줄)
-└── pyproject.toml
+│   └── test_*.py        — pytest 통합 테스트 31개 파일, 443개 테스트
+├── pyproject.toml       — 프로젝트 메타데이터, 의존성, ruff 설정
+├── PLAN.md              — 스펙 겸 설계 문서 (이 파일)
+├── CLAUDE.md            — 개발 가이드 (TDD 원칙, 인코딩 주의사항, 의존성 원칙)
+└── .claude/settings.json — PostToolUse hook: ruff 자동 실행
 ```
 
+**LOC 기준** (MCP Best Practices §4.2 <500 LOC per file):
+- 최대 파일: `think.py` 385 LOC ✅ (한도 내, 여유 115 LOC)
+- 최소 파일: `db.py` 155 LOC ✅
+
 **의존성**: `fastmcp>=3.3.1`, `pydantic>=2.13.4`, Python ≥ 3.13, 표준 라이브러리만
+- ML 라이브러리 (torch, transformers 등) **금지**
 
 ---
 
@@ -506,6 +543,72 @@ dag-thinking/
         `if not target_node or not target_node.strip()` — node_name 검증과 동일 패턴
 ```
 
+> **참고**: v0.16-v0.29 세부 태스크는 상단 버전 변경 내역 표 참조.
+> 이하는 각 버전의 핵심 구현 항목 요약이다.
+
+```
+[ v0.16 응답 풍부화 — I42/I43/I44/I45 ] (완료)
+✅ I42. think 응답에 thought_type 필드 추가
+✅ I43. status dag.nodes에 ccr_hash 필드 추가
+✅ I44. _is_list_content `+` GFM 불릿 지원
+✅ I45. _compute_dag_health total_nodes 추가
+
+[ v0.17 입력 방어 보강 — I46/I47/I48 ] (완료)
+✅ I46. note=None 방어 (None→"" 변환)
+✅ I47. target_node 공백 정규화 (strip)
+✅ I48. _split_sentences 복합 종결자 (?.!/!? 등)
+
+[ v0.18 성능·안전성·경고 — I49~I53 ] (완료)
+✅ I49. _split_sentences 약어 false-split 방지 (Mr./Dr.)
+✅ I50. cycle check 트랜잭션 내부 이동
+✅ I51. node_name 공백 정규화 (strip)
+✅ I52. restore: 삭제 노드 warning
+✅ I53. _cascade_invalidate BFS 개선
+
+[ v0.19 MCP 표준화 ] (완료)
+✅ 중복 테스트 14건 제거
+✅ ToolAnnotations 추가 (readOnlyHint/destructiveHint/idempotentHint/openWorldHint)
+
+[ v0.20 스키마 풍부화 ] (완료)
+✅ 중복 테스트 제거 (IC27/IC28/IC29)
+✅ MCP inputSchema Field descriptions 10개 파라미터 전체
+
+[ v0.21-v0.23 제약 강화 ] (완료)
+✅ session_id min/maxLength Field 제약
+✅ node_name/reason max_length Field 제약
+✅ docstring "Use when:/Don't use when:" 예시 추가
+
+[ v0.24 스키마 마무리 ] (완료)
+✅ target_node maxLength=200
+✅ payload min/maxLength=80/1500
+✅ CLAUDE.md/Hook 환경설정
+
+[ v0.25 MCP 프로토콜 표준 준수 ] (완료)
+✅ dag_thinking async + isError error handling
+✅ server name dag_thinking_mcp
+✅ _split_sentences null byte 수정
+
+[ v0.26 MCP Resource ] (완료)
+✅ dag-thinking-session://{session_id} Resource 등록
+✅ _cascade_invalidate forward_graph 명칭 개선
+
+[ v0.27 Skeleton Refactor ] (완료)
+✅ version-tracking comment 제거
+✅ FastMCP instructions 추가 (MCP discoverability)
+
+[ v0.28 MCP Best Practices §2.2/§3.2/§4.2 ] (완료)
+✅ 3-file split: db.py + actions.py + server.py
+✅ action='info' 진단 엔드포인트 (§3.2)
+✅ XML semantic tags in instructions (§2.2)
+✅ server.py <500 LOC (§4.2)
+
+[ v0.29 Post-review 수정 ] (완료)
+✅ think.py 추출 (actions.py 655→325 LOC)
+✅ _action_info 동적 버전 (importlib.metadata)
+✅ session_id min_length 제거 (info action 호환)
+✅ compressor.py 마커 회귀 수정
+```
+
 ---
 
 ## 8. 검증 체크리스트 (구현 완료 후)
@@ -592,11 +695,94 @@ dag-thinking/
         (줄임표가 문장 구분자로 오인 분리되지 않아야 함)
 □ C52. _split_sentences("Hello. World.") → ["Hello.", "World."] (정상 분리)
 □ C53. depends_on 중복 포함 think() 성공 → 엣지가 정확히 1개만 생성 (I34 executemany)
+
+[ MCP 표준 준수 — v0.25-v0.29 ]
+□ C54. FastMCP에 등록된 툴이 dag_thinking 1개만 존재 (list_tools = 1개)
+□ C55. action='info' 응답에 server/version/db_path/db_exists/actions/status 필드 포함
+□ C56. version 필드 값이 pyproject.toml [project].version과 일치
+□ C57. dag-thinking-session://{session_id} Resource 호출 → JSON 세션 상태 반환
+□ C58. ValueError 발생 시 `{"isError": True, "error": "..."}` 형식으로 반환
+□ C59. src/ 디렉토리 내 print() 호출 없음 (grep 검증 — §3.1 STDIO 경계 준수)
+□ C60. ToolAnnotations 4종 (readOnlyHint=False/destructiveHint=True/idempotentHint=False/openWorldHint=False) 확인
 ```
 
 ---
 
-## 9. 구현 요청 프롬프트
+## 9. MCP 표준 준수 현황 (v0.29 기준)
+
+### 9.1 MCP Best Practices & Lessons Learned 체크리스트
+
+| 섹션 | 내용 | 상태 | 비고 |
+|------|------|------|------|
+| §1.1 단일 툴 설계 | `dag_thinking(action=...)` 1개 | ✅ 완전 준수 | v0.2에서 5개→1개로 통합 |
+| §1.2 연결 생명주기 | 툴 호출 당 DB 연결 (per-invocation) | ✅ 완전 준수 | `contextlib.closing(_db(...))` |
+| §2.1 스키마/명명 | snake_case, 서버명 `dag_thinking_mcp` | ✅ 완전 준수 | Field 설명+제약 10개 파라미터 전체 |
+| §2.2 의미론적 설명 | XML 시맨틱 태그 (`<use_case>`, `<important_notes>`) | ✅ 완전 준수 | FastMCP `instructions=` 파라미터 |
+| §2.3 Not-found 부정적 조향 제거 | 노드/해시 미발견 에러 최소화 | ✅ 보안경계 예외 | 노드 존재 확인 = 세션 소유 검증 (보안경계) |
+| §3.1 STDIO 경계 통제 | stdout에 `print()` 없음 | ✅ 완전 준수 | 검증: `grep "print(" src/` → 0건 |
+| §3.2 info 진단 엔드포인트 | `action='info'` — 동적 버전, DB 상태 반환 | ✅ 완전 준수 | `importlib.metadata.version("dag-thinking")` |
+| §4.1 컨테이너 패키징 | Docker 미구성 | ❌ 미준수 | 개발 단계 — 향후 배포 시 필요 |
+| §4.2 릴리스 검증 파이프라인 | 자동화 스크립트 없음 | ⚠️ 부분 준수 | LOC <500 ✅, 443 tests ✅, 스크립트 미구성 |
+
+### 9.2 mcp-builder 품질 체크리스트
+
+| 항목 | 상태 | 비고 |
+|------|------|------|
+| 서버명 `{service}_mcp` 형식 | ✅ | `dag_thinking_mcp` |
+| Tool annotations 4종 완비 | ✅ | readOnly/destructive/idempotent/openWorld |
+| `async def` 툴 함수 | ✅ | `async def dag_thinking(...)` |
+| Field 타입+설명+제약 완비 | ✅ | min/maxLength 전 파라미터 |
+| `Use when:/Don't use when:` 예시 | ✅ | 툴 docstring 6개 예시 |
+| `isError: True` 에러 패턴 | ✅ | ValueError → `{"isError": True, "error": ...}` |
+| stdout 오염 없음 (§3.1) | ✅ | `print()` 0건 확인 |
+| Pydantic BaseModel 입력 검증 | ⚠️ | FastMCP의 `Annotated[..., Field()]` 사용 — 유효 패턴 |
+| MCP Resource 등록 | ✅ | `dag-thinking-session://{session_id}` (v0.26) |
+| 에러 content 형식 MCP 표준 | ⚠️ | `{"error": "..."}` vs `{"content": [{"type":"text",...}]}` — 향후 개선 대상 |
+
+### 9.3 경량성 원칙 (Lightweight)
+
+| 의존성 | 버전 | 역할 |
+|--------|------|------|
+| `fastmcp` | ≥3.3.1 | MCP 서버 프레임워크 |
+| `pydantic` | ≥2.13.4 | Field 제약 및 입력 검증 |
+| Python 표준 라이브러리 | 3.13+ | `sqlite3`, `hashlib`, `re`, `collections`, `contextlib`, `importlib.metadata` |
+| ML 라이브러리 | ❌ 금지 | `torch`, `transformers` 등 불허 |
+
+---
+
+## 10. 기술 부채 (Tech Debt) — v0.29
+
+**Priority = (영향도 + 위험도) × (6 - 난이도)**  
+영향도/위험도/난이도: 1(낮음)~5(높음)
+
+| ID | 항목 | 영향도 | 위험도 | 난이도 | 우선순위 | 비고 |
+|----|------|--------|--------|--------|---------|------|
+| TD-1 | `test_i11_i12.py` 파일명-스펙 충돌 | 1 | 2 | 1 | 15 | PLAN.md I11/I12와 명칭 혼동 |
+| TD-2 | P/R2/R3/STYLE/QUAL/BUG 시리즈 PLAN.md 미등재 | 2 | 2 | 2 | 16 | IMPROVEMENTS.md 신설 필요 |
+| TD-3 | `server.py __all__` 내부 심볼 노출 | 2 | 2 | 3 | 12 | 테스트 backward-compat 목적 — 직접 import로 교체 필요 |
+| TD-4 | double import fallback `try/except ImportError` | 2 | 1 | 2 | 12 | `actions.py`, `think.py` 양쪽 — 빌드 정상화 후 제거 가능 |
+| TD-5 | 에러 응답 형식 불일치 (ValueError→isError) | 3 | 2 | 4 | 10 | MCP 표준 `content[{type,text}]` 형식 — ~50+ 테스트 영향, 대형 변경 |
+| TD-6 | Docker 컨테이너 미구성 (§4.1) | 2 | 1 | 4 | 6 | 배포 단계에서 필요 |
+| TD-7 | 릴리스 검증 스크립트 미구성 (§4.2) | 2 | 2 | 3 | 12 | `prepare-release.py` 구성 필요 |
+
+### 해소 로드맵
+
+**Phase 1 — 즉시 (현재 사이클):**
+- [ ] TD-1. `test_i11_i12.py` 파일명 교정 (명칭 충돌 해소)
+
+**Phase 2 — 다음 사이클:**
+- [ ] TD-2. `IMPROVEMENTS.md` 신설 — P/R2/R3/STYLE/QUAL/BUG 시리즈 문서화
+- [ ] TD-3. `server.py __all__` 정리 — 테스트가 실제 모듈에서 직접 import
+- [ ] TD-4. double import fallback 제거 — 빌드 정상화 후 `.compressor` 단일 경로로
+
+**Phase 3 — 배포 준비 시:**
+- [ ] TD-5. `isError` 응답 형식 → MCP 표준 `{"content": [{"type": "text", "text": "..."}]}` 전환 (50+ 테스트 수정)
+- [ ] TD-6. Docker 컨테이너 구성 (§4.1 준수)
+- [ ] TD-7. `prepare-release.py` 구성 (§4.2 준수)
+
+---
+
+## 11. 구현 요청 프롬프트
 
 > 아래 프롬프트를 Claude에게 전달할 때 **headroom으로 설계 문서를 압축**한 뒤 hash를 함께 전달하고, **sequential-thinking으로 단계별 구현**을 유도합니다.
 
