@@ -169,36 +169,8 @@ class TestI28RestoreJoin:
         restored = cdt(action="restore", session_id="s1", ccr_hash=ccr_hash, db_path=db)
         assert restored["original_payload"] == self._PAYLOAD
 
-    def test_restore_invalidated_node_shows_warning(self, tmp_path):
-        """INVALIDATED 노드의 ccr_hash 복원 시 warning 필드가 포함된다."""
-        db, cdt = self._make_db(tmp_path)
-        r = cdt(
-            action="think",
-            session_id="s1",
-            node_name="n1",
-            thought_type="Objective",
-            payload=self._PAYLOAD,
-            db_path=db,
-        )
-        ccr_hash = r["ccr_hash"]
-        cdt(action="invalidate", session_id="s1", target_node="n1", reason="test", db_path=db)
-        restored = cdt(action="restore", session_id="s1", ccr_hash=ccr_hash, db_path=db)
-        assert "warning" in restored, "INVALIDATED node restore should include 'warning' key"
-
-    def test_restore_active_node_no_warning(self, tmp_path):
-        """COMPLETED 노드 복원 시 warning 필드가 없어야 한다."""
-        db, cdt = self._make_db(tmp_path)
-        r = cdt(
-            action="think",
-            session_id="s1",
-            node_name="n1",
-            thought_type="Objective",
-            payload=self._PAYLOAD,
-            db_path=db,
-        )
-        ccr_hash = r["ccr_hash"]
-        restored = cdt(action="restore", session_id="s1", ccr_hash=ccr_hash, db_path=db)
-        assert "warning" not in restored, "COMPLETED node should not have warning"
+    # test_restore_invalidated_node_shows_warning — test_v18_improvements.py T2에서 커버
+    # test_restore_active_node_no_warning — test_v18_improvements.py T1에서 커버
 
     def test_restore_wrong_session_raises(self, tmp_path):
         """다른 session_id로 복원 시도 → ValueError."""

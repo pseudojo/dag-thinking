@@ -139,86 +139,9 @@ class TestI18EstimateTokensCJKExtended:
 # ---------------------------------------------------------------------------
 
 
-class TestI20SessionTotalSavedRegression:
-    """session_total_saved가 다수 노드 think 후에도 정확히 누적되어야 한다."""
-
-    _LONG_PAYLOAD = (
-        "이것은 테스트용 긴 페이로드다. 충분한 길이를 갖추어야 한다. "
-        "핵심 결론은 여기에 있다. 중요한 증거가 필요하다. "
-        "근본 원인은 성능 병목이다. 해결책은 캐시 도입이다. "
-        "따라서 즉각적인 조치가 필요하다. 주요 위험 요소를 점검하라. "
-    ) * 3
-
-    def _make_db(self, tmp_path):
-        from src.server import call_dag_thinking, init_db
-
-        db = str(tmp_path / "test.db")
-        init_db(db)
-        return db, call_dag_thinking
-
-    def test_first_think_session_total_saved_accurate(self, tmp_path):
-        """첫 번째 think: session_total_saved == 해당 노드의 tokens_saved."""
-        db, call_dt = self._make_db(tmp_path)
-        result = call_dt(
-            action="think",
-            session_id="s1",
-            node_name="n1",
-            thought_type="Objective",
-            payload=self._LONG_PAYLOAD,
-            db_path=db,
-        )
-        node_saved = result["compression"]["tokens_saved"]
-        session_total = result["compression"]["session_total_saved"]
-        assert session_total == node_saved, (
-            f"First think: session_total_saved({session_total}) != tokens_saved({node_saved})"
-        )
-
-    def test_second_think_accumulates_session_total(self, tmp_path):
-        """두 번째 think: session_total_saved가 두 노드 합산."""
-        db, call_dt = self._make_db(tmp_path)
-        r1 = call_dt(
-            action="think",
-            session_id="s1",
-            node_name="n1",
-            thought_type="Objective",
-            payload=self._LONG_PAYLOAD,
-            db_path=db,
-        )
-        r2 = call_dt(
-            action="think",
-            session_id="s1",
-            node_name="n2",
-            thought_type="Evidence",
-            payload=self._LONG_PAYLOAD,
-            db_path=db,
-        )
-        s1 = r1["compression"]["session_total_saved"]
-        s2 = r2["compression"]["session_total_saved"]
-        assert s2 >= s1, f"session_total_saved should grow: {s1} → {s2}"
-
-    def test_upsert_delta_reflected_in_session_total(self, tmp_path):
-        """동일 노드 재think: delta만큼 session_total_saved 변경."""
-        db, call_dt = self._make_db(tmp_path)
-        r1 = call_dt(
-            action="think",
-            session_id="s1",
-            node_name="n1",
-            thought_type="Objective",
-            payload=self._LONG_PAYLOAD,
-            db_path=db,
-        )
-        # 동일 노드 재think (payload 동일하므로 delta=0 예상)
-        r2 = call_dt(
-            action="think",
-            session_id="s1",
-            node_name="n1",
-            thought_type="Objective",
-            payload=self._LONG_PAYLOAD,
-            db_path=db,
-        )
-        s1 = r1["compression"]["session_total_saved"]
-        s2 = r2["compression"]["session_total_saved"]
-        assert s2 == s1, f"Re-think same payload: session_total should be same: {s1} vs {s2}"
+# TestI20SessionTotalSavedRegression:
+# test_v11_improvements.py TestI20TransactionRefactor에서 커버
+# (first_think / accumulates / upsert_same_payload — 동일 시나리오)
 
 
 # ---------------------------------------------------------------------------

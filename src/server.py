@@ -1002,6 +1002,17 @@ def dag_thinking(
                           omit hash to list all restorable nodes
                           Returns (hash given): {node_name, original_payload, tokens, warning?}
                           Returns (no hash):    {restorable_nodes: [{name, ccr_hash, restore_cmd}]}
+
+    Examples:
+        - Use when: recording a new reasoning step
+          → action='think', node_name='hypothesis_1', thought_type='Hypothesis', payload='...'
+        - Use when: checking session progress or retrieving ccr_hash values for restore
+          → action='status', session_id='my_session'
+        - Use when: a hypothesis or assumption is disproven and descendants should be invalidated
+          → action='invalidate', target_node='hypothesis_1'
+        - Use when: retrieving the full original text after CCR compression
+          → action='restore', ccr_hash='<hash from status restoration_manifest>'
+        - Don't use when: you only need simple key-value storage without DAG reasoning structure
     """
     return call_dag_thinking(
         action=action,

@@ -155,3 +155,32 @@ class TestMcpFieldConstraints:
         schema = _get_input_schema()
         prop = schema.get("properties", {}).get("session_id", {})
         assert "description" in prop, "session_id description 누락 — Field 수정 후 회귀"
+
+
+class TestMcpToolDescription:
+    """D1-D4: dag_thinking tool description — 'Use when:' 사용 예시 패턴 검증."""
+
+    def _get_description(self) -> str:
+        tool = _get_dag_tool()
+        assert tool is not None, "dag_thinking 툴이 서버에 없음"
+        return tool.description or ""
+
+    def test_description_has_use_when_examples(self):
+        """D1: tool description에 'Use when:' 예시 포함."""
+        assert "Use when:" in self._get_description(), (
+            "tool description에 'Use when:' 없음 — Examples 섹션 미추가"
+        )
+
+    def test_description_has_dont_use_when(self):
+        """D2: tool description에 \"Don't use when:\" 포함."""
+        assert "Don't use when:" in self._get_description(), (
+            'tool description에 "Don\'t use when:" 없음'
+        )
+
+    def test_description_has_think_action(self):
+        """D3: 기존 action='think' 설명 회귀 없음."""
+        assert "think" in self._get_description(), "description에서 'think' 액션 설명 사라짐"
+
+    def test_description_has_status_action(self):
+        """D4: 기존 action='status' 설명 회귀 없음."""
+        assert "status" in self._get_description(), "description에서 'status' 액션 설명 사라짐"
