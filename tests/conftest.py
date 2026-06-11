@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.server import init_db
+from src.db import init_db
 
 
 @pytest.fixture

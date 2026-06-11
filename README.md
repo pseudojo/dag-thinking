@@ -193,8 +193,8 @@ dag-thinking/
 │   ├── think.py         # think 액션 — 검증, 사이클 감지, DAG 진단, 압박 경보
 │   ├── db.py            # DB 프리미티브 — 스키마, 연결, 그래프 유틸리티
 │   └── compressor.py    # 순수 Python extractive 압축기
-├── tests/               # pytest 통합 테스트 (33개 파일, 459 tests)
-├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/tests/MCP smoke
+├── tests/               # 행위 기준 8개 파일, 128 tests
+├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/ruff/tests/MCP smoke
 └── pyproject.toml
 ```
 
@@ -236,6 +236,12 @@ uv run ruff check src/
 ## 변경 이력
 
 > v0.13 이후 전체 이력은 PLAN.md(버전 변경 내역 표)와 IMPROVEMENTS.md를 참조하세요. 아래는 요약입니다.
+
+### v0.32 (2026-06-12) — Skeleton 재구성 (TDD)
+- 테스트 스위트를 버전 이력 기준 31파일(459 tests)에서 **행위 기준 8파일(128 tests)**로 재구성
+- 테스트를 위한 테스트 삭제 — 메타(ruff subprocess), 구현 세부(인덱스 존재·리네임 가드), 중복, 백컴팻 경유
+- `__all__` 재수출 제거 (TD-3 해소) — 테스트가 실제 정의 모듈에서 직접 import
+- `prepare_release.py`에 `check_ruff` 추가 — §4.2-3 정적 분석, 5종 체크 완성
 
 ### v0.31 (2026-06-12) — MCP 표준 재리뷰 (문서 리비전)
 - mcp-builder 스킬 + MCP Best Practices 문서 전면 대조 리뷰 — 준수 현황 PLAN.md §9 갱신

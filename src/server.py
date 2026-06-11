@@ -7,45 +7,8 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
-from .actions import (
-    _PRESSURE_MEDIUM,
-    VALID_THOUGHT_TYPES,
-    _action_status,
-    _compute_dag_health,
-    _resolve_parent_context,
-    _validate_think_inputs,
-    call_dag_thinking,
-)
-from .db import (
-    _DEFAULT_DB,
-    _cascade_invalidate,
-    _db,
-    _ensure_session,
-    _has_cycle_graph,
-    _load_forward_edges,
-    init_db,
-)
-
-# Re-export for test backward compatibility
-__all__ = [
-    "VALID_THOUGHT_TYPES",
-    "_PRESSURE_MEDIUM",
-    "_cascade_invalidate",
-    "_db",
-    "_ensure_session",
-    "_load_forward_edges",
-    "call_dag_thinking",
-    "_resolve_parent_context",
-    "_has_cycle_graph",
-    "_validate_think_inputs",
-    "_compute_dag_health",
-    "init_db",
-    "_DEFAULT_DB",
-    "mcp",
-    "dag_thinking",
-    "get_session_resource",
-    "_get_session_resource_data",
-]
+from .actions import _action_status, call_dag_thinking
+from .db import _DEFAULT_DB, init_db
 
 # ---------------------------------------------------------------------------
 # FastMCP server — §2.2 XML semantic tags in instructions

@@ -1,6 +1,6 @@
 """Shared test helper functions and constants."""
 
-from src.server import call_dag_thinking
+from src.actions import call_dag_thinking
 
 PAYLOAD = (
     "The key finding from this analysis is that the current architecture has a critical bottleneck "

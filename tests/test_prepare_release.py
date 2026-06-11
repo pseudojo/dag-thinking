@@ -1,8 +1,9 @@
 """
-v0.30 TD-7: prepare_release.py — §4.2 릴리스 검증 파이프라인.
+prepare_release.py — §4.2 릴리스 검증 파이프라인.
 
 L1-L5: check_loc_limits — 파일 LOC 한도 검사
 G1-G3: check_git_clean — 소스 컨트롤 상태 검사
+R1-R4: check_ruff — §4.2-3 정적 분석 (v0.32 신규)
 T1-T2: run_tests — pytest 서브프로세스 실행
 S1: smoke_test — in-memory MCP 라이프사이클 검증
 M1-M2: main — 종합 exit code
@@ -12,7 +13,14 @@ import asyncio
 import subprocess
 
 import prepare_release
-from prepare_release import check_git_clean, check_loc_limits, main, run_tests, smoke_test
+from prepare_release import (
+    check_git_clean,
+    check_loc_limits,
+    check_ruff,
+    main,
+    run_tests,
+    smoke_test,
+)
 
 
 def _git(repo: str, *args: str) -> None:
@@ -79,6 +87,58 @@ class TestCheckGitClean:
         assert isinstance(detail, str) and detail
 
 
+class TestCheckRuff:
+    """R1-R4: check_ruff — §4.2-3 정적 분석. --no-sync로 uv 재설치 차단."""
+
+    class _Result:
+        def __init__(self, returncode, stdout="", stderr=""):
+            self.returncode = returncode
+            self.stdout = stdout
+            self.stderr = stderr
+
+    def test_r1_clean_src_returns_true(self, monkeypatch):
+        """R1: ruff 종료코드 0 → (True, ...). --no-sync 플래그 포함 확인."""
+        captured = {}
+
+        def fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+            return self._Result(0)
+
+        monkeypatch.setattr(prepare_release.subprocess, "run", fake_run)
+        ok, detail = check_ruff("src")
+        assert ok is True
+        assert "--no-sync" in captured["cmd"], (
+            f"--no-sync 없으면 uv가 잠긴 exe 재설치 시도: {captured['cmd']}"
+        )
+
+    def test_r2_violations_return_false_with_output(self, monkeypatch):
+        """R2: 위반 존재 → (False, 위반 내용 포함)."""
+        monkeypatch.setattr(
+            prepare_release.subprocess,
+            "run",
+            lambda cmd, **kw: self._Result(1, stdout="src/x.py:1:1: E501 line too long\n"),
+        )
+        ok, detail = check_ruff("src")
+        assert ok is False
+        assert "E501" in detail
+
+    def test_r3_missing_tool_returns_false(self, monkeypatch):
+        """R3: 실행 자체 실패(OSError) → (False, 사유) — 예외 전파 금지."""
+
+        def boom(cmd, **kw):
+            raise OSError("uv not found")
+
+        monkeypatch.setattr(prepare_release.subprocess, "run", boom)
+        ok, detail = check_ruff("src")
+        assert ok is False
+        assert "failed" in detail
+
+    def test_r4_real_src_is_clean(self):
+        """R4: 실제 src/ — 위반 0건 (§4.2-3 현재 상태 검증)."""
+        ok, detail = check_ruff("src")
+        assert ok is True, f"src/ ruff 위반: {detail}"
+
+
 class TestRunTests:
     def test_t1_passing_project_returns_true(self, tmp_path):
         """T1: 통과 테스트만 있는 tmp 프로젝트 → (True, ...)."""
@@ -121,8 +181,17 @@ class TestMain:
     def _patch_all_pass(self, monkeypatch):
         monkeypatch.setattr(prepare_release, "check_git_clean", lambda repo: (True, "clean"))
         monkeypatch.setattr(prepare_release, "check_loc_limits", lambda src, max_loc=500: [])
-        monkeypatch.setattr(prepare_release, "run_tests", lambda repo: (True, "443 passed"))
+        monkeypatch.setattr(prepare_release, "check_ruff", lambda src: (True, "no violations"))
+        monkeypatch.setattr(prepare_release, "run_tests", lambda repo: (True, "123 passed"))
         monkeypatch.setattr(prepare_release, "smoke_test", _fake_smoke_ok)
+
+    def test_m0_main_runs_five_checks(self, monkeypatch, capsys):
+        """M0: main()이 5종 체크(ruff 포함)를 모두 출력."""
+        self._patch_all_pass(monkeypatch)
+        main()
+        out = capsys.readouterr().out
+        assert out.count("[PASS]") == 5
+        assert "ruff" in out
 
     def test_m1_all_checks_pass_returns_zero(self, monkeypatch, capsys):
         """M1: 4종 체크 전부 통과 → main() == 0, [PASS] 출력."""
