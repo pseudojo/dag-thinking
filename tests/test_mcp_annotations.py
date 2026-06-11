@@ -184,3 +184,42 @@ class TestMcpToolDescription:
     def test_description_has_status_action(self):
         """D4: 기존 action='status' 설명 회귀 없음."""
         assert "status" in self._get_description(), "description에서 'status' 액션 설명 사라짐"
+
+
+class TestMcpFieldConstraintsV23:
+    """E1-E4: node_name, reason Field 제약조건 — MCP inputSchema 노출 검증."""
+
+    def _get_anyof_string_schema(self, prop: dict) -> dict:
+        """anyOf 구조에서 type='string' 브랜치를 추출."""
+        any_of = prop.get("anyOf", [])
+        return next((s for s in any_of if s.get("type") == "string"), {})
+
+    def test_node_name_anyof_has_max_length(self):
+        """E1: node_name anyOf string 브랜치에 maxLength=200 노출."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("node_name", {})
+        str_schema = self._get_anyof_string_schema(prop)
+        assert str_schema.get("maxLength") == 200, (
+            f"node_name anyOf string 브랜치에 maxLength=200 없음 — "
+            f"Field(max_length=200) 미설정. anyOf={prop.get('anyOf')}"
+        )
+
+    def test_node_name_description_regression(self):
+        """E2: node_name Field 제약 추가 후 description 회귀 없음."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("node_name", {})
+        assert "description" in prop, "node_name description 누락 — Field 수정 후 회귀"
+
+    def test_reason_has_max_length_constraint(self):
+        """E3: reason maxLength=500 in inputSchema."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("reason", {})
+        assert prop.get("maxLength") == 500, (
+            f"reason maxLength 없음 (현재: {prop}) — Field(max_length=500) 미설정"
+        )
+
+    def test_reason_description_regression(self):
+        """E4: reason Field 제약 추가 후 description 회귀 없음."""
+        schema = _get_input_schema()
+        prop = schema.get("properties", {}).get("reason", {})
+        assert "description" in prop, "reason description 누락 — Field 수정 후 회귀"

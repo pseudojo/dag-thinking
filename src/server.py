@@ -912,7 +912,8 @@ def dag_thinking(
                 "Reasoning node name (required for action='think'). "
                 "Must be unique within the session. "
                 "Leading/trailing spaces are stripped. Max 200 chars."
-            )
+            ),
+            max_length=200,
         ),
     ] = None,
     thought_type: Annotated[
@@ -973,8 +974,9 @@ def dag_thinking(
         Field(
             description=(
                 "Human-readable reason for invalidation (action='invalidate'). "
-                "Optional — included in the response for audit trail."
-            )
+                "Optional — included in the response for audit trail. Max 500 chars."
+            ),
+            max_length=500,
         ),
     ] = "",
     ccr_hash: Annotated[
