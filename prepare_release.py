@@ -64,7 +64,7 @@ def check_audit(repo_dir: str, sbom_path: str = "sbom.json") -> tuple[bool, str]
     fd, req_path = tempfile.mkstemp(suffix=".txt")
     os.close(fd)
     try:
-        subprocess.run(
+        export = subprocess.run(
             [
                 "uv",
                 "export",
@@ -81,7 +81,9 @@ def check_audit(repo_dir: str, sbom_path: str = "sbom.json") -> tuple[bool, str]
             text=True,
             timeout=120,
         )
-        raise NotImplementedError  # export 후속 단계 — 다음 슬라이스
+        if export.returncode != 0:
+            return False, export.stderr.strip() or "uv export failed"
+        raise NotImplementedError  # pip-audit 단계 — 다음 슬라이스
     except (OSError, subprocess.TimeoutExpired) as e:
         return False, f"audit execution failed: {e}"
     finally:

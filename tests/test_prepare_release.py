@@ -11,6 +11,7 @@ M1-M2: main — 종합 exit code
 
 import asyncio
 import subprocess
+from types import SimpleNamespace
 
 import prepare_release
 from prepare_release import (
@@ -144,6 +145,19 @@ class TestCheckAudit:
         ok, detail = check_audit(".")
         assert ok is False
         assert "audit execution failed" in detail
+
+    def test_a2_export_failure_returns_false(self, monkeypatch):
+        """A2: uv export 비0 종료(비-프로젝트 등) → (False, stderr 포함)."""
+        monkeypatch.setattr(
+            prepare_release.subprocess,
+            "run",
+            lambda cmd, **kw: SimpleNamespace(
+                returncode=2, stdout="", stderr="error: No `pyproject.toml` found\n"
+            ),
+        )
+        ok, detail = check_audit(".")
+        assert ok is False
+        assert "No `pyproject.toml` found" in detail
 
 
 class TestRunTests:
