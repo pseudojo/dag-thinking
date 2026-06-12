@@ -7,7 +7,7 @@ R1-R3: check_ruff — §4.2-3 정적 분석 (v0.32 신규)
 A1-A4: check_audit — §4.2-2 공급망 감사 + SBOM (v0.33 신규)
 T1-T2: run_tests — pytest 서브프로세스 실행
 S1: smoke_test — in-memory MCP 라이프사이클 검증
-M0-M2: main — 6종 체크 + 종합 exit code
+M1-M2: main — 6종 체크 + 종합 exit code
 """
 
 import asyncio
@@ -241,22 +241,15 @@ class TestMain:
         monkeypatch.setattr(prepare_release, "run_tests", lambda repo: (True, "123 passed"))
         monkeypatch.setattr(prepare_release, "smoke_test", _fake_smoke_ok)
 
-    def test_m0_main_runs_six_checks(self, monkeypatch, capsys):
-        """M0/M3: main()이 6종 체크(ruff + supply chain audit 포함)를 모두 출력."""
-        self._patch_all_pass(monkeypatch)
-        main()
-        out = capsys.readouterr().out
-        assert out.count("[PASS]") == 6
-        assert "ruff" in out
-        assert "audit" in out
-
-    def test_m1_all_checks_pass_returns_zero(self, monkeypatch, capsys):
-        """M1: 4종 체크 전부 통과 → main() == 0, [PASS] 출력."""
+    def test_m1_all_pass_six_checks_exit_zero(self, monkeypatch, capsys):
+        """M1(M0 통합): 전 체크 통과 → exit 0, 6종 [PASS](ruff·audit 포함), [FAIL] 없음."""
         self._patch_all_pass(monkeypatch)
         assert main() == 0
         out = capsys.readouterr().out
-        assert "[PASS]" in out
+        assert out.count("[PASS]") == 6
         assert "[FAIL]" not in out
+        assert "ruff" in out
+        assert "audit" in out
 
     def test_m2_one_check_fails_returns_one(self, monkeypatch, capsys):
         """M2: 체크 1종 실패 → main() == 1, [FAIL] 출력."""
