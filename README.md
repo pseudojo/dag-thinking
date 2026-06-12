@@ -235,7 +235,7 @@ uv run ruff check src/
 
 ## 변경 이력
 
-> v0.13 이후 전체 이력은 PLAN.md(버전 변경 내역 표)와 IMPROVEMENTS.md를 참조하세요. 아래는 요약입니다.
+> v0.13 이후 전체 이력은 PLAN.md(버전 변경 내역 표)와 docs/IMPROVEMENTS.md를 참조하세요. 아래는 요약입니다.
 
 ### v0.34 (2026-06-12) — 외부 리뷰 triage (문서 리비전)
 - 외부 리뷰 4종 판정 (PLAN.md §14) — `context_pressure` 토큰 기반 전환(TD-11, 차기 최우선) 등 부채 3건 등재, TD-9 재평가
@@ -255,7 +255,7 @@ uv run ruff check src/
 
 ### v0.31 (2026-06-12) — MCP 표준 재리뷰 (문서 리비전)
 - mcp-builder 스킬 + MCP Best Practices 문서 전면 대조 리뷰 — 준수 현황 PLAN.md §9 갱신
-- IMPROVEMENTS.md 전면 갱신 (미등재 시리즈 P/BUG/R/STYLE/QUAL 등재, TD-2 해소)
+- docs/IMPROVEMENTS.md 전면 갱신 (미등재 시리즈 P/BUG/R/STYLE/QUAL 등재, TD-2 해소)
 - 잔여 부채: 공급망 감사+SBOM(TD-8), outputSchema(TD-9), Docker(TD-6), `__all__` 정리(TD-3)
 
 ### v0.25 ~ v0.30 — MCP 프로토콜 표준 준수

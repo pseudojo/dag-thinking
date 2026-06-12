@@ -1,5 +1,26 @@
 # PROMPT
 
+## v0.34.1 ~
+
+@docs/MCP_Best_Practices_and_Lessons.md 
+
+/tdd-all-in-one
+
+* dag-thinking에 대한 기존 코드 파악
+* MCP 제작 표준 파악
+* MCP(Model Context Protocol) Best Practices and Lessons Learned 파악
+* 프로젝트의 모든 문서를 읽고, 이 MCP를 구현하기 위한 핵심 로직만을 뼈대로 남기고 재구성해서 리팩토링을 하세요. TDD 프로세스에 따라 문서 - 테스트 - 실제 코드 순서로 핵심 로직만을 뼈대로 남기세요. 실제 코드를 리팩토링하게 되어 내부 로직을 수정하는경우 테스트 코드와 일치하도록 같이 수정하세요.
+* 테스트를 위한 테스트가 있는지 파악하고 부적절한 경우 테스트를 삭제
+
+반드시 지켜야 할 제약사항:
+1. TDD 기반 개발 프로세스 — PLAN.md를 먼저 읽고 그 원칙을 참고할 것
+2. mcp-builder 스킬을 이용해 MCP 제작 표준에 따라 만들어졌는지 리뷰
+3. Lightweight 형태 유지 — 외부 의존성 최소화, 최소한의 라이브러리만 사용
+
+작업 도구
+- 스킬 사용 : `hybrid-tdd-lifecycle-architect` , `tech-debt`, `tdd-all-in-one`, `mcp-builder`
+- MCP 사용 : `headroom`
+
 ---
 
 ## v0.19 ~

@@ -338,7 +338,7 @@ ccr_store(
 
 ---
 
-## 6. 파일 구조 (v0.32 현재)
+## 6. 파일 구조 (v0.35 현재)
 
 ```
 dag-thinking/
@@ -356,11 +356,13 @@ dag-thinking/
 │   ├── test_restore.py / test_dispatcher.py / test_mcp_protocol.py
 │   ├── test_prepare_release.py
 │   └── conftest.py / helpers.py — 공유 픽스처 (src 실제 모듈 직접 import)
+├── docs/
+│   ├── IMPROVEMENTS.md  — 개선 이력 전체 등재 (I/Q/R/P/BUG/STYLE/QUAL/TD 시리즈)
+│   └── MCP_Best_Practices_and_Lessons.md — MCP 표준 참조 문서 (mcp-builder 기반)
 ├── prepare_release.py   — §4.2 릴리스 검증 파이프라인 CLI, 6종 체크 (157 LOC)
 ├── pyproject.toml       — 프로젝트 메타데이터, 의존성, ruff 설정
 ├── PLAN.md              — 스펙 겸 설계 문서 (이 파일)
 ├── README.md            — 사용자 문서 (설치, MCP 설정, 사용법)
-├── IMPROVEMENTS.md      — 개선 이력 전체 등재 (I/Q/R/P/BUG/STYLE/QUAL/TD 시리즈)
 ├── CLAUDE.md            — 개발 가이드 (TDD 원칙, 인코딩 주의사항, 의존성 원칙)
 └── .claude/settings.json — PostToolUse hook: ruff 자동 실행
 ```
