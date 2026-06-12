@@ -240,6 +240,7 @@ uv run ruff check src/
 ### v0.34 (2026-06-12) — 외부 리뷰 triage (문서 리비전)
 - 외부 리뷰 4종 판정 (PLAN.md §14) — `context_pressure` 토큰 기반 전환(TD-11, 차기 최우선) 등 부채 3건 등재, TD-9 재평가
 - 포지셔닝 명문화: sequential-thinking의 **대체재가 아닌 보완재** — 노드 내부 추론 강제는 sequential-thinking, 세션 토폴로지·컨텍스트 관리(CCR)는 dag-thinking (병행 권장)
+- `ccr_hash` 알고리즘 리뷰 — xxHash·uuid·Ed25519 등 대안 전수 실측 후 현행 `sha256[:24]` 유지 판정 (PLAN.md §14.4)
 
 ### v0.33 (2026-06-12) — 공급망 검증 (TD-8 해소)
 - `prepare_release.py`에 `check_audit` 추가 — `uvx pip-audit` 취약점 감사 + CycloneDX SBOM 생성 (§4.2-2), 6종 체크 완성

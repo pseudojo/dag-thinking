@@ -36,7 +36,7 @@
 | v0.31 | 459 tests (코드 불변 — 문서 리비전) — mcp-builder/Best Practices 전면 재리뷰: §9 준수 현황 갱신(§4.2 부분 준수로 정정), TD-8/TD-9 신규 등재, TD-2 해소(IMPROVEMENTS.md 전면 갱신), README.md 동기화, §4 압축 100–280자 단계 등재 |
 | v0.32 | 128 tests — Skeleton 재구성: 테스트 스위트 행위 기준 8파일 재편(버전 이력 기준 30파일 폐기, 459→128), 테스트를 위한 테스트 삭제, TD-3 해소(`__all__` 재수출 제거), prepare_release `check_ruff` 추가(§4.2-3 정적 분석, 5종 체크) — §12 스펙 참조 |
 | v0.33 | 130 tests — TD-8 해소: prepare_release `check_audit`(§4.2-2 공급망 감사 — `uv export --frozen` + `uvx pip-audit`, CycloneDX SBOM) + main 6종 체크. §12.2-1 위반 메타 테스트 재유입 2건 삭제(L5/R4), 소스 스켈레톤 정리(스테일 주석·dead param) — §13 스펙 참조 |
-| v0.34 | 130 tests (코드 불변 — 문서 리비전) — 외부 리뷰 4종 triage(§14): TD-11(context_pressure 토큰 기반 전환) 신규·차기 최우선, TD-12(INVALIDATED/ccr_store 보존 정책) 신규, TD-13(압축 인지 효용 측정 — 보류) 신규, TD-9 재평가(9→12), 소프트 가드레일 포지셔닝·sequential-thinking 병행 사용 명문화 |
+| v0.34 | 130 tests (코드 불변 — 문서 리비전) — 외부 리뷰 4종 triage(§14): TD-11(context_pressure 토큰 기반 전환) 신규·차기 최우선, TD-12(INVALIDATED/ccr_store 보존 정책) 신규, TD-13(압축 인지 효용 측정 — 보류) 신규, TD-9 재평가(9→12), 소프트 가드레일 포지셔닝·sequential-thinking 병행 사용 명문화. §14.4 ccr_hash 알고리즘 판정 — xxHash 제안 기각, stdlib 14종+uuid+Ed25519 전수 실측 후 현행 sha256[:24] 유지(그린필드 재평가 포함, revisit 트리거 명시) |
 
 > **현재 버전**: v0.34 (130 tests) | 최종 갱신: 2026-06-12
 > 주: 패키지 버전(pyproject.toml)은 0.30 유지 — MCP 서버 프로세스가 exe를 잠그는 동안 pyproject 편집 시 uv 재설치 실패. 다음 안전 시점에 일괄 인상.

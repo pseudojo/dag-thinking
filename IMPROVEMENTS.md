@@ -134,6 +134,7 @@
 | TD-8 check_audit | §4.2-2 공급망 감사 — `uv export --frozen` + `uvx pip-audit`, CycloneDX SBOM, 6종 체크 | v0.33 |
 | 메타 테스트 정리 | §12.2-1 위반 재유입 2건 삭제(L5/R4) + 스테일 주석·dead param 제거 | v0.33 |
 | 외부 리뷰 triage | 4종 리뷰 판정(PLAN §14) — TD-11/12/13 등재, TD-9 재평가, 반박 근거·포지셔닝 명문화 | v0.34 |
+| ccr_hash 알고리즘 판정 | xxHash 제안 검토 — stdlib 14종+uuid+Ed25519 전수 실측, 현행 sha256[:24] 유지, revisit 트리거 명시 (PLAN §14.4) | v0.34 |
 
 ---
 
