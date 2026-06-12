@@ -103,7 +103,8 @@ def check_audit(repo_dir: str, sbom_path: str = "sbom.json") -> tuple[bool, str]
         )
         if audit.returncode == 0:
             return True, f"no known vulnerabilities; SBOM written to {sbom_path}"
-        raise NotImplementedError  # 취약점 발견 분기 — 다음 슬라이스
+        detail = audit.stderr.strip() or audit.stdout.strip() or "pip-audit failed"
+        return False, "\n".join(detail.splitlines()[-20:])
     except (OSError, subprocess.TimeoutExpired) as e:
         return False, f"audit execution failed: {e}"
     finally:

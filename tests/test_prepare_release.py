@@ -177,6 +177,23 @@ class TestCheckAudit:
         assert "--no-deps" in audit_cmd, "uv export가 전이 의존성 전체 포함 — 재해석 차단"
         assert "cyclonedx-json" in audit_cmd, "SBOM은 CycloneDX 형식 (§4.2-2)"
 
+    def test_a4_vulnerabilities_return_false_with_detail(self, monkeypatch):
+        """A4: pip-audit 비0 종료(취약점 발견) → (False, 감사 출력 포함) — blocking audit."""
+        results = iter(
+            [
+                SimpleNamespace(returncode=0, stdout="", stderr=""),  # uv export
+                SimpleNamespace(
+                    returncode=1,
+                    stdout="",
+                    stderr="Found 2 known vulnerabilities in 1 package\n",
+                ),  # pip-audit
+            ]
+        )
+        monkeypatch.setattr(prepare_release.subprocess, "run", lambda cmd, **kw: next(results))
+        ok, detail = check_audit(".")
+        assert ok is False
+        assert "vulnerabilities" in detail
+
 
 class TestRunTests:
     def test_t1_passing_project_returns_true(self, tmp_path):
