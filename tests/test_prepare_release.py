@@ -4,9 +4,10 @@ prepare_release.py — §4.2 릴리스 검증 파이프라인.
 L1-L4: check_loc_limits — 파일 LOC 한도 검사
 G1-G3: check_git_clean — 소스 컨트롤 상태 검사
 R1-R3: check_ruff — §4.2-3 정적 분석 (v0.32 신규)
+A1-A4: check_audit — §4.2-2 공급망 감사 + SBOM (v0.33 신규)
 T1-T2: run_tests — pytest 서브프로세스 실행
 S1: smoke_test — in-memory MCP 라이프사이클 검증
-M1-M2: main — 종합 exit code
+M0-M2: main — 6종 체크 + 종합 exit code
 """
 
 import asyncio
@@ -88,19 +89,13 @@ class TestCheckGitClean:
 class TestCheckRuff:
     """R1-R3: check_ruff — §4.2-3 정적 분석. --no-sync로 uv 재설치 차단."""
 
-    class _Result:
-        def __init__(self, returncode, stdout="", stderr=""):
-            self.returncode = returncode
-            self.stdout = stdout
-            self.stderr = stderr
-
     def test_r1_clean_src_returns_true(self, monkeypatch):
         """R1: ruff 종료코드 0 → (True, ...). --no-sync 플래그 포함 확인."""
         captured = {}
 
         def fake_run(cmd, **kwargs):
             captured["cmd"] = cmd
-            return self._Result(0)
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
 
         monkeypatch.setattr(prepare_release.subprocess, "run", fake_run)
         ok, detail = check_ruff("src")
@@ -114,7 +109,9 @@ class TestCheckRuff:
         monkeypatch.setattr(
             prepare_release.subprocess,
             "run",
-            lambda cmd, **kw: self._Result(1, stdout="src/x.py:1:1: E501 line too long\n"),
+            lambda cmd, **kw: SimpleNamespace(
+                returncode=1, stdout="src/x.py:1:1: E501 line too long\n", stderr=""
+            ),
         )
         ok, detail = check_ruff("src")
         assert ok is False
@@ -200,9 +197,7 @@ class TestRunTests:
         """T1: 통과 테스트만 있는 tmp 프로젝트 → (True, ...)."""
         tests_dir = tmp_path / "tests"
         tests_dir.mkdir()
-        (tests_dir / "test_ok.py").write_text(
-            "def test_ok():\n    assert True\n", encoding="utf-8"
-        )
+        (tests_dir / "test_ok.py").write_text("def test_ok():\n    assert True\n", encoding="utf-8")
         ok, detail = run_tests(str(tmp_path))
         assert ok is True, f"통과 프로젝트는 True 필요, detail: {detail}"
 
@@ -238,16 +233,22 @@ class TestMain:
         monkeypatch.setattr(prepare_release, "check_git_clean", lambda repo: (True, "clean"))
         monkeypatch.setattr(prepare_release, "check_loc_limits", lambda src, max_loc=500: [])
         monkeypatch.setattr(prepare_release, "check_ruff", lambda src: (True, "no violations"))
+        monkeypatch.setattr(
+            prepare_release,
+            "check_audit",
+            lambda repo, sbom_path="sbom.json": (True, "no known vulnerabilities"),
+        )
         monkeypatch.setattr(prepare_release, "run_tests", lambda repo: (True, "123 passed"))
         monkeypatch.setattr(prepare_release, "smoke_test", _fake_smoke_ok)
 
-    def test_m0_main_runs_five_checks(self, monkeypatch, capsys):
-        """M0: main()이 5종 체크(ruff 포함)를 모두 출력."""
+    def test_m0_main_runs_six_checks(self, monkeypatch, capsys):
+        """M0/M3: main()이 6종 체크(ruff + supply chain audit 포함)를 모두 출력."""
         self._patch_all_pass(monkeypatch)
         main()
         out = capsys.readouterr().out
-        assert out.count("[PASS]") == 5
+        assert out.count("[PASS]") == 6
         assert "ruff" in out
+        assert "audit" in out
 
     def test_m1_all_checks_pass_returns_zero(self, monkeypatch, capsys):
         """M1: 4종 체크 전부 통과 → main() == 0, [PASS] 출력."""

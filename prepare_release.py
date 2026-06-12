@@ -153,7 +153,7 @@ async def smoke_test() -> tuple[bool, str]:
 
 
 def main() -> int:
-    """§4.2 검증 5종 순차 실행 — 전부 통과 0, 하나라도 실패 1."""
+    """§4.2 검증 6종 순차 실행 — 전부 통과 0, 하나라도 실패 1."""
     repo_dir = str(Path(__file__).parent)
     src_dir = str(Path(__file__).parent / "src")
 
@@ -166,6 +166,7 @@ def main() -> int:
             "all files within limit" if not loc_violations else ", ".join(loc_violations),
         ),
         ("static analysis (ruff)", *check_ruff(src_dir)),
+        ("supply chain audit (pip-audit)", *check_audit(repo_dir)),
         ("test suite", *run_tests(repo_dir)),
         ("MCP smoke test", *asyncio.run(smoke_test())),
     ]

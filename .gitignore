@@ -225,3 +225,6 @@ __marimo__/
 # Claude / AI session artifacts
 prompt.txt
 reports/
+
+# Release pipeline artifacts (prepare_release.py check_audit)
+sbom.json
