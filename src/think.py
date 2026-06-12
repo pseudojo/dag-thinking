@@ -272,7 +272,6 @@ def _action_think(
             "SELECT tokens_saved FROM sessions WHERE id=?", (session_id,)
         ).fetchone()
         prev_session_total = prev_row["tokens_saved"] if prev_row else 0
-        delta = 0
 
         with conn:
             _ensure_session(conn, session_id)
