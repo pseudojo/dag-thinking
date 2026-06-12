@@ -1019,6 +1019,84 @@ main(): 5종 체크로 확장 — [source control, LOC, ruff, tests, smoke]
 
 ---
 
+## 13. v0.33 스펙 — §4.2-2 공급망 검증(TD-8) + 메타 테스트 정리
+
+### 13.1 배경 (mcp-builder + Best Practices 재리뷰, 2026-06-12)
+
+리뷰 기준: mcp-builder 스킬 체크리스트 + MCP Best Practices 문서
+(CCR 캐시: `headroom_retrieve(hash="ff35609c3729d407b6b6b5ac")` — 구 해시 만료로 재압축).
+
+판정: §1~§3 전 항목 준수 유지 (§9 현황표와 동일). 실행 가능한 잔여 격차는
+§4.2-2 공급망 검증(TD-8) 하나이며, 테스트 스위트에 §12.2-1 위반 메타 테스트 2건이 재유입됨.
+
+### 13.2 테스트 삭제 (§12.2 기준 적용 — 테스트를 위한 테스트)
+
+| 대상 | 근거 |
+|------|------|
+| `test_prepare_release.py::test_l5_real_src_dir_within_limit` | §12.2-1 메타 테스트 — 실제 `src/` LOC 검사를 테스트 스위트에서 수행. 릴리스 파이프라인(`check_loc_limits` 실행) 책임 중복 |
+| `test_prepare_release.py::test_r4_real_src_is_clean` | §12.2-1 메타 테스트 — 테스트 스위트 내 ruff subprocess 실행. v0.32에서 삭제한 패턴의 재유입. ruff 강제는 릴리스 파이프라인 + PostToolUse hook 책임 |
+
+주: L1~L4/R1~R3(tmp 디렉토리·mock 기반 행위 테스트)와 S1(`smoke_test` 유일 happy-path 커버)은 유지.
+
+### 13.3 소스 스켈레톤 정리 (REFACTOR — 동작 불변)
+
+- `think.py`: "Constants (shared with actions.py via re-export)" 주석 — TD-3 해소(v0.32)로 스테일. 제거.
+- `db.py`: `_cascade_invalidate(edges_graph=None)` — 호출처 없는 dead parameter (YAGNI). 제거.
+- `think.py`: `_compute_dag_health` 반환 dict의 `len(completed_names)` → 기 계산된 `total_nodes` 변수 재사용.
+
+### 13.4 신규 코드: prepare_release.check_audit (§4.2-2, TD-8)
+
+**책임**: 공급망 취약점 감사 + SBOM 생성 — 정확히 하나의 검증 (SRP).
+**의존성**: 표준 라이브러리(`subprocess`/`tempfile`/`os`) only. pip-audit는 `uvx` 격리 실행 —
+프로젝트 의존성/pyproject.toml 불변 (Lightweight 원칙 + exe-lock 제약 준수).
+
+```
+시그니처: def check_audit(repo_dir: str, sbom_path: str = "sbom.json") -> tuple[bool, str]
+
+입력 제약:
+  repo_dir: uv.lock이 존재하는 프로젝트 루트. 미존재/비-프로젝트 → uv export 비0 종료 → (False, ...) 자연 처리.
+  sbom_path: SBOM 출력 경로 (repo_dir 상대). .gitignore 등재 필수 —
+             다음 릴리스 런의 check_git_clean 오염 방지.
+
+의사코드:
+  BEGIN
+    fd, req_path = tempfile.mkstemp(suffix=".txt"); os.close(fd)  # Windows 파일 잠금 회피
+    TRY:
+      export = subprocess.run(["uv","export","--frozen","--no-dev","--no-emit-project",
+                               "--format","requirements-txt","-o",req_path],
+                              cwd=repo_dir, capture_output, text, timeout=120)
+      IF export.returncode != 0: RETURN (False, export.stderr tail)
+      audit = subprocess.run(["uvx","pip-audit","-r",req_path,"--no-deps",
+                              "-f","cyclonedx-json","-o",sbom_path],
+                             cwd=repo_dir, capture_output, text, timeout=300)
+      IF audit.returncode == 0: RETURN (True, f"no known vulnerabilities; SBOM written to {sbom_path}")
+      RETURN (False, audit stderr/stdout tail)
+    CATCH OSError|TimeoutExpired as e: RETURN (False, f"audit execution failed: {e}")
+    FINALLY: os.unlink(req_path) (missing_ok)
+  END
+
+제약/근거:
+  --frozen      : uv.lock 그대로 읽기 — lock 갱신/sync 차단 (잠긴 exe 재설치 방지, check_ruff --no-sync와 동일 근거)
+  --no-dev      : 릴리스 아티팩트 공급망만 감사 (pytest 등 dev 그룹 제외)
+  --no-deps     : uv export가 전체 전이 의존성을 이미 포함 — pip-audit 재해석 차단
+  -f cyclonedx-json -o : 감사와 SBOM 생성을 단일 패스로 (§4.2-2 두 요구 동시 충족)
+  네트워크      : pip-audit는 PyPI advisory DB 조회 필요 — 오프라인 시 (False, ...) 경로로 자연 강등
+
+main(): 6종 체크로 확장 — [source control, LOC, ruff, supply chain audit, tests, smoke]
+```
+
+**의도적 미적용**: §4.2-1의 "origin synchronization" 검사는 추가하지 않음 —
+릴리스 검증이 네트워크 단절 환경에서도 결정론적으로 동작해야 하며(`--frozen`과 동일 철학),
+push 여부는 git hosting 측 CI의 책임.
+
+### 13.5 검증 게이트
+
+- 신규 테스트: A1(도구 실행 실패) / A2(export 실패) / A3(정상 + 플래그 검증) / A4(취약점 발견) / M3(main 6종)
+- 구 메타 테스트 2건 삭제 후 전체 그린 + `prepare_release.py` 실측 6종 통과
+- 소스/테스트 파일 모두 <500 LOC 유지
+
+---
+
 **조정 완료 요약:**
 - 툴 5개 → **1개** (`dag_thinking(action=...)`)로 건너뛰기 문제 구조적 차단
 - `depends_on` 지정 시 부모 압축 페이로드 **자동 내장** → 별도 resolve 호출 불필요

@@ -1,9 +1,9 @@
 """
 prepare_release.py — §4.2 릴리스 검증 파이프라인.
 
-L1-L5: check_loc_limits — 파일 LOC 한도 검사
+L1-L4: check_loc_limits — 파일 LOC 한도 검사
 G1-G3: check_git_clean — 소스 컨트롤 상태 검사
-R1-R4: check_ruff — §4.2-3 정적 분석 (v0.32 신규)
+R1-R3: check_ruff — §4.2-3 정적 분석 (v0.32 신규)
 T1-T2: run_tests — pytest 서브프로세스 실행
 S1: smoke_test — in-memory MCP 라이프사이클 검증
 M1-M2: main — 종합 exit code
@@ -55,10 +55,6 @@ class TestCheckLocLimits:
         """L4: 빈 디렉토리 → []."""
         assert check_loc_limits(str(tmp_path), max_loc=500) == []
 
-    def test_l5_real_src_dir_within_limit(self):
-        """L5: 실제 src/ 디렉토리 — 모든 파일 500 LOC 이하 (§4.2 현재 상태 검증)."""
-        assert check_loc_limits("src", max_loc=500) == []
-
 
 class TestCheckGitClean:
     def test_g1_clean_repo_returns_true(self, tmp_path):
@@ -88,7 +84,7 @@ class TestCheckGitClean:
 
 
 class TestCheckRuff:
-    """R1-R4: check_ruff — §4.2-3 정적 분석. --no-sync로 uv 재설치 차단."""
+    """R1-R3: check_ruff — §4.2-3 정적 분석. --no-sync로 uv 재설치 차단."""
 
     class _Result:
         def __init__(self, returncode, stdout="", stderr=""):
@@ -132,11 +128,6 @@ class TestCheckRuff:
         ok, detail = check_ruff("src")
         assert ok is False
         assert "failed" in detail
-
-    def test_r4_real_src_is_clean(self):
-        """R4: 실제 src/ — 위반 0건 (§4.2-3 현재 상태 검증)."""
-        ok, detail = check_ruff("src")
-        assert ok is True, f"src/ ruff 위반: {detail}"
 
 
 class TestRunTests:

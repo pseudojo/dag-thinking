@@ -13,7 +13,7 @@ from .db import (
 )
 
 # ---------------------------------------------------------------------------
-# Constants (shared with actions.py via re-export)
+# Constants
 # ---------------------------------------------------------------------------
 
 VALID_THOUGHT_TYPES = frozenset(
@@ -242,7 +242,7 @@ def _compute_dag_health(
         "orphan_nodes": orphan_nodes,
         "thought_type_distribution": type_dist,
         "health_hint": health_hint,
-        "total_nodes": len(completed_names),
+        "total_nodes": total_nodes,
     }
 
 

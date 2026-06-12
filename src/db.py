@@ -117,11 +117,8 @@ def _cascade_invalidate(
     conn: sqlite3.Connection,
     session_id: str,
     root: str,
-    edges_graph: dict[str, list[str]] | None = None,
 ) -> list[str]:
-    forward_graph = (
-        edges_graph if edges_graph is not None else _load_forward_edges(conn, session_id)
-    )
+    forward_graph = _load_forward_edges(conn, session_id)
 
     reachable: list[str] = []
     stack = [root]
