@@ -159,6 +159,24 @@ class TestCheckAudit:
         assert ok is False
         assert "No `pyproject.toml` found" in detail
 
+    def test_a3_clean_audit_returns_true_with_sbom(self, monkeypatch):
+        """A3: export·audit 모두 성공 → (True, SBOM 경로 포함). 핵심 플래그 검증."""
+        calls = []
+
+        def fake_run(cmd, **kw):
+            calls.append(cmd)
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        monkeypatch.setattr(prepare_release.subprocess, "run", fake_run)
+        ok, detail = check_audit(".", sbom_path="sbom.json")
+        assert ok is True
+        assert "sbom.json" in detail
+        export_cmd, audit_cmd = calls
+        assert "--frozen" in export_cmd, "uv export는 --frozen 필수 — lock 갱신/sync 차단"
+        assert audit_cmd[:2] == ["uvx", "pip-audit"]
+        assert "--no-deps" in audit_cmd, "uv export가 전이 의존성 전체 포함 — 재해석 차단"
+        assert "cyclonedx-json" in audit_cmd, "SBOM은 CycloneDX 형식 (§4.2-2)"
+
 
 class TestRunTests:
     def test_t1_passing_project_returns_true(self, tmp_path):

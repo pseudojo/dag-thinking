@@ -83,7 +83,27 @@ def check_audit(repo_dir: str, sbom_path: str = "sbom.json") -> tuple[bool, str]
         )
         if export.returncode != 0:
             return False, export.stderr.strip() or "uv export failed"
-        raise NotImplementedError  # pip-audit 단계 — 다음 슬라이스
+
+        audit = subprocess.run(
+            [
+                "uvx",
+                "pip-audit",
+                "-r",
+                req_path,
+                "--no-deps",
+                "-f",
+                "cyclonedx-json",
+                "-o",
+                sbom_path,
+            ],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+        if audit.returncode == 0:
+            return True, f"no known vulnerabilities; SBOM written to {sbom_path}"
+        raise NotImplementedError  # 취약점 발견 분기 — 다음 슬라이스
     except (OSError, subprocess.TimeoutExpired) as e:
         return False, f"audit execution failed: {e}"
     finally:
