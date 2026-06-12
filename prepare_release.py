@@ -5,8 +5,10 @@ CLI script (not the MCP server process) — stdout output is permitted here.
 """
 
 import asyncio
+import os
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 
@@ -55,6 +57,35 @@ def check_ruff(src_dir: str) -> tuple[bool, str]:
     lines = result.stdout.strip().splitlines()
     tail = "\n".join(lines[-20:]) if lines else result.stderr.strip()
     return False, tail
+
+
+def check_audit(repo_dir: str, sbom_path: str = "sbom.json") -> tuple[bool, str]:
+    """§4.2-2 공급망 취약점 감사 + SBOM 생성 — uv export + uvx pip-audit (PLAN.md §13.4)."""
+    fd, req_path = tempfile.mkstemp(suffix=".txt")
+    os.close(fd)
+    try:
+        subprocess.run(
+            [
+                "uv",
+                "export",
+                "--frozen",
+                "--no-dev",
+                "--no-emit-project",
+                "--format",
+                "requirements-txt",
+                "-o",
+                req_path,
+            ],
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        raise NotImplementedError  # export 후속 단계 — 다음 슬라이스
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return False, f"audit execution failed: {e}"
+    finally:
+        Path(req_path).unlink(missing_ok=True)
 
 
 def run_tests(repo_dir: str) -> tuple[bool, str]:

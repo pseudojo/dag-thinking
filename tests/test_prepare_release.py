@@ -14,6 +14,7 @@ import subprocess
 
 import prepare_release
 from prepare_release import (
+    check_audit,
     check_git_clean,
     check_loc_limits,
     check_ruff,
@@ -128,6 +129,21 @@ class TestCheckRuff:
         ok, detail = check_ruff("src")
         assert ok is False
         assert "failed" in detail
+
+
+class TestCheckAudit:
+    """A1-A4: check_audit — §4.2-2 공급망 취약점 감사 + SBOM (PLAN.md §13.4)."""
+
+    def test_a1_missing_tool_returns_false(self, monkeypatch):
+        """A1: 실행 자체 실패(OSError: uv/uvx 부재) → (False, 사유) — 예외 전파 금지."""
+
+        def boom(cmd, **kw):
+            raise OSError("uv not found")
+
+        monkeypatch.setattr(prepare_release.subprocess, "run", boom)
+        ok, detail = check_audit(".")
+        assert ok is False
+        assert "audit execution failed" in detail
 
 
 class TestRunTests:
