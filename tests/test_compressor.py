@@ -116,9 +116,7 @@ class TestCompressProse:
         text = "".join(filler)
         assert len(text) >= 700
         compressed, _, _ = compress(text, "Evidence")
-        assert "measured" in compressed, (
-            f"Evidence 키워드 문장이 보존되어야 함: {compressed!r}"
-        )
+        assert "measured" in compressed, f"Evidence 키워드 문장이 보존되어야 함: {compressed!r}"
 
     def test_compress_accepts_all_thought_types(self):
         """compress(text, thought_type)가 7개 타입 전부 (str, str, int) 반환."""

@@ -221,9 +221,7 @@ class TestCompressionMetrics:
         """BUG-1: 동일 payload 재생성 → session total 불변."""
         r1 = think(db_path, "s1", "n1", "Objective")
         r2 = think(db_path, "s1", "n1", "Objective")
-        assert (
-            r2["compression"]["session_total_saved"] == r1["compression"]["session_total_saved"]
-        )
+        assert r2["compression"]["session_total_saved"] == r1["compression"]["session_total_saved"]
 
     def test_short_payload_zero_saved(self, db_path):
         """C10: 100자 미만 payload → tokens_saved=0 (passthrough)."""

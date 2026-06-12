@@ -58,8 +58,7 @@ class TestRestorationManifest:
         r = think(db_path, "s1", "root", "Objective")
         entry = status(db_path, "s1")["restoration_manifest"]["nodes"][0]
         expected = (
-            f"dag_thinking(action='restore', "
-            f"session_id={'s1'!r}, ccr_hash={r['ccr_hash']!r})"
+            f"dag_thinking(action='restore', session_id={'s1'!r}, ccr_hash={r['ccr_hash']!r})"
         )
         assert entry["restore_cmd"] == expected
         assert entry["name"] == "root"

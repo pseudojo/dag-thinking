@@ -1,7 +1,7 @@
 # dag-thinking 개선 이력
 
-> v0.3 ~ v0.32 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
-> 상세 설계는 PLAN.md, 구현은 `src/` 5개 모듈 참조. 128 tests passing (v0.32 기준).
+> v0.3 ~ v0.33 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
+> 상세 설계는 PLAN.md, 구현은 `src/` 5개 모듈 참조. 130 tests passing (v0.33 기준).
 >
 > **주**: 아래 표의 I/Q/P 시리즈를 검증하던 버전별 테스트 파일은 v0.32에서 행위 기준
 > 8개 파일로 재구성됐다 (PLAN.md §12). 각 항목의 행위는 신규 스위트가 계속 보장한다.
@@ -131,11 +131,14 @@
 | Skeleton 재구성 | 테스트 459→128 (행위 기준 8파일), 테스트를 위한 테스트 삭제 | v0.32 |
 | TD-3 `__all__` 제거 | server/actions 재수출 제거, 테스트 직접 import | v0.32 |
 | check_ruff | prepare_release §4.2-3 정적 분석 — 5종 체크 완성 | v0.32 |
+| TD-8 check_audit | §4.2-2 공급망 감사 — `uv export --frozen` + `uvx pip-audit`, CycloneDX SBOM, 6종 체크 | v0.33 |
+| 메타 테스트 정리 | §12.2-1 위반 재유입 2건 삭제(L5/R4) + 스테일 주석·dead param 제거 | v0.33 |
 
 ---
 
 ## 검증 상태
 
-- **128 tests passing** (v0.32 기준, 2026-06-12 실측 — 행위 기준 8파일)
-- `prepare_release.py` 5종 체크: source control / LOC limits / static analysis (ruff) / test suite / MCP smoke test
-- 미해소 부채는 PLAN.md §10 참조 (TD-6, TD-8, TD-9)
+- **130 tests passing** (v0.33 기준, 2026-06-12 실측 — 행위 기준 8파일)
+- `prepare_release.py` 6종 체크: source control / LOC limits / static analysis (ruff) /
+  supply chain audit (pip-audit + SBOM) / test suite / MCP smoke test — 전부 PASS 실측
+- 미해소 부채는 PLAN.md §10 참조 (TD-6, TD-9, TD-10)

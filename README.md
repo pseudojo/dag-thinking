@@ -193,8 +193,8 @@ dag-thinking/
 │   ├── think.py         # think 액션 — 검증, 사이클 감지, DAG 진단, 압박 경보
 │   ├── db.py            # DB 프리미티브 — 스키마, 연결, 그래프 유틸리티
 │   └── compressor.py    # 순수 Python extractive 압축기
-├── tests/               # 행위 기준 8개 파일, 128 tests
-├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/ruff/tests/MCP smoke
+├── tests/               # 행위 기준 8개 파일, 130 tests
+├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/ruff/pip-audit+SBOM/tests/MCP smoke
 └── pyproject.toml
 ```
 
@@ -236,6 +236,11 @@ uv run ruff check src/
 ## 변경 이력
 
 > v0.13 이후 전체 이력은 PLAN.md(버전 변경 내역 표)와 IMPROVEMENTS.md를 참조하세요. 아래는 요약입니다.
+
+### v0.33 (2026-06-12) — 공급망 검증 (TD-8 해소)
+- `prepare_release.py`에 `check_audit` 추가 — `uvx pip-audit` 취약점 감사 + CycloneDX SBOM 생성 (§4.2-2), 6종 체크 완성
+- 프로젝트 의존성 불변 (`uvx` 격리 실행 — Lightweight 원칙 유지)
+- §12.2-1 위반 메타 테스트 재유입 2건 삭제(L5/R4) + 소스 스켈레톤 정리
 
 ### v0.32 (2026-06-12) — Skeleton 재구성 (TDD)
 - 테스트 스위트를 버전 이력 기준 31파일(459 tests)에서 **행위 기준 8파일(128 tests)**로 재구성
