@@ -193,7 +193,7 @@ dag-thinking/
 │   ├── think.py         # think 액션 — 검증, 사이클 감지, DAG 진단, 압박 경보
 │   ├── db.py            # DB 프리미티브 — 스키마, 연결, 그래프 유틸리티
 │   └── compressor.py    # 순수 Python extractive 압축기
-├── tests/               # 행위 기준 8개 파일, 130 tests
+├── tests/               # 행위 기준 8개 파일, 129 tests
 ├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/ruff/pip-audit+SBOM/tests/MCP smoke
 └── pyproject.toml
 ```
@@ -225,7 +225,7 @@ SQLite (WAL 모드):
 uv run pytest
 
 # 특정 테스트 클래스만
-uv run pytest tests/test_server.py::TestThinkStatusRestoreRoundtrip -v
+uv run pytest tests/test_think.py::TestParentContext -v
 
 # 린트
 uv run ruff check src/
@@ -236,6 +236,12 @@ uv run ruff check src/
 ## 변경 이력
 
 > v0.13 이후 전체 이력은 PLAN.md(버전 변경 내역 표)와 docs/IMPROVEMENTS.md를 참조하세요. 아래는 요약입니다.
+
+### v0.35 (2026-06-13) — Skeleton 재검증 3차
+- mcp-builder 스킬 + MCP Best Practices 전면 재대조 — **신규 표준 위반 0건** (PLAN.md §15)
+- 테스트를 위한 테스트 재감사 — §12.2-3 중복 1건 통합(prepare_release M0/M1 → 1건, 130→129 tests)
+- 소스 스켈레톤 정리 — `think.py` dead init(`delta=0`) 제거 (동작 불변)
+- 문서 스테일 정정 — README 폐기 경로(`test_server.py`) 교정, PLAN §6 LOC 실측 동기화
 
 ### v0.34 (2026-06-12) — 외부 리뷰 triage (문서 리비전)
 - 외부 리뷰 4종 판정 (PLAN.md §14) — `context_pressure` 토큰 기반 전환(TD-11, 차기 최우선) 등 부채 3건 등재, TD-9 재평가

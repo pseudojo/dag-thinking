@@ -1,7 +1,7 @@
 # dag-thinking 개선 이력
 
-> v0.3 ~ v0.34 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
-> 상세 설계는 PLAN.md, 구현은 `src/` 5개 모듈 참조. 130 tests passing (v0.34 기준).
+> v0.3 ~ v0.35 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
+> 상세 설계는 PLAN.md, 구현은 `src/` 5개 모듈 참조. 129 tests passing (v0.35 기준).
 >
 > **주**: 아래 표의 I/Q/P 시리즈를 검증하던 버전별 테스트 파일은 v0.32에서 행위 기준
 > 8개 파일로 재구성됐다 (PLAN.md §12). 각 항목의 행위는 신규 스위트가 계속 보장한다.
@@ -135,12 +135,13 @@
 | 메타 테스트 정리 | §12.2-1 위반 재유입 2건 삭제(L5/R4) + 스테일 주석·dead param 제거 | v0.33 |
 | 외부 리뷰 triage | 4종 리뷰 판정(PLAN §14) — TD-11/12/13 등재, TD-9 재평가, 반박 근거·포지셔닝 명문화 | v0.34 |
 | ccr_hash 알고리즘 판정 | xxHash 제안 검토 — stdlib 14종+uuid+Ed25519 전수 실측, 현행 sha256[:24] 유지, revisit 트리거 명시 (PLAN §14.4) | v0.34 |
+| Skeleton 재검증 3차 | mcp-builder/Best Practices 재대조 신규 위반 0건 — §12.2-3 중복 통합(M0/M1→1건), think.py dead init 제거, README/LOC 스테일 정정 (PLAN §15) | v0.35 |
 
 ---
 
 ## 검증 상태
 
-- **130 tests passing** (v0.34 기준, 2026-06-12 실측 — 행위 기준 8파일)
+- **129 tests passing** (v0.35 기준, 2026-06-13 실측 — 행위 기준 8파일)
 - `prepare_release.py` 6종 체크: source control / LOC limits / static analysis (ruff) /
   supply chain audit (pip-audit + SBOM) / test suite / MCP smoke test — 전부 PASS 실측
 - 미해소 부채는 PLAN.md §10 참조 (TD-6, TD-9, TD-10, TD-11, TD-12 / 보류: TD-13)

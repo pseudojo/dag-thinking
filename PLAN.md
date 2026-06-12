@@ -37,8 +37,9 @@
 | v0.32 | 128 tests — Skeleton 재구성: 테스트 스위트 행위 기준 8파일 재편(버전 이력 기준 30파일 폐기, 459→128), 테스트를 위한 테스트 삭제, TD-3 해소(`__all__` 재수출 제거), prepare_release `check_ruff` 추가(§4.2-3 정적 분석, 5종 체크) — §12 스펙 참조 |
 | v0.33 | 130 tests — TD-8 해소: prepare_release `check_audit`(§4.2-2 공급망 감사 — `uv export --frozen` + `uvx pip-audit`, CycloneDX SBOM) + main 6종 체크. §12.2-1 위반 메타 테스트 재유입 2건 삭제(L5/R4), 소스 스켈레톤 정리(스테일 주석·dead param) — §13 스펙 참조 |
 | v0.34 | 130 tests (코드 불변 — 문서 리비전) — 외부 리뷰 4종 triage(§14): TD-11(context_pressure 토큰 기반 전환) 신규·차기 최우선, TD-12(INVALIDATED/ccr_store 보존 정책) 신규, TD-13(압축 인지 효용 측정 — 보류) 신규, TD-9 재평가(9→12), 소프트 가드레일 포지셔닝·sequential-thinking 병행 사용 명문화. §14.4 ccr_hash 알고리즘 판정 — xxHash 제안 기각, stdlib 14종+uuid+Ed25519 전수 실측 후 현행 sha256[:24] 유지(그린필드 재평가 포함, revisit 트리거 명시) |
+| v0.35 | 129 tests — Skeleton 재검증 3차(§15): mcp-builder/Best Practices 전면 재대조 신규 위반 0건, §12.2-3 중복 통합(prepare_release M0/M1 → 1건), think.py dead init(delta=0) 제거, 문서 스테일 정정(README test_server.py 경로, §6 LOC 실측) |
 
-> **현재 버전**: v0.34 (130 tests) | 최종 갱신: 2026-06-12
+> **현재 버전**: v0.35 (129 tests) | 최종 갱신: 2026-06-13
 > 주: 패키지 버전(pyproject.toml)은 0.30 유지 — MCP 서버 프로세스가 exe를 잠그는 동안 pyproject 편집 시 uv 재설치 실패. 다음 안전 시점에 일괄 인상.
 
 ---
@@ -346,12 +347,12 @@ dag-thinking/
 │   ├── server.py        — FastMCP 얇은 레이어, 단일 툴 정의, MCP Resource   (233 LOC)
 │   ├── actions.py       — 비즈니스 로직: status/invalidate/restore/info + dispatcher  (287 LOC)
 │   ├── think.py         — think 액션 + 헬퍼: _action_think, _validate_think_inputs,
-│   │                      _compute_dag_health, _compute_context_pressure 등          (382 LOC)
+│   │                      _compute_dag_health, _compute_context_pressure 등          (381 LOC)
 │   ├── db.py            — DB 프리미티브: init_db, _db, _ensure_session,
-│   │                      _load_forward_edges, _has_cycle_graph, _cascade_invalidate  (156 LOC)
+│   │                      _load_forward_edges, _has_cycle_graph, _cascade_invalidate  (153 LOC)
 │   ├── compressor.py    — 순수 Python extractive 압축기                               (282 LOC)
 │   └── __init__.py      — 빈 패키지 마커
-├── tests/               — 행위 기준 8개 파일, 130개 테스트 (§12.1 아키텍처)
+├── tests/               — 행위 기준 8개 파일, 129개 테스트 (§12.1 아키텍처)
 │   ├── test_compressor.py / test_think.py / test_status.py / test_invalidate.py
 │   ├── test_restore.py / test_dispatcher.py / test_mcp_protocol.py
 │   ├── test_prepare_release.py
@@ -359,7 +360,7 @@ dag-thinking/
 ├── docs/
 │   ├── IMPROVEMENTS.md  — 개선 이력 전체 등재 (I/Q/R/P/BUG/STYLE/QUAL/TD 시리즈)
 │   └── MCP_Best_Practices_and_Lessons.md — MCP 표준 참조 문서 (mcp-builder 기반)
-├── prepare_release.py   — §4.2 릴리스 검증 파이프라인 CLI, 6종 체크 (157 LOC)
+├── prepare_release.py   — §4.2 릴리스 검증 파이프라인 CLI, 6종 체크 (184 LOC)
 ├── pyproject.toml       — 프로젝트 메타데이터, 의존성, ruff 설정
 ├── PLAN.md              — 스펙 겸 설계 문서 (이 파일)
 ├── README.md            — 사용자 문서 (설치, MCP 설정, 사용법)
@@ -368,8 +369,8 @@ dag-thinking/
 ```
 
 **LOC 기준** (MCP Best Practices §4.2 <500 LOC per file):
-- 최대 파일: `think.py` 382 LOC ✅ (한도 내, 여유 118 LOC)
-- 최소 파일: `db.py` 156 LOC ✅
+- 최대 파일: `think.py` 381 LOC ✅ (한도 내, 여유 119 LOC)
+- 최소 파일: `db.py` 153 LOC ✅
 - 자동 검증: `prepare_release.py` check_loc_limits() + check_ruff()가 릴리스 시 강제
 
 **의존성**: `fastmcp>=3.3.1`, `pydantic>=2.13.4`, Python ≥ 3.13, 표준 라이브러리만
