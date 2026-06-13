@@ -17,7 +17,7 @@ dag-thinking은 단일 툴 `dag_thinking(action=...)` 하나만 노출해 잘못
 - **자동 컨텍스트 내장**: `depends_on` 지정 시 부모 노드의 압축 페이로드를 응답에 자동 첨부
 - **완전한 가역성**: `status` 응답에 항상 복원 매니페스트 포함, 복붙 가능한 복원 명령어 제공
 - **thought_type별 압축 최적화**: Evidence, Synthesis 등 타입 특화 키워드로 중요 문장 우선 보존
-- **컨텍스트 압박 경보**: 세션 노드 수 기반 `low / medium / high` 경보
+- **컨텍스트 압박 경보**: 세션 누적 토큰 수 기반 `low / medium / high` 경보
 - **DAG 수렴 진단**: 고립 노드 감지, 최장 체인 깊이, 수렴 여부 실시간 진단
 - **ML 의존성 없음**: 표준 라이브러리 + `fastmcp` + `pydantic`만 사용
 
@@ -96,7 +96,7 @@ dag_thinking(
   "ccr_hash": "a3f8c2d1e5b9f0a2c7d4",
   "compression": { "tokens_saved": 42, "session_total_saved": 42 },
   "next_hint": "Add Hypothesis or Assumption nodes to explore this objective.",
-  "context_pressure": { "level": "low", "node_count": 1, "hint": "..." }
+  "context_pressure": { "level": "low", "tokens_original": 42, "hint": "..." }
 }
 ```
 
@@ -179,9 +179,9 @@ dag-thinking-session://{session_id}
 
 | level | 조건 | 권장 행동 |
 |---|---|---|
-| `low` | 노드 < 8개 | 추론 계속 |
-| `medium` | 8 ≤ 노드 < 15개 | Synthesis 검토 권장 |
-| `high` | 노드 ≥ 15개 | 즉시 수렴 권고 |
+| `low` | `tokens_original` < 900 | 추론 계속 |
+| `medium` | 900 ≤ `tokens_original` < 1700 | Synthesis 검토 권장 |
+| `high` | `tokens_original` ≥ 1700 | 즉시 수렴 권고 |
 
 ## 아키텍처
 
@@ -193,8 +193,10 @@ dag-thinking/
 │   ├── think.py         # think 액션 — 검증, 사이클 감지, DAG 진단, 압박 경보
 │   ├── db.py            # DB 프리미티브 — 스키마, 연결, 그래프 유틸리티
 │   └── compressor.py    # 순수 Python extractive 압축기
-├── tests/               # 행위 기준 8개 파일, 129 tests
-├── docs/                # CHANGELOG(버전 이력) · IMPROVEMENTS(개선 항목 색인) · MCP Best Practices
+├── tests/               # 행위 기준 8개 파일, 130 tests
+│   ├── tools/           # 개발 툴 테스트 (prepare_release.py)
+│   └── eval/            # LLM 연동 평가 하네스 (EvalHarness)
+├── docs/                # CHANGELOG · IMPROVEMENTS · EVAL_PLAN · MCP Best Practices
 ├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/ruff/pip-audit+SBOM/tests/MCP smoke
 └── pyproject.toml
 ```
@@ -240,17 +242,20 @@ uv run ruff check src/
 > 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.35 (2026-06-13) — 현재 버전 · Skeleton 재검증 3차
+### v0.41 (2026-06-13) — 현재 버전 · CLEAN-10 · 130 tests
 
-- mcp-builder 스킬 + MCP Best Practices 전면 재대조 — **신규 표준 위반 0건** (PLAN.md §15)
-- 테스트를 위한 테스트 재감사 — §12.2-3 중복 1건 통합(prepare_release M0/M1 → 1건, 130→129 tests)
-- 소스 스켈레톤 정리 — `think.py` dead init(`delta=0`) 제거 (동작 불변)
-- 문서 스테일 정정 — README 폐기 경로(`test_server.py`) 교정, PLAN §6 LOC 실측 동기화
+- **CLEAN-10** `test_dispatcher.py` TypedDict 메타검증 테스트 2건 삭제 — 런타임 MCP 행위 아닌 Python 타입 시스템 내부(`__required_keys__`)를 검사, 행위는 `TestParentContext`·`TestRestoreWarnings`가 커버 (132 → 130 tests)
+- **DOC-4** PLAN.md §6 LOC 실측 정정 (`server.py` 210→232, `actions.py` 350→416, `think.py` 266→311, `db.py` 133→152, `compressor.py` 235→274)
+- TD-12 구현 스펙 명세 (PLAN.md §10.1) — 세션 만료/최대 수 정책(`delete`|`archive`), 구현 대상 확정
+- `docs/EVAL_PLAN.md` 신설 — TD-13 압축 인지 효용 평가 계획 (50 기준, 500점 만점)
+- `tests/tools/`, `tests/eval/` 디렉토리 분리 — `test_prepare_release.py` 이전, LLM 연동 평가 하네스 골격 추가
 
 ### 이전 버전 요약
 
 | 버전 구간 | 주요 내용 |
 |-----------|----------|
+| v0.36 ~ v0.40 | TD-9 TypedDict 반환 타입 완비, TD-11 `context_pressure` 토큰 기반 전환(임계값 900/1700, `node_count`→`tokens_original`), `total=False`→`True`+`NotRequired` 정확화, 스테일 주석 정리 |
+| v0.35 | Skeleton 재검증 3차 — mcp-builder/Best Practices 신규 위반 0건, M0/M1 중복 통합(130→129 tests), dead init 제거 |
 | v0.31 ~ v0.34 | MCP 표준 재리뷰, 테스트 스위트 행위 기준 재구성(459→128 tests), 공급망 감사+SBOM(TD-8), 외부 리뷰 triage·`ccr_hash` 알고리즘 판정 |
 | v0.25 ~ v0.30 | MCP 프로토콜 표준 준수 — async+`ToolError`(protocol-level isError), MCP Resource, `action='info'`, 3+1 파일 분리, `prepare_release.py` |
 | v0.13 ~ v0.24 | 입력 방어·압축 정확성·MCP 스키마 풍부화 — ToolAnnotations 4종, 전 파라미터 Field 제약, `_split_sentences` false-split 수정 |

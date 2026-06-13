@@ -1,8 +1,8 @@
 # dag-thinking 개선 이력
 
-> v0.3 ~ v0.35 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
+> v0.3 ~ v0.41 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
 > 상세 설계는 [PLAN.md](../PLAN.md), 버전별 변경 이력은 [CHANGELOG.md](CHANGELOG.md),
-> 구현은 `src/` 5개 모듈 참조. 129 tests passing (v0.35 기준).
+> 구현은 `src/` 5개 모듈 참조. 130 tests passing (v0.41 기준).
 >
 > **주**: 아래 표의 I/Q/P 시리즈를 검증하던 버전별 테스트 파일은 v0.32에서 행위 기준
 > 8개 파일로 재구성됐다 (PLAN.md §12). 각 항목의 행위는 신규 스위트가 계속 보장한다.
@@ -137,12 +137,25 @@
 | 외부 리뷰 triage | 4종 리뷰 판정(PLAN §14) — TD-11/12/13 등재, TD-9 재평가, 반박 근거·포지셔닝 명문화 | v0.34 |
 | ccr_hash 알고리즘 판정 | xxHash 제안 검토 — stdlib 14종+uuid+Ed25519 전수 실측, 현행 sha256[:24] 유지, revisit 트리거 명시 (PLAN §14.4) | v0.34 |
 | Skeleton 재검증 3차 | mcp-builder/Best Practices 재대조 신규 위반 0건 — §12.2-3 중복 통합(M0/M1→1건), think.py dead init 제거, README/LOC 스테일 정정 (PLAN §15) | v0.35 |
+| TD-10 pyproject 버전 동기화 | `pyproject.toml` 버전 0.30→0.35 인상 + `test_td10_version_matches_document_version` 버전 회귀 가드 추가 | v0.36 |
+| CLEAN-3 `_compute_dag_health` 이전 | `think.py` → `actions.py` 이전 — 정의 위치 = 사용 위치 (SRP 준수) | v0.36 |
+| TD-9 TypedDict 반환 타입 완비 | `ThinkResult` / `StatusResult` / `InvalidateResult` / `RestoreListResult` / `RestorePayloadResult` / `InfoResult` 6종 정의 | v0.36 |
+| TD-11 `context_pressure` 토큰 기반 전환 | `COUNT(COMPLETED)` → `SUM(tokens_original)`, 임계값 900/1700, 반환키 `node_count`→`tokens_original` | v0.37 |
+| CLEAN-4 `ThinkResult` TypedDict 정확화 | `total=False` → `total=True` + `parent_context: NotRequired[dict]` — 7개 필수 키 타입체커 정확 보장 | v0.38 |
+| DOC-2 `_validate_think_inputs` WHAT 주석 제거 | 함수명·시그니처로 자명 — WHAT 주석 불필요 | v0.38 |
+| CLEAN-6 `RestorePayloadResult` TypedDict 정확화 | `total=False` → `total=True` + `warning: NotRequired[str]` — 3개 필수 키 타입체커 정확 보장 | v0.39 |
+| CLEAN-7 `compressor.py` WHAT 주석 4건 제거 | `_is_cjk_char` docstring, position bonus 설명 등 — WHY 주석 1건 보존 | v0.39 |
+| CLEAN-8 `compressor.py` 스테일 역사 주석 제거 | `ContentRouter 유사` 등 이전 출처 참조 + WHAT 인라인 주석 2건 제거 | v0.40 |
+| CLEAN-9 `actions.py` 섹션 헤더 칼러 참조 제거 | `moved from think.py — used only by _action_status` 등 이전 출처 참조 제거 | v0.40 |
+| DOC-3 PLAN.md 문서 제목 정정 | `v0.37` → `v0.39` (문서 스테일) | v0.40 |
+| CLEAN-10 TypedDict 메타검증 테스트 삭제 | `TestThinkResultTyping`·`TestRestorePayloadResultTyping` — 런타임 행위 아닌 Python 타입 시스템 내부 검사 (132→130 tests) | v0.41 |
+| DOC-4 §6 LOC 실측 정정 | `server.py` 210→232, `actions.py` 350→416, `think.py` 266→311, `db.py` 133→152, `compressor.py` 235→274 | v0.41 |
 
 ---
 
 ## 검증 상태
 
-- **129 tests passing** (v0.35 기준, 2026-06-13 실측 — 행위 기준 8파일)
+- **130 tests passing** (v0.41 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
 - `prepare_release.py` 6종 체크: source control / LOC limits / static analysis (ruff) /
   supply chain audit (pip-audit + SBOM) / test suite / MCP smoke test — 전부 PASS 실측
-- 미해소 부채는 PLAN.md §10 참조 (TD-6, TD-9, TD-10, TD-11, TD-12 / 보류: TD-13)
+- 미해소 부채는 PLAN.md §10 참조 (TD-6, TD-12 구현 대기 / 보류: TD-13)
