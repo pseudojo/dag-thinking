@@ -68,19 +68,3 @@ class TestInfoAction:
         )
 
 
-class TestThinkResultTyping:
-    def test_parent_context_is_only_optional_field(self):
-        """CLEAN-4: ThinkResult에서 parent_context만 선택적, 나머지 7개 필드 필수."""
-        from src.think import ThinkResult
-
-        assert "status" in ThinkResult.__required_keys__
-        assert ThinkResult.__optional_keys__ == frozenset({"parent_context"})
-
-
-class TestRestorePayloadResultTyping:
-    def test_warning_is_only_optional_field(self):
-        """CLEAN-6: RestorePayloadResult에서 warning만 선택적, 나머지 3개 필드 필수."""
-        from src.actions import RestorePayloadResult
-
-        assert "node_name" in RestorePayloadResult.__required_keys__
-        assert RestorePayloadResult.__optional_keys__ == frozenset({"warning"})

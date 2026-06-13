@@ -1,10 +1,23 @@
 # dag-thinking 변경 이력 (Changelog)
 
-> v0.1 ~ v0.40 버전별 전체 이력. 최신 버전이 위에 온다.
+> v0.1 ~ v0.41 버전별 전체 이력. 최신 버전이 위에 온다.
 > 개선 항목 ID(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈)별 색인은 [IMPROVEMENTS.md](IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채 로드맵은 [PLAN.md](../PLAN.md)를 참조하세요.
 
 ---
+
+## v0.41 (2026-06-13) — CLEAN-10 · DOC-4 · 130 tests
+
+- **CLEAN-10** `test_dispatcher.py` TypedDict 메타검증 테스트 2건 삭제: `TestThinkResultTyping`·`TestRestorePayloadResultTyping`
+  - 이 테스트들은 `TypedDict.__required_keys__`·`__optional_keys__` Python 타입 시스템 내부를 검사 — 런타임 MCP 행위와 무관
+  - 행위(parent_context 선택적 포함, warning 선택적 포함)는 `TestParentContext`·`TestRestoreWarnings`가 이미 커버
+  - 132 → 130 tests
+- **DOC-4** PLAN.md §6 LOC 실측 정정 (v0.35 실측 이후 v0.36~v0.40 코드 변동으로 스테일)
+  - `server.py` 210 → 232 LOC
+  - `actions.py` 350 → 416 LOC (`_compute_dag_health` CLEAN-3 이전 등)
+  - `think.py` 266 → 311 LOC (ThinkResult TypedDict, _compute_context_pressure 등)
+  - `db.py` 133 → 152 LOC
+  - `compressor.py` 235 → 274 LOC
 
 ## v0.40 (2026-06-13) — 주석·문서 정리 (코드 불변) · 132 tests
 
