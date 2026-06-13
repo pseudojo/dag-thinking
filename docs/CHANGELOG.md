@@ -1,8 +1,20 @@
 # dag-thinking 변경 이력 (Changelog)
 
-> v0.1 ~ v0.42 버전별 전체 이력. 최신 버전이 위에 온다.
+> v0.1 ~ v0.43 버전별 전체 이력. 최신 버전이 위에 온다.
 > 개선 항목 ID(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈)별 색인은 [IMPROVEMENTS.md](IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채 로드맵은 [PLAN.md](../PLAN.md)를 참조하세요.
+
+---
+
+## v0.43 (2026-06-13) — BUG-2 · CLEAN-11 · 138 tests
+
+- **BUG-2** `actions.py`에서 `cleanup_if_needed` import 누락 수정
+  - `_run_cleanup` 헬퍼가 `except Exception: pass`로 `NameError`를 삼켜 TD-12 클린업이 실제로 실행되지 않던 버그
+  - `from .db import (...)` 블록에 `cleanup_if_needed` 추가
+- **CLEAN-11** `test_dispatcher.py`에서 스테일 버전 비교 테스트 삭제
+  - `test_td10_version_matches_document_version`: v0.35에서 `pyproject.toml` 버전 플로어 `>= (0, 35)` 검증용으로 작성됐으나 현재 버전에서 항상 참 → 의미 없음
+  - 행위(dynamic version reading)는 `test_info_version_is_dynamic`이 이미 커버
+  - 139 → 138 tests
 
 ---
 

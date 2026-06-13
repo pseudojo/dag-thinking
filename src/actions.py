@@ -13,6 +13,7 @@ from .db import (
     _cascade_invalidate,
     _db,
     _ensure_session,
+    cleanup_if_needed,
 )
 from .think import _action_think
 

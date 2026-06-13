@@ -242,7 +242,12 @@ uv run ruff check src/
 > 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.42 (2026-06-13) — 현재 버전 · TD-12 · 139 tests
+### v0.43 (2026-06-13) — 현재 버전 · BUG-2 · CLEAN-11 · 138 tests
+
+- **BUG-2** `actions.py` `cleanup_if_needed` import 누락 수정 — TD-12 클린업이 실제로 실행되지 않던 버그 수정
+- **CLEAN-11** 스테일 버전 비교 테스트 삭제 (`test_td10_version_matches_document_version`) (139 → 138 tests)
+
+### v0.42 (2026-06-13) — TD-12 · 139 tests
 
 - **TD-12** 세션 만료/최대 수 정책 구현 (`cleanup_if_needed`) — `delete`|`archive` 정책, 현재 세션 보호, 환경 변수 (`DAG_SESSION_MAX_AGE_DAYS`, `DAG_SESSION_MAX_COUNT`, `DAG_CLEANUP_POLICY`) 기반 자동 실행 (130 → 139 tests)
 

@@ -1,8 +1,8 @@
 # dag-thinking 개선 이력
 
-> v0.3 ~ v0.41 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
+> v0.3 ~ v0.43 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
 > 상세 설계는 [PLAN.md](../PLAN.md), 버전별 변경 이력은 [CHANGELOG.md](CHANGELOG.md),
-> 구현은 `src/` 5개 모듈 참조. 130 tests passing (v0.41 기준).
+> 구현은 `src/` 5개 모듈 참조. 138 tests passing (v0.43 기준).
 >
 > **주**: 아래 표의 I/Q/P 시리즈를 검증하던 버전별 테스트 파일은 v0.32에서 행위 기준
 > 8개 파일로 재구성됐다 (PLAN.md §12). 각 항목의 행위는 신규 스위트가 계속 보장한다.
@@ -150,12 +150,15 @@
 | DOC-3 PLAN.md 문서 제목 정정 | `v0.37` → `v0.39` (문서 스테일) | v0.40 |
 | CLEAN-10 TypedDict 메타검증 테스트 삭제 | `TestThinkResultTyping`·`TestRestorePayloadResultTyping` — 런타임 행위 아닌 Python 타입 시스템 내부 검사 (132→130 tests) | v0.41 |
 | DOC-4 §6 LOC 실측 정정 | `server.py` 210→232, `actions.py` 350→416, `think.py` 266→311, `db.py` 133→152, `compressor.py` 235→274 | v0.41 |
+| TD-12 세션 정리 정책 구현 | `cleanup_if_needed` (delete/archive 정책), `get_archive_db_path`, `_run_cleanup` 통합 — 환경변수 기반 자동 실행 (130→139 tests) | v0.42 |
+| BUG-2 `cleanup_if_needed` 누락 import | `actions.py`에서 `cleanup_if_needed`가 import 없이 사용 — `except Exception: pass`로 무음 스왈로 되어 cleanup이 실행 안 되던 버그 수정 | v0.43 |
+| CLEAN-11 스테일 버전 하한 테스트 삭제 | `test_td10_version_matches_document_version` — `>= (0, 35)` 하한 가드 불필요, `test_info_version_is_dynamic`로 커버 (139→138 tests) | v0.43 |
 
 ---
 
 ## 검증 상태
 
-- **130 tests passing** (v0.41 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
+- **138 tests passing** (v0.43 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
 - `prepare_release.py` 6종 체크: source control / LOC limits / static analysis (ruff) /
   supply chain audit (pip-audit + SBOM) / test suite / MCP smoke test — 전부 PASS 실측
-- 미해소 부채는 PLAN.md §10 참조 (TD-6, TD-12 구현 대기 / 보류: TD-13)
+- 미해소 부채는 PLAN.md §10 참조 (TD-6 배포 시 / 보류: TD-13)
