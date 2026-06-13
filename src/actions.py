@@ -3,6 +3,8 @@
 import contextlib
 import importlib.metadata
 import os
+import sqlite3
+from collections import deque
 
 from .compressor import estimate_tokens
 from .db import (
@@ -11,9 +13,99 @@ from .db import (
     _db,
     _ensure_session,
 )
-from .think import _action_think, _compute_dag_health
+from .think import _action_think
 
 _MAX_SESSION_ID_LEN = 200
+
+
+# ---------------------------------------------------------------------------
+# DAG health analysis (moved from think.py — used only by _action_status)
+# ---------------------------------------------------------------------------
+
+
+def _compute_dag_health(
+    node_rows: list[sqlite3.Row],
+    edge_rows: list[sqlite3.Row],
+) -> dict:
+    if not node_rows:
+        return {
+            "is_converging": False,
+            "max_depth": 0,
+            "orphan_nodes": [],
+            "thought_type_distribution": {},
+            "health_hint": "No nodes yet. Start with an Objective node.",
+            "total_nodes": 0,
+        }
+
+    completed_names = {r["name"] for r in node_rows if r["status"] == "COMPLETED"}
+    type_dist: dict[str, int] = {}
+    is_converging = False
+
+    for r in node_rows:
+        if r["status"] != "COMPLETED":
+            continue
+        t = r["thought_type"]
+        type_dist[t] = type_dist.get(t, 0) + 1
+        if t in ("Synthesis", "Action"):
+            is_converging = True
+
+    child_map: dict[str, list[str]] = {}
+    has_parent: set[str] = set()
+    has_child: set[str] = set()
+    for r in edge_rows:
+        if r["parent"] in completed_names and r["child"] in completed_names:
+            child_map.setdefault(r["parent"], []).append(r["child"])
+            has_parent.add(r["child"])
+            has_child.add(r["parent"])
+
+    connected = has_parent | has_child
+    orphan_nodes = (
+        sorted(n for n in completed_names if n not in connected) if len(completed_names) > 1 else []
+    )
+
+    roots = [n for n in completed_names if n not in has_parent]
+    max_depth = 0
+    if roots:
+        bfs: deque[tuple[str, int]] = deque((r, 0) for r in roots)
+        visited: set[str] = set()
+        while bfs:
+            node, depth = bfs.popleft()
+            if node in visited:
+                continue
+            visited.add(node)
+            if depth > max_depth:
+                max_depth = depth
+            for child in child_map.get(node, []):
+                if child not in visited:
+                    bfs.append((child, depth + 1))
+
+    total_nodes = len(completed_names)
+    if orphan_nodes:
+        health_hint = (
+            f"Orphan node(s) detected: {orphan_nodes}. "
+            "Use depends_on to connect them to the reasoning chain."
+        )
+    elif is_converging:
+        health_hint = (
+            "DAG converging — Synthesis or Action node reached. "
+            "Consider closing the session or adding Action nodes."
+        )
+    elif total_nodes >= 5 and "Synthesis" not in type_dist and "Action" not in type_dist:
+        health_hint = (
+            f"{total_nodes} nodes without Synthesis — "
+            "consider adding a Synthesis node to consolidate findings."
+        )
+    else:
+        health_hint = "Reasoning in progress. Continue building toward Synthesis."
+
+    return {
+        "is_converging": is_converging,
+        "max_depth": max_depth,
+        "orphan_nodes": orphan_nodes,
+        "thought_type_distribution": type_dist,
+        "health_hint": health_hint,
+        "total_nodes": total_nodes,
+    }
 
 
 # ---------------------------------------------------------------------------
