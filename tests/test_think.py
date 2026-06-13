@@ -237,27 +237,32 @@ class TestContextPressure:
         return last
 
     def test_first_node_low(self, db_path):
-        """C36: 첫 노드 → level=low, node_count=1."""
+        """C36: 첫 노드 → level=low, tokens_original 노출 (TD-11: node_count 제거)."""
         cp = think(db_path, "s1", "n0", "Objective")["context_pressure"]
-        assert cp == {"level": "low", "node_count": 1, "hint": cp["hint"]}
+        assert cp["level"] == "low"
+        assert "tokens_original" in cp
+        assert "node_count" not in cp
+        assert cp["tokens_original"] > 0
         assert cp["hint"]
 
-    def test_boundary_8_nodes_medium(self, db_path):
-        """C37: 8번째 노드 → medium (경계값)."""
+    def test_boundary_medium_tokens(self, db_path):
+        """C37: 8번째 노드(928 tokens ≥ 900) → medium (TD-11: 토큰 기반 경계값)."""
         r = self._fill(db_path, "s1", 8)
-        assert r["context_pressure"]["level"] == "medium"
-        assert r["context_pressure"]["node_count"] == 8
+        cp = r["context_pressure"]
+        assert cp["level"] == "medium"
+        assert cp["tokens_original"] == 928
 
-    def test_boundary_15_nodes_high(self, db_path):
-        """15번째 노드 → high (경계값)."""
+    def test_boundary_high_tokens(self, db_path):
+        """15번째 노드(1740 tokens ≥ 1700) → high (TD-11: 토큰 기반 경계값)."""
         r = self._fill(db_path, "s1", 15)
         assert r["context_pressure"]["level"] == "high"
 
-    def test_invalidated_nodes_excluded(self, db_path):
-        """P3-9: INVALIDATED 노드는 node_count에서 제외."""
+    def test_invalidated_nodes_tokens_excluded(self, db_path):
+        """P3-9: INVALIDATED 노드 토큰이 합계에서 제외 (TD-11: tokens_original 검증)."""
         self._fill(db_path, "s1", 8)
         invalidate(db_path, "s1", "node0")
         invalidate(db_path, "s1", "node1")
         r = think(db_path, "s1", "fresh", "Evidence")
-        assert r["context_pressure"]["node_count"] == 7
-        assert r["context_pressure"]["level"] == "low"
+        cp = r["context_pressure"]
+        assert cp["tokens_original"] == 812
+        assert cp["level"] == "low"

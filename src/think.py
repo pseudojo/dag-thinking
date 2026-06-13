@@ -16,6 +16,7 @@ from .db import (
 # Constants
 # ---------------------------------------------------------------------------
 
+
 class ThinkResult(TypedDict, total=False):
     status: str
     node: str
@@ -42,8 +43,8 @@ VALID_THOUGHT_TYPES = frozenset(
 _MAX_DEPENDS_ON = 20
 _MAX_NODE_NAME_LEN = 200
 _MAX_NOTE_LEN = 500
-_PRESSURE_MEDIUM = 8
-_PRESSURE_HIGH = 15
+_PRESSURE_MEDIUM_TOKENS = 900
+_PRESSURE_HIGH_TOKENS = 1700
 
 _NEXT_HINTS: dict[str, str] = {
     "Objective": "Add Hypothesis or Assumption nodes to explore this objective.",
@@ -149,27 +150,32 @@ def _resolve_parent_context(
 
 
 def _compute_context_pressure(conn: sqlite3.Connection, session_id: str) -> dict:
-    node_count = conn.execute(
-        "SELECT COUNT(*) FROM nodes WHERE session_id=? AND status='COMPLETED'", (session_id,)
+    total_tokens = conn.execute(
+        "SELECT COALESCE(SUM(tokens_original), 0) FROM nodes "
+        "WHERE session_id=? AND status='COMPLETED'",
+        (session_id,),
     ).fetchone()[0]
 
-    if node_count >= _PRESSURE_HIGH:
+    if total_tokens >= _PRESSURE_HIGH_TOKENS:
         level = "high"
         hint = (
-            f"Session has {node_count} nodes — approaching reasoning capacity. "
+            f"Session has accumulated {total_tokens} tokens — approaching reasoning capacity. "
             "Consolidate with a Synthesis node or call status() to close."
         )
-    elif node_count >= _PRESSURE_MEDIUM:
+    elif total_tokens >= _PRESSURE_MEDIUM_TOKENS:
         level = "medium"
         hint = (
-            f"Session has {node_count} nodes. "
+            f"Session has accumulated {total_tokens} tokens. "
             "Consider moving toward Synthesis to converge findings."
         )
     else:
         level = "low"
-        hint = f"Session has {node_count} node(s). Plenty of capacity for further reasoning."
+        hint = (
+            f"Session has accumulated {total_tokens} token(s). "
+            "Plenty of capacity for further reasoning."
+        )
 
-    return {"level": level, "node_count": node_count, "hint": hint}
+    return {"level": level, "tokens_original": total_tokens, "hint": hint}
 
 
 # ---------------------------------------------------------------------------
