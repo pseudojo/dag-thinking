@@ -100,7 +100,6 @@ def ccr_hash(text: str) -> str:
 
 
 def _is_cjk_char(ch: str) -> bool:
-    """CJK/Hangul/Kana char check used by estimate_tokens and _score_sentence."""
     cp = ord(ch)
     return (
         0x3400 <= cp <= 0x4DBF  # CJK Extension A
@@ -140,16 +139,13 @@ def _score_sentence(
     extra_hits = sum(1 for w in words if w in extra_keywords)
     score = keyword_hits * 1.5 + extra_hits * 1.0
 
-    # position bonus: first and last sentences are important
     if total > 1:
         if position == 0:
             score += 2.0
         elif position == total - 1:
             score += 1.0
 
-    # CJK-aware length factor: _is_cjk_char 헬퍼 사용 — estimate_tokens와 동일 CJK 범위 기준
-    # \b\w+\b treats an entire CJK run as one "word", so word_count would be 1
-    # for a 15-char Hangul sentence — underestimating length.
+    # \b\w+\b collapses an entire CJK run to one "word" — use char count instead
     cjk_char_count = sum(1 for ch in sentence if _is_cjk_char(ch))
     primarily_cjk = cjk_char_count > len(sentence) * 0.5 if sentence else False
     word_count = cjk_char_count if primarily_cjk else len(words)
@@ -262,7 +258,6 @@ def compress(text: str, thought_type: str | None = None) -> tuple[str, str, int]
     else:
         target_ratio = _RATIO_TINY
 
-    # thought_type별 추가 키워드 가중치
     extra_keywords = _TYPE_KEYWORDS.get(thought_type or "", frozenset())
 
     if _is_list_content(text):
@@ -274,7 +269,6 @@ def compress(text: str, thought_type: str | None = None) -> tuple[str, str, int]
     compressed_tokens = estimate_tokens(compressed)
     tokens_saved = original_tokens - compressed_tokens
 
-    # passthrough if savings < threshold
     if tokens_saved / original_tokens < _SAVINGS_THRESHOLD:
         return text, hash_val, 0
 

@@ -5,7 +5,7 @@ import importlib.metadata
 import os
 import sqlite3
 from collections import deque
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from .compressor import estimate_tokens
 from .db import (
@@ -35,11 +35,11 @@ class RestoreListResult(TypedDict):
     restorable_nodes: list[dict]
 
 
-class RestorePayloadResult(TypedDict, total=False):
+class RestorePayloadResult(TypedDict):
     node_name: str
     original_payload: str
     tokens: int
-    warning: str
+    warning: NotRequired[str]
 
 
 class InfoResult(TypedDict):
