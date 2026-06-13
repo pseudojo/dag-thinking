@@ -237,7 +237,7 @@ wheels = [
 
 [[package]]
 name = "dag-thinking"
-version = "0.35"
+version = "0.41"
 source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
