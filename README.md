@@ -193,7 +193,7 @@ dag-thinking/
 │   ├── think.py         # think 액션 — 검증, 사이클 감지, DAG 진단, 압박 경보
 │   ├── db.py            # DB 프리미티브 — 스키마, 연결, 그래프 유틸리티
 │   └── compressor.py    # 순수 Python extractive 압축기
-├── tests/               # 행위 기준 8개 파일, 130 tests
+├── tests/               # 행위 기준 8개 파일, 138 tests
 │   ├── tools/           # 개발 툴 테스트 (prepare_release.py)
 │   └── eval/            # LLM 연동 평가 하네스 (EvalHarness)
 ├── docs/                # CHANGELOG · IMPROVEMENTS · EVAL_PLAN · MCP Best Practices
