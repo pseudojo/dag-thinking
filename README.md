@@ -242,9 +242,13 @@ uv run ruff check src/
 > 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.48 (2026-06-13) — 현재 버전 · CLEAN-15 · 139 tests
+### v0.49 (2026-06-14) — 현재 버전 · 문서 일관성 정리 · 139 tests
 
-- **CLEAN-15** compressor 선택 로직 중복 제거 — `_compress_list`/`_compress_prose`가 각각 보유하던 "중요도 score → 상위 k개 → 원문 순서 복원" 알고리즘을 `_select_top_k()` 헬퍼로 단일화 (DRY, 행위 불변). 기존 압축 테스트(`TestCompressList`/`TestCompressProse`)가 안전망. 패키지 버전 0.45 유지 (MCP 서버 연결 중)
+- **문서 정리 (코드 불변, DOC-5)** 버전업 누적으로 드리프트된 문서 마커·수치 일괄 정정 (내용 삭제 없음) — PLAN 제목·`§6`/`§9`/`§10` 헤더 버전, §6 LOC 실측(`actions.py` 435·`think.py` 313)·테스트 수(139개)·누락 `test_cleanup.py` 보강, CHANGELOG/IMPROVEMENTS 범위·기준 버전 동기화, 폐기된 PLAN `§12–§15` 통합 안내 추가. 상세: [PLAN.md](PLAN.md) §1 (v0.49)
+
+### v0.48 (2026-06-13) — CLEAN-15 · 139 tests
+
+- **CLEAN-15** compressor 선택 로직 중복 제거 — `_compress_list`/`_compress_prose`가 각각 보유하던 "중요도 score → 상위 k개 → 원문 순서 복원" 알고리즘을 `_select_top_k()` 헬퍼로 단일화 (DRY, 행위 불변). 기존 압축 테스트(`TestCompressList`/`TestCompressProse`)가 안전망. 패키지 버전 0.45→0.48 인상 (서버 재기동 후 적용)
 
 ### v0.47 (2026-06-13) — TD-14 · 139 tests
 

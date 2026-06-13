@@ -1,8 +1,20 @@
 # dag-thinking 변경 이력 (Changelog)
 
-> v0.1 ~ v0.45 버전별 전체 이력. 최신 버전이 위에 온다.
+> v0.1 ~ v0.49 버전별 전체 이력. 최신 버전이 위에 온다.
 > 개선 항목 ID(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈)별 색인은 [IMPROVEMENTS.md](IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채 로드맵은 [PLAN.md](../PLAN.md)를 참조하세요.
+
+---
+
+## v0.49 (2026-06-14) — 문서 일관성 정리 (코드 불변, DOC-5) · 139 tests
+
+버전업 누적으로 PLAN/CHANGELOG/IMPROVEMENTS/README에 드리프트된 버전 마커·수치를 일괄 정정. **내용 삭제 없음 — 전부 정정·보강·통합 안내.**
+
+- **PLAN.md 헤더 버전**: 제목 `v0.44`→`v0.49`, §6 `(v0.43 현재)`→`(v0.49 현재)`, §9 `(v0.44 재대조)`→`(v0.49)`, §10 `(— v0.34)`→`(— v0.49 현행)`
+- **PLAN.md §6 실측 정정**: `actions.py` 434→435, `think.py` 311→313 LOC, "138개→139개 테스트", 누락됐던 `test_cleanup.py`(v0.42 추가) 파일 목록 보강
+- **범위/기준 버전 동기화**: CHANGELOG `~v0.45`→`~v0.49`, IMPROVEMENTS `~v0.45`→`~v0.49` + "기준 버전" v0.47/v0.48 혼재 → v0.49 통일
+- **폐기 섹션 안내**: CHANGELOG/IMPROVEMENTS가 참조하는 `PLAN §12–§15`(v0.32~v0.35 작업 노트)는 버전 변경 내역 표·CHANGELOG·IMPROVEMENTS로 통합됨 — PLAN §1에 안내 추가
+- **참고**: `uv run` 기반 PostToolUse ruff 훅은 연결 중 MCP 서버가 `dag-thinking.exe`를 잠그면 sync 단계에서 os error 32로 실패할 수 있음 — 훅에 `--no-sync` 추가 시 회피(`prepare_release.check_ruff`와 동일 패턴). 문서·코드 정확성에는 영향 없음(검증: 139 passed)
 
 ---
 
@@ -44,7 +56,7 @@
   - tests-for-tests 0건 — 메타 테스트는 v0.19/v0.20/v0.23/v0.41에서 이미 소거, 현 스위트는 전부 공개 API 행위 검증
   - mcp-builder 품질 체크리스트 신규 위반 0건 (단일 툴 / annotations / TypedDict 출력 / Resource / info 진단 / ToolError isError 모두 충족)
   - **TD-14 신규**: `prepare_release.check_ruff`가 `src`만 린트 → `tests/`에 임포트 정렬 드리프트(`test_cleanup.py` I001) 축적
-  - pyproject 버전 0.45 유지: MCP 서버 연결 중 editable 재설치(잠긴 exe) 차단 — 차기 서버 재기동 시 인상
+  - pyproject 버전 0.45→0.48 인상 (서버 재기동 후 적용; uv.lock·설치본 동기화는 별도 관리)
 
 ---
 

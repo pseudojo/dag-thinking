@@ -1,8 +1,8 @@
 # dag-thinking 개선 이력
 
-> v0.3 ~ v0.45 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
+> v0.3 ~ v0.49 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
 > 상세 설계는 [PLAN.md](../PLAN.md), 버전별 변경 이력은 [CHANGELOG.md](CHANGELOG.md),
-> 구현은 `src/` 5개 모듈 참조. 139 tests passing (v0.47 기준).
+> 구현은 `src/` 5개 모듈 참조. 139 tests passing (v0.49 기준).
 >
 > **주**: 아래 표의 I/Q/P 시리즈를 검증하던 버전별 테스트 파일은 v0.32에서 행위 기준
 > 8개 파일로 재구성됐다 (PLAN.md §12). 각 항목의 행위는 신규 스위트가 계속 보장한다.
@@ -158,12 +158,13 @@
 | CLEAN-14 `restore_cmd` 포맷 중복 제거 (DRY) | `_action_status`/`_action_restore`의 동일 `dag_thinking(action='restore', ...)` f-string 2곳 → `_restore_cmd(session_id, ccr_hash)` 헬퍼로 단일화. `test_restore`가 status 매니페스트와 byte-level 동일 보장(기존 `startswith` → 정확 일치). hybrid-tdd-architect audit 도출, 행위 불변 | v0.46 |
 | TD-14 `prepare_release` ruff가 `tests/` 미검사 → 해소 | (v0.46 등재) `check_ruff("src")`만 호출 → tests/ 드리프트(`test_cleanup.py` I001) 축적. (v0.47 해소) `check_ruff(*targets)` 가변 인자화 + `main`이 `src`+`tests` 전달, 기존 드리프트 정리, `test_r4` 회귀 가드 | v0.46→v0.47 |
 | CLEAN-15 compressor 선택 로직 중복 제거 (DRY) | `_compress_list`/`_compress_prose`의 동일 "score→top-k(floor 2)→원문순서 복원" 12줄 ×2 → `_select_top_k(units, ratio, kw)` 헬퍼로 단일화 (결합만 `\n`/`_join_sentences`로 분기). 행위 불변, `TestCompressList`/`TestCompressProse` 안전망. hybrid-tdd-architect audit 도출 | v0.48 |
+| DOC-5 문서 일관성 일괄 정정 | 버전업 누적 드리프트 정정(삭제 없음): PLAN 제목·§6/§9/§10 헤더 버전, §6 LOC 실측(`actions.py` 434→435·`think.py` 311→313)·테스트 수(138→139)·누락 `test_cleanup.py` 보강, CHANGELOG/IMPROVEMENTS 범위·기준 버전, 폐기 섹션 §12–§15 통합 안내 | v0.49 |
 
 ---
 
 ## 검증 상태
 
-- **139 tests passing** (v0.48 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
+- **139 tests passing** (v0.49 기준, 2026-06-14 실측 — 행위 기준 8파일 + tools/eval 보조)
 - **line coverage 96%** (v0.45 실측: `pytest --cov=src` — 520 stmts, 22 miss; 미스는 엔트리포인트·방어 분기. v0.46~v0.48은 행위 불변 — 커버리지 영향 없음)
 - `prepare_release.py` 6종 체크: source control / LOC limits / static analysis (ruff: src+tests) /
   supply chain audit (pip-audit + SBOM) / test suite / MCP smoke test — 전부 PASS 실측
