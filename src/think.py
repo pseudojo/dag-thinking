@@ -67,10 +67,8 @@ def _validate_think_inputs(
     thought_type: str | None,
     payload: str | None,
     depends_on: list[str] | None = None,
-    note: str | None = "",
+    note: str = "",
 ) -> None:
-    if note is None:
-        note = ""
     if not node_name or not node_name.strip():
         raise ValueError("node_name is required for action='think' and cannot be blank")
     if len(node_name) > _MAX_NODE_NAME_LEN:
@@ -192,6 +190,8 @@ def _action_think(
     depends_on: list[str],
     note: str,
 ) -> ThinkResult:
+    if note is None:
+        note = ""
     _validate_think_inputs(node_name, thought_type, payload, depends_on, note)
 
     tokens_original_val = estimate_tokens(payload)

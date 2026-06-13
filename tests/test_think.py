@@ -3,10 +3,12 @@
 PLAN.md §3 think 명세 + §8 체크리스트 C03~C09, C26~C37, C42~C49, C53, BUG-1 커버.
 """
 
+import contextlib
 import re
 
 import pytest
 
+from src.db import _db
 from tests.helpers import PAYLOAD, invalidate, status, think
 
 
@@ -33,9 +35,14 @@ class TestThinkBasics:
         assert r["node"] == "spaced"
 
     def test_note_none_is_tolerated(self, db_path):
-        """I46: note=None → 빈 문자열로 처리, 정상 생성."""
+        """I46/CLEAN-12: note=None → 빈 문자열로 처리, DB에 NULL 아닌 '' 저장."""
         r = think(db_path, "s1", "n1", "Objective", note=None)
         assert r["status"] == "created"
+        with contextlib.closing(_db(db_path)) as conn:
+            row = conn.execute(
+                "SELECT note FROM nodes WHERE session_id='s1' AND name='n1'"
+            ).fetchone()
+        assert row["note"] == "", f"note=None은 '' 저장 필요, 실제: {row['note']!r}"
 
 
 class TestThinkValidation:

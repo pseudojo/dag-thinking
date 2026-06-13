@@ -1,8 +1,21 @@
 # dag-thinking 변경 이력 (Changelog)
 
-> v0.1 ~ v0.43 버전별 전체 이력. 최신 버전이 위에 온다.
+> v0.1 ~ v0.44 버전별 전체 이력. 최신 버전이 위에 온다.
 > 개선 항목 ID(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈)별 색인은 [IMPROVEMENTS.md](IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채 로드맵은 [PLAN.md](../PLAN.md)를 참조하세요.
+
+---
+
+## v0.44 (2026-06-13) — CLEAN-12 · 138 tests
+
+- **CLEAN-12** `think.py:_action_think` `note=None` 정규화 버그 수정
+  - `_validate_think_inputs`에서 `note`를 지역 변수로 정규화하던 방식은 호출자에게 전파되지 않아
+    `note=None` 입력 시 DB `note` 컬럼에 `""` 대신 `NULL`이 저장되던 버그
+  - `_action_think` 진입 시 `if note is None: note = ""` 추가
+  - `_validate_think_inputs`의 dead code(`if note is None: note = ""`) 제거 + 타입 `str | None → str` 정확화
+  - 기회 수정: `actions.py:362` E501 (cleanup_if_needed 호출 줄 래핑)
+  - `test_note_none_is_tolerated` 강화 — DB 직접 조회로 `row["note"] == ""` 검증 추가
+  - 138 tests (변경 없음)
 
 ---
 

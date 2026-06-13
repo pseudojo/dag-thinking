@@ -359,7 +359,9 @@ def _run_cleanup(db_path: str, session_id: str) -> None:
         max_age = int(os.environ.get("DAG_SESSION_MAX_AGE_DAYS", "30"))
         max_count = int(os.environ.get("DAG_SESSION_MAX_COUNT", "500"))
         policy = os.environ.get("DAG_CLEANUP_POLICY", "delete")
-        cleanup_if_needed(db_path, session_id, max_age_days=max_age, max_count=max_count, policy=policy)
+        cleanup_if_needed(
+            db_path, session_id, max_age_days=max_age, max_count=max_count, policy=policy
+        )
     except Exception:
         pass
 
