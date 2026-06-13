@@ -16,6 +16,7 @@ from .db import (
 )
 from .think import _action_think
 
+
 class StatusResult(TypedDict):
     session_id: str
     dag: dict

@@ -2,7 +2,7 @@
 
 import contextlib
 import sqlite3
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 from .compressor import compress, estimate_tokens
 from .db import (
@@ -17,7 +17,7 @@ from .db import (
 # ---------------------------------------------------------------------------
 
 
-class ThinkResult(TypedDict, total=False):
+class ThinkResult(TypedDict):
     status: str
     node: str
     thought_type: str
@@ -25,7 +25,7 @@ class ThinkResult(TypedDict, total=False):
     compression: dict
     next_hint: str
     context_pressure: dict
-    parent_context: dict
+    parent_context: NotRequired[dict]
 
 
 VALID_THOUGHT_TYPES = frozenset(
@@ -69,7 +69,6 @@ def _validate_think_inputs(
     depends_on: list[str] | None = None,
     note: str | None = "",
 ) -> None:
-    """action='think' 입력 유효성 검사. 실패 시 ValueError 즉시 raise."""
     if note is None:
         note = ""
     if not node_name or not node_name.strip():

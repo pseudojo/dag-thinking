@@ -66,3 +66,12 @@ class TestInfoAction:
         assert (int(parts[0]), int(parts[1])) >= (0, 35), (
             f"pyproject.toml 버전 미달: {ver!r} < '0.35' — TD-10 해소 필요"
         )
+
+
+class TestThinkResultTyping:
+    def test_parent_context_is_only_optional_field(self):
+        """CLEAN-4: ThinkResult에서 parent_context만 선택적, 나머지 7개 필드 필수."""
+        from src.think import ThinkResult
+
+        assert "status" in ThinkResult.__required_keys__
+        assert ThinkResult.__optional_keys__ == frozenset({"parent_context"})
