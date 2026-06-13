@@ -16,6 +16,11 @@ class TestRestoreList:
         nodes = restore(db_path, "s1")["restorable_nodes"]
         assert [n["name"] for n in nodes] == ["a", "b"]
         assert {n["ccr_hash"] for n in nodes} == {r1["ccr_hash"], r2["ccr_hash"]}
+        # CLEAN-14: restore_cmd 포맷이 status 매니페스트와 byte-level 동일 (단일 소스)
+        expected = (
+            f"dag_thinking(action='restore', session_id={'s1'!r}, ccr_hash={r1['ccr_hash']!r})"
+        )
+        assert nodes[0]["restore_cmd"] == expected
         for n in nodes:
             assert n["status"] == "COMPLETED"
             assert n["restore_cmd"].startswith("dag_thinking(action='restore', ")

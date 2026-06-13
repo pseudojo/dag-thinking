@@ -55,6 +55,12 @@ class InfoResult(TypedDict):
 _MAX_SESSION_ID_LEN = 200
 
 
+def _restore_cmd(session_id: str, ccr_hash: str) -> str:
+    """Copy-pasteable restore invocation — single source for the status manifest
+    and the restore list, so both stay byte-identical."""
+    return f"dag_thinking(action='restore', session_id={session_id!r}, ccr_hash={ccr_hash!r})"
+
+
 # ---------------------------------------------------------------------------
 # DAG health analysis
 # ---------------------------------------------------------------------------
@@ -188,11 +194,7 @@ def _action_status(*, db_path: str, session_id: str) -> StatusResult:
                 "type": row["thought_type"],
                 "status": row["status"],
                 "ccr_hash": row["ccr_hash"],
-                "restore_cmd": (
-                    f"dag_thinking(action='restore', "
-                    f"session_id={repr(session_id)}, "
-                    f"ccr_hash={repr(row['ccr_hash'])})"
-                ),
+                "restore_cmd": _restore_cmd(session_id, row["ccr_hash"]),
             }
         )
 
@@ -286,11 +288,7 @@ def _action_restore(
                         "name": r["name"],
                         "ccr_hash": r["ccr_hash"],
                         "status": r["status"],
-                        "restore_cmd": (
-                            f"dag_thinking(action='restore', "
-                            f"session_id={repr(session_id)}, "
-                            f"ccr_hash={repr(r['ccr_hash'])})"
-                        ),
+                        "restore_cmd": _restore_cmd(session_id, r["ccr_hash"]),
                     }
                     for r in rows
                 ]

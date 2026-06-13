@@ -242,7 +242,12 @@ uv run ruff check src/
 > 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.45 (2026-06-13) — 현재 버전 · CLEAN-13 · 138 tests
+### v0.46 (2026-06-13) — 현재 버전 · CLEAN-14 · 138 tests
+
+- **CLEAN-14** `actions.py` restore_cmd 포맷 중복 제거 — `_action_status`(restoration_manifest)와 `_action_restore`(restorable_nodes)의 동일 f-string을 `_restore_cmd()` 헬퍼로 단일화 (DRY, 행위 불변). 패키지 버전은 0.45 유지 (MCP 서버 연결 중 editable 재설치 차단 — 차기 재기동 시 인상)
+- **재감사** (hybrid-tdd-lifecycle-architect + mcp-builder) — tests-for-tests 0건 확인 (메타 테스트는 v0.19~v0.41에서 기소거), MCP 표준 신규 위반 0건. TD-14 신규 등재 (`prepare_release` ruff가 `tests/` 미검사) → [PLAN.md](PLAN.md) §10
+
+### v0.45 (2026-06-13) — CLEAN-13 · 138 tests
 
 - **CLEAN-13** `think.py` payload 검증 매직넘버(80/1500) → `_PAYLOAD_MIN_LEN`/`_PAYLOAD_MAX_LEN` 명명 상수 — 도메인 제약 중 유일한 bare literal을 `_MAX_NODE_NAME_LEN`/`_MAX_NOTE_LEN`과 동일 스타일로 통일 (행위 불변)
 - **아키텍처 감사** (hybrid-tdd-lifecycle-architect) — line coverage 96%, Boundary Regression Index ~2. 이중 계층 검증(Pydantic 스키마 + 도메인)은 의도적 defense-in-depth로 [PLAN.md](PLAN.md) §9.3에 등재

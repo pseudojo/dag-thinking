@@ -2,7 +2,7 @@
 
 > v0.3 ~ v0.45 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
 > 상세 설계는 [PLAN.md](../PLAN.md), 버전별 변경 이력은 [CHANGELOG.md](CHANGELOG.md),
-> 구현은 `src/` 5개 모듈 참조. 138 tests passing (v0.44 기준).
+> 구현은 `src/` 5개 모듈 참조. 138 tests passing (v0.46 기준).
 >
 > **주**: 아래 표의 I/Q/P 시리즈를 검증하던 버전별 테스트 파일은 v0.32에서 행위 기준
 > 8개 파일로 재구성됐다 (PLAN.md §12). 각 항목의 행위는 신규 스위트가 계속 보장한다.
@@ -155,13 +155,15 @@
 | CLEAN-11 스테일 버전 하한 테스트 삭제 | `test_td10_version_matches_document_version` — `>= (0, 35)` 하한 가드 불필요, `test_info_version_is_dynamic`로 커버 (139→138 tests) | v0.43 |
 | CLEAN-12 `note=None` 정규화 버그 수정 | `_action_think`에 `note = "" if note is None else note` 추가 — `_validate_think_inputs`의 지역 정규화가 호출자에게 전파 안 되는 버그. Dead code 제거 + 타입 `str\|None → str` 정확화. `test_note_none_is_tolerated` DB 직접 검증 추가 | v0.44 |
 | CLEAN-13 payload 검증 매직넘버 상수화 | `_validate_think_inputs`의 payload 80/1500 bare literal → `_PAYLOAD_MIN_LEN`/`_PAYLOAD_MAX_LEN` (도메인 제약 중 유일한 비명명 리터럴, `_MAX_NODE_NAME_LEN`/`_MAX_NOTE_LEN` 스타일 통일). 에러 메시지 f-string화. hybrid-tdd-architect audit 도출, 행위 불변 | v0.45 |
+| CLEAN-14 `restore_cmd` 포맷 중복 제거 (DRY) | `_action_status`/`_action_restore`의 동일 `dag_thinking(action='restore', ...)` f-string 2곳 → `_restore_cmd(session_id, ccr_hash)` 헬퍼로 단일화. `test_restore`가 status 매니페스트와 byte-level 동일 보장(기존 `startswith` → 정확 일치). hybrid-tdd-architect audit 도출, 행위 불변 | v0.46 |
+| TD-14 `prepare_release` ruff가 `tests/` 미검사 (신규·미해소) | `check_ruff("src")`만 호출 → 테스트 임포트 정렬 드리프트(`test_cleanup.py` I001) 축적. PLAN.md §10 등재 | v0.46 |
 
 ---
 
 ## 검증 상태
 
-- **138 tests passing** (v0.45 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
-- **line coverage 96%** (v0.45 실측: `pytest --cov=src` — 520 stmts, 22 miss; 미스는 엔트리포인트·방어 분기)
+- **138 tests passing** (v0.46 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
+- **line coverage 96%** (v0.45 실측: `pytest --cov=src` — 520 stmts, 22 miss; 미스는 엔트리포인트·방어 분기. v0.46 CLEAN-14는 행위 불변 — 커버리지 영향 없음)
 - `prepare_release.py` 6종 체크: source control / LOC limits / static analysis (ruff) /
   supply chain audit (pip-audit + SBOM) / test suite / MCP smoke test — 전부 PASS 실측
 - 미해소 부채는 PLAN.md §10 참조 (TD-6 배포 시 / 보류: TD-13)

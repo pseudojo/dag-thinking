@@ -6,6 +6,23 @@
 
 ---
 
+## v0.46 (2026-06-13) — CLEAN-14 · hybrid-tdd-architect 재감사 · 138 tests
+
+- **CLEAN-14** `actions.py` restore_cmd 포맷 중복 제거 (DRY)
+  - `_action_status`(restoration_manifest)와 `_action_restore`(restorable_nodes)가 동일한
+    `f"dag_thinking(action='restore', session_id=..., ccr_hash=...)"` f-string을 각각 보유
+  - `_restore_cmd(session_id, ccr_hash) -> str` 헬퍼로 단일화 — 두 경로가 byte-level 동일 보장
+  - `test_restore::test_no_hash_lists_restorable_nodes` 강화: restore 목록의 restore_cmd가 status
+    매니페스트와 정확히 일치하는지 명시 (기존 `startswith`만 검사 → 정확 일치)
+  - 행위 불변 (138 green) — REFACTOR (테스트 선강화 → 헬퍼 추출 순)
+- **아키텍처 재감사** (hybrid-tdd-lifecycle-architect + mcp-builder)
+  - tests-for-tests 0건 — 메타 테스트는 v0.19/v0.20/v0.23/v0.41에서 이미 소거, 현 스위트는 전부 공개 API 행위 검증
+  - mcp-builder 품질 체크리스트 신규 위반 0건 (단일 툴 / annotations / TypedDict 출력 / Resource / info 진단 / ToolError isError 모두 충족)
+  - **TD-14 신규**: `prepare_release.check_ruff`가 `src`만 린트 → `tests/`에 임포트 정렬 드리프트(`test_cleanup.py` I001) 축적
+  - pyproject 버전 0.45 유지: MCP 서버 연결 중 editable 재설치(잠긴 exe) 차단 — 차기 서버 재기동 시 인상
+
+---
+
 ## v0.45 (2026-06-13) — CLEAN-13 · hybrid-tdd-architect audit · 138 tests
 
 - **CLEAN-13** `think.py` payload 검증 매직넘버 → 명명 상수
