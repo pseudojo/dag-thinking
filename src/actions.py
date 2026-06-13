@@ -5,6 +5,7 @@ import importlib.metadata
 import os
 import sqlite3
 from collections import deque
+from typing import TypedDict
 
 from .compressor import estimate_tokens
 from .db import (
@@ -14,6 +15,40 @@ from .db import (
     _ensure_session,
 )
 from .think import _action_think
+
+class StatusResult(TypedDict):
+    session_id: str
+    dag: dict
+    metrics: dict
+    restoration_manifest: dict
+    dag_health: dict
+
+
+class InvalidateResult(TypedDict):
+    invalidated: list[str]
+    reason: str
+    hint: str
+
+
+class RestoreListResult(TypedDict):
+    restorable_nodes: list[dict]
+
+
+class RestorePayloadResult(TypedDict, total=False):
+    node_name: str
+    original_payload: str
+    tokens: int
+    warning: str
+
+
+class InfoResult(TypedDict):
+    server: str
+    version: str
+    db_path: str
+    db_exists: bool
+    actions: list[str]
+    status: str
+
 
 _MAX_SESSION_ID_LEN = 200
 
@@ -113,7 +148,7 @@ def _compute_dag_health(
 # ---------------------------------------------------------------------------
 
 
-def _action_status(*, db_path: str, session_id: str) -> dict:
+def _action_status(*, db_path: str, session_id: str) -> StatusResult:
     with contextlib.closing(_db(db_path)) as conn:
         with conn:
             _ensure_session(conn, session_id)
@@ -197,7 +232,7 @@ def _action_status(*, db_path: str, session_id: str) -> dict:
 
 def _action_invalidate(
     *, db_path: str, session_id: str, target_node: str | None, reason: str
-) -> dict:
+) -> InvalidateResult:
     if target_node:
         target_node = target_node.strip()
     if not target_node:
@@ -231,7 +266,9 @@ def _action_invalidate(
 # ---------------------------------------------------------------------------
 
 
-def _action_restore(*, db_path: str, session_id: str, ccr_hash_val: str | None) -> dict:
+def _action_restore(
+    *, db_path: str, session_id: str, ccr_hash_val: str | None
+) -> RestoreListResult | RestorePayloadResult:
     with contextlib.closing(_db(db_path)) as conn:
         with conn:
             _ensure_session(conn, session_id)
@@ -294,7 +331,7 @@ def _action_restore(*, db_path: str, session_id: str, ccr_hash_val: str | None) 
 # ---------------------------------------------------------------------------
 
 
-def _action_info(*, db_path: str) -> dict:
+def _action_info(*, db_path: str) -> InfoResult:
     """MCP Best Practices §3.2 — lightweight server diagnostic."""
     try:
         version = importlib.metadata.version("dag-thinking")

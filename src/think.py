@@ -2,6 +2,7 @@
 
 import contextlib
 import sqlite3
+from typing import TypedDict
 
 from .compressor import compress, estimate_tokens
 from .db import (
@@ -14,6 +15,17 @@ from .db import (
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
+class ThinkResult(TypedDict, total=False):
+    status: str
+    node: str
+    thought_type: str
+    ccr_hash: str
+    compression: dict
+    next_hint: str
+    context_pressure: dict
+    parent_context: dict
+
 
 VALID_THOUGHT_TYPES = frozenset(
     {
@@ -174,7 +186,7 @@ def _action_think(
     payload: str | None,
     depends_on: list[str],
     note: str,
-) -> dict:
+) -> ThinkResult:
     _validate_think_inputs(node_name, thought_type, payload, depends_on, note)
 
     tokens_original_val = estimate_tokens(payload)
