@@ -6,6 +6,19 @@
 
 ---
 
+## v0.48 (2026-06-13) — CLEAN-15 · compressor 선택 로직 DRY · 139 tests
+
+- **CLEAN-15** compressor `_compress_list`/`_compress_prose` 선택 알고리즘 중복 제거 (DRY)
+  - 두 함수가 동일한 "단위별 중요도 score → 상위 k개(floor 2) → 원문 순서 복원" 로직을 각각 12줄로 보유
+  - `_select_top_k(units, target_ratio, extra_keywords) -> list[str]` 헬퍼로 단일화 —
+    `_compress_list`는 `"\n".join(...)`, `_compress_prose`는 `_join_sentences(...)`로 결합만 분기
+  - 행위 불변 (139 green) — `TestCompressList`(아이템 보존·개수 범위) + `TestCompressProse`(키워드 보존·길이 감소)가 안전망
+  - compressor.py 274 LOC 불변 (중복 12줄 ×2 → 헬퍼 1개 + thin caller 2개)
+  - REFACTOR — 신규 테스트 없음(사적 헬퍼 직접 테스트는 test-for-test이므로 지양, 기존 행위 테스트로 커버)
+  - pyproject 버전 0.45 유지 (MCP 서버 연결 중)
+
+---
+
 ## v0.47 (2026-06-13) — TD-14 · 릴리스 게이트 tests/ 린트 확장 · 139 tests
 
 - **TD-14** `prepare_release` 정적 분석(§4.2-3)이 `tests/`에 미적용이던 갭 해소

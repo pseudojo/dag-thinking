@@ -242,7 +242,11 @@ uv run ruff check src/
 > 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.47 (2026-06-13) — 현재 버전 · TD-14 · 139 tests
+### v0.48 (2026-06-13) — 현재 버전 · CLEAN-15 · 139 tests
+
+- **CLEAN-15** compressor 선택 로직 중복 제거 — `_compress_list`/`_compress_prose`가 각각 보유하던 "중요도 score → 상위 k개 → 원문 순서 복원" 알고리즘을 `_select_top_k()` 헬퍼로 단일화 (DRY, 행위 불변). 기존 압축 테스트(`TestCompressList`/`TestCompressProse`)가 안전망. 패키지 버전 0.45 유지 (MCP 서버 연결 중)
+
+### v0.47 (2026-06-13) — TD-14 · 139 tests
 
 - **TD-14** 릴리스 게이트가 `tests/`를 린트하지 않던 갭 해소 — `prepare_release.check_ruff`를 가변 인자(`*targets`)로 전환해 `src`+`tests` 동시 검사. 누적돼 있던 tests/ 드리프트(임포트 정렬·포맷) 일괄 정리, `test_r4` 회귀 가드 추가 (138→139 tests). 패키지 버전 0.45 유지 (MCP 서버 연결 중)
 

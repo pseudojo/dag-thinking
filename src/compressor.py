@@ -156,22 +156,31 @@ def _score_sentence(
     return score
 
 
+def _select_top_k(
+    units: list[str],
+    target_ratio: float,
+    extra_keywords: frozenset = frozenset(),
+) -> list[str]:
+    """중요도 상위 k개 단위를 선택해 원문 순서로 복원.
+
+    floor_k=min(2, n): 다중 단위는 최소 2개 보존 — 1개로 과잉 압축 방지.
+    """
+    floor_k = min(2, len(units))
+    k = max(floor_k, round(len(units) * target_ratio))
+    scored = [
+        (_score_sentence(u, i, len(units), extra_keywords), i, u) for i, u in enumerate(units)
+    ]
+    scored.sort(key=lambda x: x[0], reverse=True)
+    return [u for _, _, u in sorted(scored[:k], key=lambda x: x[1])]
+
+
 def _compress_list(
     text: str,
     target_ratio: float,
     extra_keywords: frozenset = frozenset(),
 ) -> str:
     lines = [item for item in text.splitlines() if item.strip()]
-    # 다중 아이템 목록 최소 2개 보존 — 1개로 과잉 압축 방지
-    floor_k = min(2, len(lines))
-    k = max(floor_k, round(len(lines) * target_ratio))
-    scored = [
-        (_score_sentence(item, i, len(lines), extra_keywords), i, item)
-        for i, item in enumerate(lines)
-    ]
-    scored.sort(key=lambda x: x[0], reverse=True)
-    selected = sorted(scored[:k], key=lambda x: x[1])
-    return "\n".join(item[2] for item in selected)
+    return "\n".join(_select_top_k(lines, target_ratio, extra_keywords))
 
 
 _CJK_TERMINATORS: frozenset[str] = frozenset("。！？")
@@ -227,16 +236,7 @@ def _compress_prose(
     sentences = _split_sentences(text)
     if not sentences:
         return text
-
-    floor_k = min(2, len(sentences))
-    k = max(floor_k, round(len(sentences) * target_ratio))
-    scored = [
-        (_score_sentence(s, i, len(sentences), extra_keywords), i, s)
-        for i, s in enumerate(sentences)
-    ]
-    scored.sort(key=lambda x: x[0], reverse=True)
-    selected = sorted(scored[:k], key=lambda x: x[1])
-    return _join_sentences([item[2] for item in selected])
+    return _join_sentences(_select_top_k(sentences, target_ratio, extra_keywords))
 
 
 def compress(text: str, thought_type: str | None = None) -> tuple[str, str, int]:

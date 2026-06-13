@@ -157,13 +157,14 @@
 | CLEAN-13 payload 검증 매직넘버 상수화 | `_validate_think_inputs`의 payload 80/1500 bare literal → `_PAYLOAD_MIN_LEN`/`_PAYLOAD_MAX_LEN` (도메인 제약 중 유일한 비명명 리터럴, `_MAX_NODE_NAME_LEN`/`_MAX_NOTE_LEN` 스타일 통일). 에러 메시지 f-string화. hybrid-tdd-architect audit 도출, 행위 불변 | v0.45 |
 | CLEAN-14 `restore_cmd` 포맷 중복 제거 (DRY) | `_action_status`/`_action_restore`의 동일 `dag_thinking(action='restore', ...)` f-string 2곳 → `_restore_cmd(session_id, ccr_hash)` 헬퍼로 단일화. `test_restore`가 status 매니페스트와 byte-level 동일 보장(기존 `startswith` → 정확 일치). hybrid-tdd-architect audit 도출, 행위 불변 | v0.46 |
 | TD-14 `prepare_release` ruff가 `tests/` 미검사 → 해소 | (v0.46 등재) `check_ruff("src")`만 호출 → tests/ 드리프트(`test_cleanup.py` I001) 축적. (v0.47 해소) `check_ruff(*targets)` 가변 인자화 + `main`이 `src`+`tests` 전달, 기존 드리프트 정리, `test_r4` 회귀 가드 | v0.46→v0.47 |
+| CLEAN-15 compressor 선택 로직 중복 제거 (DRY) | `_compress_list`/`_compress_prose`의 동일 "score→top-k(floor 2)→원문순서 복원" 12줄 ×2 → `_select_top_k(units, ratio, kw)` 헬퍼로 단일화 (결합만 `\n`/`_join_sentences`로 분기). 행위 불변, `TestCompressList`/`TestCompressProse` 안전망. hybrid-tdd-architect audit 도출 | v0.48 |
 
 ---
 
 ## 검증 상태
 
-- **139 tests passing** (v0.47 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
-- **line coverage 96%** (v0.45 실측: `pytest --cov=src` — 520 stmts, 22 miss; 미스는 엔트리포인트·방어 분기. v0.46~v0.47은 행위 불변 — 커버리지 영향 없음)
+- **139 tests passing** (v0.48 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
+- **line coverage 96%** (v0.45 실측: `pytest --cov=src` — 520 stmts, 22 miss; 미스는 엔트리포인트·방어 분기. v0.46~v0.48은 행위 불변 — 커버리지 영향 없음)
 - `prepare_release.py` 6종 체크: source control / LOC limits / static analysis (ruff: src+tests) /
   supply chain audit (pip-audit + SBOM) / test suite / MCP smoke test — 전부 PASS 실측
 - 미해소 부채는 PLAN.md §10 참조 (TD-6 배포 시 / 보류: TD-13)
