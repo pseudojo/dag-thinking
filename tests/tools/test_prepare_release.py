@@ -128,6 +128,21 @@ class TestCheckRuff:
         assert ok is False
         assert "failed" in detail
 
+    def test_r4_lints_src_and_tests(self, monkeypatch):
+        """R4(TD-14): 다중 타겟 — src와 tests 두 경로가 모두 ruff cmd에 전달된다."""
+        captured = {}
+
+        def fake_run(cmd, **kwargs):
+            captured["cmd"] = cmd
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        monkeypatch.setattr(prepare_release.subprocess, "run", fake_run)
+        ok, _ = check_ruff("src", "tests")
+        assert ok is True
+        assert "src" in captured["cmd"]
+        assert "tests" in captured["cmd"]
+        assert "--no-sync" in captured["cmd"]
+
 
 class TestCheckAudit:
     """A1-A4: check_audit — §4.2-2 공급망 취약점 감사 + SBOM (PLAN.md §13.4)."""
@@ -232,7 +247,7 @@ class TestMain:
     def _patch_all_pass(self, monkeypatch):
         monkeypatch.setattr(prepare_release, "check_git_clean", lambda repo: (True, "clean"))
         monkeypatch.setattr(prepare_release, "check_loc_limits", lambda src, max_loc=500: [])
-        monkeypatch.setattr(prepare_release, "check_ruff", lambda src: (True, "no violations"))
+        monkeypatch.setattr(prepare_release, "check_ruff", lambda *targets: (True, "no violations"))
         monkeypatch.setattr(
             prepare_release,
             "check_audit",

@@ -193,11 +193,11 @@ dag-thinking/
 │   ├── think.py         # think 액션 — 검증, 사이클 감지, DAG 진단, 압박 경보
 │   ├── db.py            # DB 프리미티브 — 스키마, 연결, 그래프 유틸리티
 │   └── compressor.py    # 순수 Python extractive 압축기
-├── tests/               # 행위 기준 8개 파일, 138 tests
+├── tests/               # 행위 기준 8개 파일, 139 tests
 │   ├── tools/           # 개발 툴 테스트 (prepare_release.py)
 │   └── eval/            # LLM 연동 평가 하네스 (EvalHarness)
 ├── docs/                # CHANGELOG · IMPROVEMENTS · EVAL_PLAN · MCP Best Practices
-├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/ruff/pip-audit+SBOM/tests/MCP smoke
+├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/ruff(src+tests)/pip-audit+SBOM/tests/MCP smoke
 └── pyproject.toml
 ```
 
@@ -242,7 +242,11 @@ uv run ruff check src/
 > 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.46 (2026-06-13) — 현재 버전 · CLEAN-14 · 138 tests
+### v0.47 (2026-06-13) — 현재 버전 · TD-14 · 139 tests
+
+- **TD-14** 릴리스 게이트가 `tests/`를 린트하지 않던 갭 해소 — `prepare_release.check_ruff`를 가변 인자(`*targets`)로 전환해 `src`+`tests` 동시 검사. 누적돼 있던 tests/ 드리프트(임포트 정렬·포맷) 일괄 정리, `test_r4` 회귀 가드 추가 (138→139 tests). 패키지 버전 0.45 유지 (MCP 서버 연결 중)
+
+### v0.46 (2026-06-13) — CLEAN-14 · 138 tests
 
 - **CLEAN-14** `actions.py` restore_cmd 포맷 중복 제거 — `_action_status`(restoration_manifest)와 `_action_restore`(restorable_nodes)의 동일 f-string을 `_restore_cmd()` 헬퍼로 단일화 (DRY, 행위 불변). 패키지 버전은 0.45 유지 (MCP 서버 연결 중 editable 재설치 차단 — 차기 재기동 시 인상)
 - **재감사** (hybrid-tdd-lifecycle-architect + mcp-builder) — tests-for-tests 0건 확인 (메타 테스트는 v0.19~v0.41에서 기소거), MCP 표준 신규 위반 0건. TD-14 신규 등재 (`prepare_release` ruff가 `tests/` 미검사) → [PLAN.md](PLAN.md) §10

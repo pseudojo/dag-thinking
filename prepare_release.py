@@ -41,11 +41,11 @@ def check_loc_limits(src_dir: str, max_loc: int = 500) -> list[str]:
     return violations
 
 
-def check_ruff(src_dir: str) -> tuple[bool, str]:
-    """§4.2-3 정적 분석 — ruff check. --no-sync: uv가 잠긴 exe 재설치를 시도하지 않도록 차단."""
+def check_ruff(*targets: str) -> tuple[bool, str]:
+    """§4.2-3 정적 분석 — ruff check (src + tests). --no-sync: uv가 잠긴 exe 재설치를 시도하지 않도록 차단."""
     try:
         result = subprocess.run(
-            ["uv", "run", "--no-sync", "ruff", "check", src_dir],
+            ["uv", "run", "--no-sync", "ruff", "check", *targets],
             capture_output=True,
             text=True,
             timeout=120,
@@ -156,6 +156,7 @@ def main() -> int:
     """§4.2 검증 6종 순차 실행 — 전부 통과 0, 하나라도 실패 1."""
     repo_dir = str(Path(__file__).parent)
     src_dir = str(Path(__file__).parent / "src")
+    tests_dir = str(Path(__file__).parent / "tests")
 
     loc_violations = check_loc_limits(src_dir)
     checks: list[tuple[str, bool, str]] = [
@@ -165,7 +166,7 @@ def main() -> int:
             not loc_violations,
             "all files within limit" if not loc_violations else ", ".join(loc_violations),
         ),
-        ("static analysis (ruff)", *check_ruff(src_dir)),
+        ("static analysis (ruff: src + tests)", *check_ruff(src_dir, tests_dir)),
         ("supply chain audit (pip-audit)", *check_audit(repo_dir)),
         ("test suite", *run_tests(repo_dir)),
         ("MCP smoke test", *asyncio.run(smoke_test())),

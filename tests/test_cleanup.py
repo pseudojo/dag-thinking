@@ -10,7 +10,6 @@ import pytest
 
 from src.db import _db, cleanup_if_needed, get_archive_db_path
 
-
 # ---------------------------------------------------------------------------
 # Test helpers
 # ---------------------------------------------------------------------------
@@ -18,9 +17,7 @@ from src.db import _db, cleanup_if_needed, get_archive_db_path
 
 def _insert_old_session(db_path: str, session_id: str, days_ago: int = 60) -> None:
     """직접 과거 타임스탬프로 세션 삽입 (API를 우회해 age 초과 테스트용)."""
-    ts = (datetime.now(timezone.utc) - timedelta(days=days_ago)).strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
+    ts = (datetime.now(timezone.utc) - timedelta(days=days_ago)).strftime("%Y-%m-%d %H:%M:%S")
     with contextlib.closing(_db(db_path)) as conn:
         with conn:
             conn.execute(
@@ -31,9 +28,7 @@ def _insert_old_session(db_path: str, session_id: str, days_ago: int = 60) -> No
 
 def _session_exists(db_path: str, session_id: str) -> bool:
     with contextlib.closing(_db(db_path)) as conn:
-        row = conn.execute(
-            "SELECT id FROM sessions WHERE id=?", (session_id,)
-        ).fetchone()
+        row = conn.execute("SELECT id FROM sessions WHERE id=?", (session_id,)).fetchone()
     return row is not None
 
 
@@ -47,9 +42,7 @@ class TestCleanupDeleteAged:
         """T-CL01: created_at < cutoff 세션이 delete 정책 하에서 삭제된다."""
         _insert_old_session(db_path, "old_session", days_ago=60)
 
-        n = cleanup_if_needed(
-            db_path, "current", max_age_days=30, max_count=0, policy="delete"
-        )
+        n = cleanup_if_needed(db_path, "current", max_age_days=30, max_count=0, policy="delete")
 
         assert n == 1
         assert not _session_exists(db_path, "old_session")
@@ -75,12 +68,18 @@ class TestCleanupDeleteAged:
         cleanup_if_needed(db_path, "current", max_age_days=30, max_count=0, policy="delete")
 
         with contextlib.closing(_db(db_path)) as conn:
-            assert conn.execute(
-                "SELECT count(*) FROM nodes WHERE session_id='old_session'"
-            ).fetchone()[0] == 0
-            assert conn.execute(
-                "SELECT count(*) FROM ccr_store WHERE session_id='old_session'"
-            ).fetchone()[0] == 0
+            assert (
+                conn.execute(
+                    "SELECT count(*) FROM nodes WHERE session_id='old_session'"
+                ).fetchone()[0]
+                == 0
+            )
+            assert (
+                conn.execute(
+                    "SELECT count(*) FROM ccr_store WHERE session_id='old_session'"
+                ).fetchone()[0]
+                == 0
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -95,9 +94,7 @@ class TestCleanupExcessCount:
         _insert_old_session(db_path, "s2", days_ago=60)
         _insert_old_session(db_path, "s3", days_ago=30)
 
-        n = cleanup_if_needed(
-            db_path, "current", max_age_days=0, max_count=2, policy="delete"
-        )
+        n = cleanup_if_needed(db_path, "current", max_age_days=0, max_count=2, policy="delete")
 
         assert n == 1
         assert not _session_exists(db_path, "s1")
@@ -115,9 +112,7 @@ class TestCleanupProtectCurrent:
         """T-CL03: current session_id는 age 초과여도 삭제 대상에서 제외된다."""
         _insert_old_session(db_path, "current_old", days_ago=60)
 
-        n = cleanup_if_needed(
-            db_path, "current_old", max_age_days=30, max_count=0, policy="delete"
-        )
+        n = cleanup_if_needed(db_path, "current_old", max_age_days=30, max_count=0, policy="delete")
 
         assert n == 0
         assert _session_exists(db_path, "current_old")
@@ -133,18 +128,14 @@ class TestCleanupArchivePolicy:
         """T-CL04: archive 정책 하에서 아카이브 파일 생성 + 주 DB 제거."""
         _insert_old_session(db_path, "old_session", days_ago=60)
 
-        n = cleanup_if_needed(
-            db_path, "current", max_age_days=30, max_count=0, policy="archive"
-        )
+        n = cleanup_if_needed(db_path, "current", max_age_days=30, max_count=0, policy="archive")
 
         assert n == 1
         assert not _session_exists(db_path, "old_session")
 
         archive_path = get_archive_db_path(db_path)
         with contextlib.closing(_db(archive_path)) as arc:
-            row = arc.execute(
-                "SELECT id FROM sessions WHERE id='old_session'"
-            ).fetchone()
+            row = arc.execute("SELECT id FROM sessions WHERE id='old_session'").fetchone()
         assert row is not None
 
 
@@ -172,9 +163,7 @@ class TestCleanupArchiveRestorability:
                     ("a" * 24, "old_session", "n1", original),
                 )
 
-        cleanup_if_needed(
-            db_path, "current", max_age_days=30, max_count=0, policy="archive"
-        )
+        cleanup_if_needed(db_path, "current", max_age_days=30, max_count=0, policy="archive")
 
         archive_path = get_archive_db_path(db_path)
         with contextlib.closing(_db(archive_path)) as arc:
@@ -195,9 +184,7 @@ class TestCleanupNoOp:
         """T-CL06: age/count 조건 모두 미충족 시 cleanup이 실행되지 않는다."""
         _insert_old_session(db_path, "recent", days_ago=5)
 
-        n = cleanup_if_needed(
-            db_path, "current", max_age_days=365, max_count=500, policy="delete"
-        )
+        n = cleanup_if_needed(db_path, "current", max_age_days=365, max_count=500, policy="delete")
 
         assert n == 0
         assert _session_exists(db_path, "recent")
@@ -215,9 +202,7 @@ class TestCleanupReturnCount:
         _insert_old_session(db_path, "s2", days_ago=60)
         _insert_old_session(db_path, "s3", days_ago=45)
 
-        n = cleanup_if_needed(
-            db_path, "current", max_age_days=30, max_count=0, policy="delete"
-        )
+        n = cleanup_if_needed(db_path, "current", max_age_days=30, max_count=0, policy="delete")
 
         assert n == 3
 

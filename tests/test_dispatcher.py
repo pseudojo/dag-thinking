@@ -56,5 +56,3 @@ class TestInfoAction:
         ghost = str(tmp_path / "nope.db")
         info = call_dag_thinking(db_path=ghost, action="info", session_id="")
         assert info["db_exists"] is False
-
-

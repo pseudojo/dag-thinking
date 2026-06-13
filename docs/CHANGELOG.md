@@ -6,6 +6,18 @@
 
 ---
 
+## v0.47 (2026-06-13) — TD-14 · 릴리스 게이트 tests/ 린트 확장 · 139 tests
+
+- **TD-14** `prepare_release` 정적 분석(§4.2-3)이 `tests/`에 미적용이던 갭 해소
+  - `check_ruff(src_dir)` → `check_ruff(*targets)` 가변 인자화, `main()`이 `src`+`tests` 두 경로 전달
+    (`"static analysis (ruff: src + tests)"`) — 게이트는 여전히 6종(PASS 카운트 불변)
+  - 기존 tests/ 드리프트 일괄 정리: `test_cleanup.py` I001(임포트 정렬) + `test_cleanup.py`/`test_dispatcher.py` 포맷
+  - `test_r4_lints_src_and_tests` 추가 — 다중 타겟이 ruff cmd에 모두 전달되는지 회귀 가드 (138→139)
+  - `_patch_all_pass`의 `check_ruff` 모킹을 `lambda *targets`로 갱신 (신규 호출 시그니처 정합)
+  - pyproject 버전 0.45 유지 (MCP 서버 연결 중 — editable 재설치 차단)
+
+---
+
 ## v0.46 (2026-06-13) — CLEAN-14 · hybrid-tdd-architect 재감사 · 138 tests
 
 - **CLEAN-14** `actions.py` restore_cmd 포맷 중복 제거 (DRY)
