@@ -3,6 +3,7 @@
 import contextlib
 import os
 import sqlite3
+from datetime import date, datetime, timedelta, timezone
 
 _DEFAULT_DB = os.path.join(os.path.dirname(__file__), "..", "dag_thinking.db")
 
@@ -150,3 +151,147 @@ def _cascade_invalidate(
         [(session_id, n) for n in newly],
     )
     return newly
+
+
+def get_archive_db_path(db_path: str) -> str:
+
+    db_dir = os.path.dirname(os.path.abspath(db_path))
+    today = date.today().strftime("%Y%m%d")
+    return os.path.join(db_dir, f"dag-thinking-archive-{today}.db")
+
+
+def _get_cleanup_candidates(
+    conn: sqlite3.Connection,
+    current_session_id: str,
+    max_age_days: int,
+    max_count: int,
+) -> list[str]:
+
+    candidates: set[str] = set()
+
+    if max_age_days > 0:
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=max_age_days)).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
+        rows = conn.execute(
+            "SELECT id FROM sessions WHERE created_at < ? AND id != ?",
+            (cutoff, current_session_id),
+        ).fetchall()
+        candidates.update(r["id"] for r in rows)
+
+    if max_count > 0:
+        total = conn.execute("SELECT count(*) FROM sessions").fetchone()[0]
+        excess = total - max_count
+        if excess > 0:
+            rows = conn.execute(
+                "SELECT id FROM sessions WHERE id != ? ORDER BY created_at ASC LIMIT ?",
+                (current_session_id, excess),
+            ).fetchall()
+            candidates.update(r["id"] for r in rows)
+
+    return list(candidates)
+
+
+def _delete_sessions(conn: sqlite3.Connection, session_ids: list[str]) -> int:
+    if not session_ids:
+        return 0
+    ph = ",".join("?" * len(session_ids))
+    conn.execute(f"DELETE FROM ccr_store WHERE session_id IN ({ph})", session_ids)
+    conn.execute(f"DELETE FROM edges WHERE session_id IN ({ph})", session_ids)
+    conn.execute(f"DELETE FROM nodes WHERE session_id IN ({ph})", session_ids)
+    conn.execute(f"DELETE FROM sessions WHERE id IN ({ph})", session_ids)
+    return len(session_ids)
+
+
+def _archive_sessions(
+    db_path: str,
+    session_ids: list[str],
+    archive_db_path: str,
+) -> int:
+    if not session_ids:
+        return 0
+    init_db(archive_db_path)
+    ph = ",".join("?" * len(session_ids))
+    with contextlib.closing(_db(db_path)) as src:
+        sessions = src.execute(f"SELECT * FROM sessions WHERE id IN ({ph})", session_ids).fetchall()
+        nodes = src.execute(
+            f"SELECT * FROM nodes WHERE session_id IN ({ph})", session_ids
+        ).fetchall()
+        edges = src.execute(
+            f"SELECT * FROM edges WHERE session_id IN ({ph})", session_ids
+        ).fetchall()
+        ccr = src.execute(
+            f"SELECT * FROM ccr_store WHERE session_id IN ({ph})", session_ids
+        ).fetchall()
+
+    with contextlib.closing(_db(archive_db_path)) as dst:
+        with dst:
+            for r in sessions:
+                dst.execute(
+                    "INSERT OR IGNORE INTO sessions (id, created_at, description, tokens_saved)"
+                    " VALUES (?, ?, ?, ?)",
+                    (r["id"], r["created_at"], r["description"], r["tokens_saved"]),
+                )
+            for r in nodes:
+                dst.execute(
+                    "INSERT OR IGNORE INTO nodes"
+                    " (session_id, name, thought_type, payload, compressed, ccr_hash,"
+                    "  note, status, tokens_original, tokens_saved, created_at)"
+                    " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        r["session_id"],
+                        r["name"],
+                        r["thought_type"],
+                        r["payload"],
+                        r["compressed"],
+                        r["ccr_hash"],
+                        r["note"],
+                        r["status"],
+                        r["tokens_original"],
+                        r["tokens_saved"],
+                        r["created_at"],
+                    ),
+                )
+            for r in edges:
+                dst.execute(
+                    "INSERT OR IGNORE INTO edges (session_id, parent, child) VALUES (?, ?, ?)",
+                    (r["session_id"], r["parent"], r["child"]),
+                )
+            for r in ccr:
+                dst.execute(
+                    "INSERT OR IGNORE INTO ccr_store"
+                    " (hash, session_id, node_name, original, created_at)"
+                    " VALUES (?, ?, ?, ?, ?)",
+                    (r["hash"], r["session_id"], r["node_name"], r["original"], r["created_at"]),
+                )
+
+    with contextlib.closing(_db(db_path)) as conn:
+        with conn:
+            _delete_sessions(conn, session_ids)
+
+    return len(session_ids)
+
+
+def cleanup_if_needed(
+    db_path: str,
+    current_session_id: str,
+    max_age_days: int = 30,
+    max_count: int = 500,
+    policy: str = "delete",
+) -> int:
+    if policy not in ("delete", "archive"):
+        raise ValueError(f"Invalid policy '{policy}': must be 'delete' or 'archive'")
+
+    with contextlib.closing(_db(db_path)) as conn:
+        candidates = _get_cleanup_candidates(conn, current_session_id, max_age_days, max_count)
+
+    if not candidates:
+        return 0
+
+    if policy == "delete":
+        with contextlib.closing(_db(db_path)) as conn:
+            with conn:
+                return _delete_sessions(conn, candidates)
+
+    archive_path = get_archive_db_path(db_path)
+    return _archive_sessions(db_path, candidates, archive_path)

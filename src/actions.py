@@ -349,6 +349,21 @@ def _action_info(*, db_path: str) -> InfoResult:
 
 
 # ---------------------------------------------------------------------------
+# Session cleanup helper
+# ---------------------------------------------------------------------------
+
+
+def _run_cleanup(db_path: str, session_id: str) -> None:
+    try:
+        max_age = int(os.environ.get("DAG_SESSION_MAX_AGE_DAYS", "30"))
+        max_count = int(os.environ.get("DAG_SESSION_MAX_COUNT", "500"))
+        policy = os.environ.get("DAG_CLEANUP_POLICY", "delete")
+        cleanup_if_needed(db_path, session_id, max_age_days=max_age, max_count=max_count, policy=policy)
+    except Exception:
+        pass
+
+
+# ---------------------------------------------------------------------------
 # Public dispatcher
 # ---------------------------------------------------------------------------
 
@@ -384,6 +399,9 @@ def call_dag_thinking(
     deduped_depends_on = (
         list(dict.fromkeys(p.strip() for p in depends_on if p.strip())) if depends_on else []
     )
+
+    if action in ("think", "status"):
+        _run_cleanup(db_path, session_id)
 
     if action == "think":
         return _action_think(

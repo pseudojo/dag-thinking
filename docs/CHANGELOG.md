@@ -1,8 +1,21 @@
 # dag-thinking 변경 이력 (Changelog)
 
-> v0.1 ~ v0.41 버전별 전체 이력. 최신 버전이 위에 온다.
+> v0.1 ~ v0.42 버전별 전체 이력. 최신 버전이 위에 온다.
 > 개선 항목 ID(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈)별 색인은 [IMPROVEMENTS.md](IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채 로드맵은 [PLAN.md](../PLAN.md)를 참조하세요.
+
+---
+
+## v0.42 (2026-06-13) — TD-12 · 139 tests
+
+- **TD-12** 세션 만료/최대 수 정책 구현 (`cleanup_if_needed`)
+  - `src/db.py`: `cleanup_if_needed`, `get_archive_db_path`, `_get_cleanup_candidates`, `_delete_sessions`, `_archive_sessions` 추가
+  - `src/actions.py`: `_run_cleanup` 헬퍼 추가, `think`/`status` 액션 진입 시 자동 실행
+  - 환경 변수: `DAG_SESSION_MAX_AGE_DAYS` (기본 30), `DAG_SESSION_MAX_COUNT` (기본 500), `DAG_CLEANUP_POLICY` (기본 `delete`, 또는 `archive`)
+  - `archive` 정책: 주 DB에서 제거 전 `dag-thinking-archive-YYYYMMDD.db`로 세션·노드·ccr_store 전체 복사
+  - 현재 `session_id`는 age/count 초과 여부와 무관하게 항상 보호
+  - 실패 시 silent (MCP 툴 응답에 영향 없음)
+  - `tests/test_cleanup.py` 신설: T-CL01 ~ T-CL07 (9 tests), 130 → 139 tests
 
 ---
 

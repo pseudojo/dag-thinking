@@ -242,13 +242,9 @@ uv run ruff check src/
 > 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.41 (2026-06-13) — 현재 버전 · CLEAN-10 · 130 tests
+### v0.42 (2026-06-13) — 현재 버전 · TD-12 · 139 tests
 
-- **CLEAN-10** `test_dispatcher.py` TypedDict 메타검증 테스트 2건 삭제 — 런타임 MCP 행위 아닌 Python 타입 시스템 내부(`__required_keys__`)를 검사, 행위는 `TestParentContext`·`TestRestoreWarnings`가 커버 (132 → 130 tests)
-- **DOC-4** PLAN.md §6 LOC 실측 정정 (`server.py` 210→232, `actions.py` 350→416, `think.py` 266→311, `db.py` 133→152, `compressor.py` 235→274)
-- TD-12 구현 스펙 명세 (PLAN.md §10.1) — 세션 만료/최대 수 정책(`delete`|`archive`), 구현 대상 확정
-- `docs/EVAL_PLAN.md` 신설 — TD-13 압축 인지 효용 평가 계획 (50 기준, 500점 만점)
-- `tests/tools/`, `tests/eval/` 디렉토리 분리 — `test_prepare_release.py` 이전, LLM 연동 평가 하네스 골격 추가
+- **TD-12** 세션 만료/최대 수 정책 구현 (`cleanup_if_needed`) — `delete`|`archive` 정책, 현재 세션 보호, 환경 변수 (`DAG_SESSION_MAX_AGE_DAYS`, `DAG_SESSION_MAX_COUNT`, `DAG_CLEANUP_POLICY`) 기반 자동 실행 (130 → 139 tests)
 
 ### 이전 버전 요약
 
