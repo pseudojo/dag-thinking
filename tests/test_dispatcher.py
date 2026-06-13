@@ -56,3 +56,13 @@ class TestInfoAction:
         ghost = str(tmp_path / "nope.db")
         info = call_dag_thinking(db_path=ghost, action="info", session_id="")
         assert info["db_exists"] is False
+
+    def test_td10_version_matches_document_version(self, db_path):
+        """TD-10: pyproject.toml 버전이 문서 버전(≥0.35) 이상이어야 함."""
+        info = call_dag_thinking(db_path=db_path, action="info", session_id="")
+        ver = info["version"]
+        assert ver != "unknown", "버전이 importlib.metadata에서 동적으로 읽혀야 함"
+        parts = ver.split(".")
+        assert (int(parts[0]), int(parts[1])) >= (0, 35), (
+            f"pyproject.toml 버전 미달: {ver!r} < '0.35' — TD-10 해소 필요"
+        )
