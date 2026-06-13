@@ -1,6 +1,6 @@
 # dag-thinking 개선 이력
 
-> v0.3 ~ v0.44 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
+> v0.3 ~ v0.45 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
 > 상세 설계는 [PLAN.md](../PLAN.md), 버전별 변경 이력은 [CHANGELOG.md](CHANGELOG.md),
 > 구현은 `src/` 5개 모듈 참조. 138 tests passing (v0.44 기준).
 >
@@ -154,12 +154,14 @@
 | BUG-2 `cleanup_if_needed` 누락 import | `actions.py`에서 `cleanup_if_needed`가 import 없이 사용 — `except Exception: pass`로 무음 스왈로 되어 cleanup이 실행 안 되던 버그 수정 | v0.43 |
 | CLEAN-11 스테일 버전 하한 테스트 삭제 | `test_td10_version_matches_document_version` — `>= (0, 35)` 하한 가드 불필요, `test_info_version_is_dynamic`로 커버 (139→138 tests) | v0.43 |
 | CLEAN-12 `note=None` 정규화 버그 수정 | `_action_think`에 `note = "" if note is None else note` 추가 — `_validate_think_inputs`의 지역 정규화가 호출자에게 전파 안 되는 버그. Dead code 제거 + 타입 `str\|None → str` 정확화. `test_note_none_is_tolerated` DB 직접 검증 추가 | v0.44 |
+| CLEAN-13 payload 검증 매직넘버 상수화 | `_validate_think_inputs`의 payload 80/1500 bare literal → `_PAYLOAD_MIN_LEN`/`_PAYLOAD_MAX_LEN` (도메인 제약 중 유일한 비명명 리터럴, `_MAX_NODE_NAME_LEN`/`_MAX_NOTE_LEN` 스타일 통일). 에러 메시지 f-string화. hybrid-tdd-architect audit 도출, 행위 불변 | v0.45 |
 
 ---
 
 ## 검증 상태
 
-- **138 tests passing** (v0.44 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
+- **138 tests passing** (v0.45 기준, 2026-06-13 실측 — 행위 기준 8파일 + tools/eval 보조)
+- **line coverage 96%** (v0.45 실측: `pytest --cov=src` — 520 stmts, 22 miss; 미스는 엔트리포인트·방어 분기)
 - `prepare_release.py` 6종 체크: source control / LOC limits / static analysis (ruff) /
   supply chain audit (pip-audit + SBOM) / test suite / MCP smoke test — 전부 PASS 실측
 - 미해소 부채는 PLAN.md §10 참조 (TD-6 배포 시 / 보류: TD-13)

@@ -1,8 +1,22 @@
 # dag-thinking 변경 이력 (Changelog)
 
-> v0.1 ~ v0.44 버전별 전체 이력. 최신 버전이 위에 온다.
+> v0.1 ~ v0.45 버전별 전체 이력. 최신 버전이 위에 온다.
 > 개선 항목 ID(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈)별 색인은 [IMPROVEMENTS.md](IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채 로드맵은 [PLAN.md](../PLAN.md)를 참조하세요.
+
+---
+
+## v0.45 (2026-06-13) — CLEAN-13 · hybrid-tdd-architect audit · 138 tests
+
+- **CLEAN-13** `think.py` payload 검증 매직넘버 → 명명 상수
+  - `_validate_think_inputs`의 payload 길이 검증(`< 80`, `> 1500`)이 도메인 제약 중 유일한 bare literal
+    (`node_name`/`note`/`depends_on`/`session_id`은 모두 `_MAX_*` 명명 상수 사용)
+  - `_PAYLOAD_MIN_LEN = 80` / `_PAYLOAD_MAX_LEN = 1500` 추출, 에러 메시지 f-string화 (값 단일 소스)
+  - 행위 불변 (138 green) — `test_payload_79/80/1500/1501`이 안전망
+- **아키텍처 감사** (hybrid-tdd-lifecycle-architect)
+  - line coverage 96% (520 stmts, 22 miss — 미스는 `server.py` main/resource 엔트리·방어 분기)
+  - Test-to-Code ~0.79:1 (deep modules — 96% 커버리지가 충분성 입증, "저비율=과소테스트" 가설 반증)
+  - Boundary Regression Index ~2 (이중 계층 검증: Pydantic 스키마 + 도메인, < 5 = 비치명적) → PLAN.md §9.3 등재
 
 ---
 

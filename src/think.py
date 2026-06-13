@@ -43,6 +43,8 @@ VALID_THOUGHT_TYPES = frozenset(
 _MAX_DEPENDS_ON = 20
 _MAX_NODE_NAME_LEN = 200
 _MAX_NOTE_LEN = 500
+_PAYLOAD_MIN_LEN = 80
+_PAYLOAD_MAX_LEN = 1500
 _PRESSURE_MEDIUM_TOKENS = 900
 _PRESSURE_HIGH_TOKENS = 1700
 
@@ -80,10 +82,10 @@ def _validate_think_inputs(
         raise ValueError(f"thought_type must be one of: {sorted(VALID_THOUGHT_TYPES)}")
     if not payload or not payload.strip():
         raise ValueError("payload cannot be blank or whitespace-only")
-    if len(payload) < 80:
-        raise ValueError("payload must be at least 80 characters")
-    if len(payload) > 1500:
-        raise ValueError("payload must be at most 1500 characters")
+    if len(payload) < _PAYLOAD_MIN_LEN:
+        raise ValueError(f"payload must be at least {_PAYLOAD_MIN_LEN} characters")
+    if len(payload) > _PAYLOAD_MAX_LEN:
+        raise ValueError(f"payload must be at most {_PAYLOAD_MAX_LEN} characters")
     if depends_on is not None and len(depends_on) > _MAX_DEPENDS_ON:
         raise ValueError(
             f"depends_on exceeds maximum of {_MAX_DEPENDS_ON} parents (got {len(depends_on)})"

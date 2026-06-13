@@ -242,7 +242,12 @@ uv run ruff check src/
 > 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.44 (2026-06-13) — 현재 버전 · CLEAN-12 · 138 tests
+### v0.45 (2026-06-13) — 현재 버전 · CLEAN-13 · 138 tests
+
+- **CLEAN-13** `think.py` payload 검증 매직넘버(80/1500) → `_PAYLOAD_MIN_LEN`/`_PAYLOAD_MAX_LEN` 명명 상수 — 도메인 제약 중 유일한 bare literal을 `_MAX_NODE_NAME_LEN`/`_MAX_NOTE_LEN`과 동일 스타일로 통일 (행위 불변)
+- **아키텍처 감사** (hybrid-tdd-lifecycle-architect) — line coverage 96%, Boundary Regression Index ~2. 이중 계층 검증(Pydantic 스키마 + 도메인)은 의도적 defense-in-depth로 [PLAN.md](PLAN.md) §9.3에 등재
+
+### v0.44 (2026-06-13) — CLEAN-12 · 138 tests
 
 - **CLEAN-12** `_action_think` `note=None` 정규화 버그 수정 — `_validate_think_inputs`의 지역 정규화가 호출자에게 미전파돼 DB에 `""` 아닌 `NULL` 저장되던 버그. `_action_think` 진입 시 직접 정규화 + dead code 제거 (138 tests 불변)
 
