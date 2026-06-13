@@ -56,7 +56,7 @@
   - tests-for-tests 0건 — 메타 테스트는 v0.19/v0.20/v0.23/v0.41에서 이미 소거, 현 스위트는 전부 공개 API 행위 검증
   - mcp-builder 품질 체크리스트 신규 위반 0건 (단일 툴 / annotations / TypedDict 출력 / Resource / info 진단 / ToolError isError 모두 충족)
   - **TD-14 신규**: `prepare_release.check_ruff`가 `src`만 린트 → `tests/`에 임포트 정렬 드리프트(`test_cleanup.py` I001) 축적
-  - pyproject 버전 0.45→0.48 인상 (서버 재기동 후 적용; uv.lock·설치본 동기화는 별도 관리)
+  - pyproject 버전 0.45 유지 (MCP 서버 연결 중 — editable 재설치 차단, 차기 재기동 시 인상)
 
 ---
 

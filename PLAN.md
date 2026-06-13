@@ -696,7 +696,7 @@ dag-thinking/
 
 ## 8. 검증 체크리스트 (구현 완료 후)
 
-> v0.32 행위 기준 8파일 스위트가 전 항목(C01~C66)을 커버 — 현행 138 tests 그린.
+> v0.32 행위 기준 8파일 스위트가 전 항목(C01~C66)을 커버 — 현행 139 tests 그린.
 
 ```
 [ 단일 진입점 ]
@@ -1003,7 +1003,7 @@ T-CL07. cleanup_if_needed가 삭제된 세션 수를 정확히 반환한다
 설계 문서 원문이 필요하면 headroom_retrieve(hash="{{DESIGN_DOC_HASH}}")로 가져오세요.
 
 ## 구현 경로
-D:\workspace\request-prompts\dag-thinking\
+D:\workspace\dag-thinking\
 
 ## 구현 순서 (sequential_think로 각 단계 시작 전 계획 수립)
 
@@ -1014,12 +1014,14 @@ sequential_think로 먼저 구현 계획 수립 후 작성.
 - compress() → (text, hash, tokens_saved) 반환
 - 주요 조건: 100자 미만 passthrough, 절약 <10% passthrough
 
-**Step 2 — server.py (DB + 헬퍼)**
+**Step 2 — 소스 파일 (DB + 헬퍼 + 비즈니스 로직)**
 sequential_think로 먼저 구현 계획 수립 후 작성.
-- init_db() — sessions, nodes, edges, ccr_store 4개 테이블
-- _db(), _ensure_session(), _has_cycle(), _cascade_invalidate()
+- `db.py` — init_db(), _db(), _ensure_session(), _load_forward_edges(), _has_cycle_graph(), _cascade_invalidate(), cleanup_if_needed()
+- `actions.py` — _action_status, _action_invalidate, _action_restore, _action_info, _restore_cmd, _compute_dag_health, _run_cleanup, call_dag_thinking dispatcher
+- `think.py` — _action_think, _validate_think_inputs, _compute_context_pressure, ThinkResult TypedDict
+- `server.py` — FastMCP 얇은 레이어, 단일 툴 dag_thinking, MCP Resource
 
-**Step 3 — server.py (단일 툴 dag_thinking)**
+**Step 3 — think.py / actions.py (액션별 구현)**
 sequential_think로 먼저 구현 계획 수립 후 작성.
 - action="think":
   - depends_on → parent_context 자동 내장

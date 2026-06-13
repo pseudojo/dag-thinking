@@ -5,7 +5,7 @@
 > 구현은 `src/` 5개 모듈 참조. 139 tests passing (v0.49 기준).
 >
 > **주**: 아래 표의 I/Q/P 시리즈를 검증하던 버전별 테스트 파일은 v0.32에서 행위 기준
-> 8개 파일로 재구성됐다 (PLAN.md §12). 각 항목의 행위는 신규 스위트가 계속 보장한다.
+> 8개 파일로 재구성됐다 (v0.32 Skeleton 재구성 — CHANGELOG.md v0.32 항목 참조). 각 항목의 행위는 신규 스위트가 계속 보장한다.
 
 ---
 
@@ -133,10 +133,10 @@
 | TD-3 `__all__` 제거 | server/actions 재수출 제거, 테스트 직접 import | v0.32 |
 | check_ruff | prepare_release §4.2-3 정적 분석 — 5종 체크 완성 | v0.32 |
 | TD-8 check_audit | §4.2-2 공급망 감사 — `uv export --frozen` + `uvx pip-audit`, CycloneDX SBOM, 6종 체크 | v0.33 |
-| 메타 테스트 정리 | §12.2-1 위반 재유입 2건 삭제(L5/R4) + 스테일 주석·dead param 제거 | v0.33 |
+| 메타 테스트 정리 | 메타 테스트(테스트를 위한 테스트) 재유입 2건 삭제(L5/R4) + 스테일 주석·dead param 제거 | v0.33 |
 | 외부 리뷰 triage | 4종 리뷰 판정(PLAN §14) — TD-11/12/13 등재, TD-9 재평가, 반박 근거·포지셔닝 명문화 | v0.34 |
 | ccr_hash 알고리즘 판정 | xxHash 제안 검토 — stdlib 14종+uuid+Ed25519 전수 실측, 현행 sha256[:24] 유지, revisit 트리거 명시 (PLAN §14.4) | v0.34 |
-| Skeleton 재검증 3차 | mcp-builder/Best Practices 재대조 신규 위반 0건 — §12.2-3 중복 통합(M0/M1→1건), think.py dead init 제거, README/LOC 스테일 정정 (PLAN §15) | v0.35 |
+| Skeleton 재검증 3차 | mcp-builder/Best Practices 재대조 신규 위반 0건 — 중복 통합(M0/M1→1건, prepare_release 테스트), think.py dead init 제거, README/LOC 스테일 정정 | v0.35 |
 | TD-10 pyproject 버전 동기화 | `pyproject.toml` 버전 0.30→0.35 인상 + `test_td10_version_matches_document_version` 버전 회귀 가드 추가 | v0.36 |
 | CLEAN-3 `_compute_dag_health` 이전 | `think.py` → `actions.py` 이전 — 정의 위치 = 사용 위치 (SRP 준수) | v0.36 |
 | TD-9 TypedDict 반환 타입 완비 | `ThinkResult` / `StatusResult` / `InvalidateResult` / `RestoreListResult` / `RestorePayloadResult` / `InfoResult` 6종 정의 | v0.36 |
