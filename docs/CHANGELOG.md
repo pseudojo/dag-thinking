@@ -1,13 +1,39 @@
 # dag-thinking 변경 이력 (Changelog)
 
-> v0.1 ~ v0.35 버전별 전체 이력. 최신 버전이 위에 온다.
+> v0.1 ~ v0.40 버전별 전체 이력. 최신 버전이 위에 온다.
 > 개선 항목 ID(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈)별 색인은 [IMPROVEMENTS.md](IMPROVEMENTS.md),
 > 설계 배경·스펙·기술 부채 로드맵은 [PLAN.md](../PLAN.md)를 참조하세요.
->
-> **주**: 패키지 버전(pyproject.toml)은 0.30 유지 중 — MCP 서버 프로세스의 exe 잠금 해제 시
-> 일괄 인상 예정 (PLAN.md §10 TD-10).
 
 ---
+
+## v0.40 (2026-06-13) — 주석·문서 정리 (코드 불변) · 132 tests
+
+- **CLEAN-8** `compressor.py` 스테일 역사 주석(`ContentRouter 유사`) 및 WHAT 인라인 주석 2건 추가 제거
+- **CLEAN-9** `actions.py` 섹션 헤더에서 이전 출처 칼러 참조 제거 (`moved from think.py — used only by _action_status`)
+- **DOC-3** PLAN.md 문서 제목 `v0.37` → `v0.39` 정정
+
+## v0.39 (2026-06-13) — CLEAN-6 · CLEAN-7 · 132 tests
+
+- **CLEAN-6** `RestorePayloadResult(TypedDict, total=False)` → `TypedDict`(total=True) + `warning: NotRequired[str]` — `node_name`·`original_payload`·`tokens` 3개 키 필수 정확화
+- **CLEAN-7** `compressor.py` WHAT 주석 4건 제거 (`_is_cjk_char` docstring, position bonus 설명, 가중치 변수명 설명, threshold 조건식 설명); WHY 주석 보존: `# \b\w+\b collapses an entire CJK run to one "word" — use char count instead`
+
+## v0.38 (2026-06-13) — CLEAN-4 · DOC-2 · 131 tests
+
+- **CLEAN-4** `ThinkResult(TypedDict, total=False)` → `TypedDict`(total=True) + `parent_context: NotRequired[dict]` — 7개 필수 키 타입체커 정확 인식
+- **DOC-2** `_validate_think_inputs` WHAT docstring 제거 (함수명·시그니처로 자명)
+
+## v0.37 (2026-06-13) — TD-11 해소 · 130 tests
+
+- **TD-11** `context_pressure` 압박 신호 전환: `COUNT(COMPLETED)` 노드 수 → `SUM(tokens_original)` 토큰 누적합
+- 임계값: `_PRESSURE_MEDIUM_TOKENS=900`, `_PRESSURE_HIGH_TOKENS=1700` (구 8/15 노드 기준 행위 보존)
+- 반환 키 `node_count` → `tokens_original`, 힌트 문구 "X nodes" → "accumulated X tokens"
+- `TestContextPressure` 4건 교체 (node_count 기반 → tokens_original 기반)
+
+## v0.36 (2026-06-13) — TD-9 · TD-10 · CLEAN-3 해소 · 130 tests
+
+- **TD-10** `pyproject.toml` 버전 `0.30` → `0.35` 인상 + `test_td10_version_matches_document_version` 추가 (버전 회귀 가드)
+- **CLEAN-3** `_compute_dag_health` `think.py` → `actions.py` 이전 — SRP 준수 (정의 위치 = 사용 위치)
+- **TD-9** TypedDict 반환 타입 완비 — `ThinkResult`(think.py) + `StatusResult`/`InvalidateResult`/`RestoreListResult`/`RestorePayloadResult`/`InfoResult`(actions.py)
 
 ## v0.35 (2026-06-13) — Skeleton 재검증 3차 · 129 tests
 
