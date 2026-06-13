@@ -55,7 +55,7 @@ _MAX_SESSION_ID_LEN = 200
 
 
 # ---------------------------------------------------------------------------
-# DAG health analysis (moved from think.py — used only by _action_status)
+# DAG health analysis
 # ---------------------------------------------------------------------------
 
 

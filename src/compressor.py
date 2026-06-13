@@ -47,7 +47,6 @@ IMPORTANCE_KEYWORDS = frozenset(
     }
 )
 
-# thought_type별 가중 키워드 — ContentRouter 유사 압축 특화
 # IMPORTANCE_KEYWORDS와 중복 없는 단어만 포함 (추가 정보량 확보)
 _TYPE_KEYWORDS: dict[str, frozenset] = {
     "Objective": frozenset({"goal", "aim", "target", "achieve", "scope", "purpose"}),
@@ -89,7 +88,7 @@ _TYPE_KEYWORDS: dict[str, frozenset] = {
 }
 
 _PASSTHROUGH_LEN = 100
-_SAVINGS_THRESHOLD = 0.10  # skip if savings < 10%
+_SAVINGS_THRESHOLD = 0.10
 _RATIO_TINY = 0.70  # 100–280 chars → keep 70%
 _RATIO_SHORT = 0.58  # 280–700 chars → keep 58%
 _RATIO_LONG = 0.42  # 700+ chars → keep 42%
