@@ -194,6 +194,7 @@ dag-thinking/
 │   ├── db.py            # DB 프리미티브 — 스키마, 연결, 그래프 유틸리티
 │   └── compressor.py    # 순수 Python extractive 압축기
 ├── tests/               # 행위 기준 8개 파일, 129 tests
+├── docs/                # CHANGELOG(버전 이력) · IMPROVEMENTS(개선 항목 색인) · MCP Best Practices
 ├── prepare_release.py   # 릴리스 검증 파이프라인 — git/LOC/ruff/pip-audit+SBOM/tests/MCP smoke
 └── pyproject.toml
 ```
@@ -235,121 +236,23 @@ uv run ruff check src/
 
 ## 변경 이력
 
-> v0.13 이후 전체 이력은 PLAN.md(버전 변경 내역 표)와 docs/IMPROVEMENTS.md를 참조하세요. 아래는 요약입니다.
+> 버전별 전체 이력은 [docs/CHANGELOG.md](docs/CHANGELOG.md),
+> 개선 항목(I/Q/R/P/BUG/SEC/PERF/TYPE/TD 시리즈) 색인은 [docs/IMPROVEMENTS.md](docs/IMPROVEMENTS.md),
+> 설계 배경·스펙·기술 부채는 [PLAN.md](PLAN.md)를 참조하세요. 아래는 요약입니다.
 
-### v0.35 (2026-06-13) — Skeleton 재검증 3차
+### v0.35 (2026-06-13) — 현재 버전 · Skeleton 재검증 3차
+
 - mcp-builder 스킬 + MCP Best Practices 전면 재대조 — **신규 표준 위반 0건** (PLAN.md §15)
 - 테스트를 위한 테스트 재감사 — §12.2-3 중복 1건 통합(prepare_release M0/M1 → 1건, 130→129 tests)
 - 소스 스켈레톤 정리 — `think.py` dead init(`delta=0`) 제거 (동작 불변)
 - 문서 스테일 정정 — README 폐기 경로(`test_server.py`) 교정, PLAN §6 LOC 실측 동기화
 
-### v0.34 (2026-06-12) — 외부 리뷰 triage (문서 리비전)
-- 외부 리뷰 4종 판정 (PLAN.md §14) — `context_pressure` 토큰 기반 전환(TD-11, 차기 최우선) 등 부채 3건 등재, TD-9 재평가
-- 포지셔닝 명문화: sequential-thinking의 **대체재가 아닌 보완재** — 노드 내부 추론 강제는 sequential-thinking, 세션 토폴로지·컨텍스트 관리(CCR)는 dag-thinking (병행 권장)
-- `ccr_hash` 알고리즘 리뷰 — xxHash·uuid·Ed25519 등 대안 전수 실측 후 현행 `sha256[:24]` 유지 판정 (PLAN.md §14.4)
+### 이전 버전 요약
 
-### v0.33 (2026-06-12) — 공급망 검증 (TD-8 해소)
-- `prepare_release.py`에 `check_audit` 추가 — `uvx pip-audit` 취약점 감사 + CycloneDX SBOM 생성 (§4.2-2), 6종 체크 완성
-- 프로젝트 의존성 불변 (`uvx` 격리 실행 — Lightweight 원칙 유지)
-- §12.2-1 위반 메타 테스트 재유입 2건 삭제(L5/R4) + 소스 스켈레톤 정리
-
-### v0.32 (2026-06-12) — Skeleton 재구성 (TDD)
-- 테스트 스위트를 버전 이력 기준 31파일(459 tests)에서 **행위 기준 8파일(128 tests)**로 재구성
-- 테스트를 위한 테스트 삭제 — 메타(ruff subprocess), 구현 세부(인덱스 존재·리네임 가드), 중복, 백컴팻 경유
-- `__all__` 재수출 제거 (TD-3 해소) — 테스트가 실제 정의 모듈에서 직접 import
-- `prepare_release.py`에 `check_ruff` 추가 — §4.2-3 정적 분석, 5종 체크 완성
-
-### v0.31 (2026-06-12) — MCP 표준 재리뷰 (문서 리비전)
-- mcp-builder 스킬 + MCP Best Practices 문서 전면 대조 리뷰 — 준수 현황 PLAN.md §9 갱신
-- docs/IMPROVEMENTS.md 전면 갱신 (미등재 시리즈 P/BUG/R/STYLE/QUAL 등재, TD-2 해소)
-- 잔여 부채: 공급망 감사+SBOM(TD-8), outputSchema(TD-9), Docker(TD-6), `__all__` 정리(TD-3)
-
-### v0.25 ~ v0.30 — MCP 프로토콜 표준 준수
-- `async def` 툴 + protocol-level isError (`ToolError`), 서버명 `dag_thinking_mcp`
-- MCP Resource `dag-thinking-session://{session_id}`, FastMCP instructions XML 시맨틱 태그
-- `action='info'` 진단 엔드포인트 (동적 버전), 3+1 파일 분리 (<500 LOC/파일)
-- `prepare_release.py` 릴리스 검증 파이프라인 — 459 tests
-
-### v0.13 ~ v0.24 — 입력 방어 / 압축 정확성 / 스키마 풍부화
-- 공백 전용 payload 차단, 길이 상한(note 500자), 엣지 인덱스 추가
-- `_split_sentences` 줄임표·약어 false-split 수정, 최소 보존 k=2
-- ToolAnnotations 4종 + 전 파라미터 Field 설명·제약, "Use when:" docstring 예시
-
-### v0.12
-- **I25**: `_is_cjk_char()` 헬퍼 추출 — `estimate_tokens`와 `_score_sentence` CJK 범위 정의 통일 (DRY)
-- **I28**: `_action_restore()` ccr_store+nodes 2-query → LEFT JOIN 1-query 통합
-- **I29**: `call_dag_thinking()` `depends_on` 중복 항목 순서 보존 제거
-- **I30**: `call_dag_thinking()` `session_id` 길이 상한 `_MAX_SESSION_ID_LEN=200` 추가
-- 282 tests passing
-
-### v0.11 (2026-06-10) — 트랜잭션 최적화 / CJK 안전성 / 스코어링 개선
-
-ruthless-code-critic 감사 기반 TDD 개선 (247 tests · 0 failures):
-
-- **I20** `session_total_saved` SELECT 트랜잭션 외부 이동 — PERF-2 원칙 완성. `_action_think`의 `with conn:` 블록 내에서 `UPDATE sessions` 이후 `SELECT tokens_saved`를 실행해 쓰기 락을 불필요하게 연장하던 구조 수정. `prev_session_total`을 `with conn:` 이전에 읽고 `session_total_saved = prev_session_total + delta`로 로컬 계산 교체
-- **I23** CJK Compatibility Ideographs 유니코드 이스케이프 교체 — `estimate_tokens()`의 `'豈' <= ch <= '﫿'` 리터럴 문자를 `'豈' <= ch <= '﫿'` 이스케이프로 교체. 소스 파일 인코딩 훼손 시 범위 경계 문자가 깨져 CJK 토큰 계산이 오작동할 위험 제거
-- **I24** `_score_sentence()` CJK-aware word_count — `re.findall(r"\b\w+\b")`가 CJK 연속 문자를 하나의 토큰으로 처리해 `word_count=1 < 5` → 전 CJK 문장에 균일 `-0.5` 패널티 부여하던 버그 수정. CJK 문자 비율 > 50% 시 CJK 문자 수를 `word_count` 대리값으로 사용, 짧은/긴 CJK 문장을 정확히 구분
-
-### v0.10 (2026-06-10) — 압축 품질 / 토큰 정확도 / 입력 방어
-
-ruthless-code-critic 감사 기반 TDD 개선 (231 tests · 0 failures):
-
-- **I21** `_join_sentences()` 추출 + `_compress_prose()` CJK 재결합 수정 — v0.9에서 CJK 문장 분리를 추가했으나 재결합은 여전히 `" ".join()` 사용. `"A。B。C。"` 압축 시 `"A。 B。 C。"` (원문에 없는 공백 삽입) 버그 수정. `_CJK_TERMINATORS = frozenset("。！？")`으로 종결자 감지 후 CJK 문장은 공백 없이, ASCII 문장은 공백으로 구분 결합
-- **I18** `estimate_tokens()` CJK 확장 범위 보완 — CJK Extension A (U+3400~U+4DBF, ~6,600자), CJK Compatibility Ideographs (U+F900~U+FAFF), CJK Extension B+ SMP (`ord(ch) >= 0x20000`) 미처리 문자들을 `non_cjk`(÷4)로 계산해 토큰 수 최대 8배 과소 산출하던 버그 수정
-- **I20** `session_total_saved` 회귀 안전성 — 기존 누적 계산 정확성 검증 테스트 3건 추가
-- **I22** `_validate_think_inputs()` `node_name` 길이 상한 — 무제한 길이 `node_name`으로 인한 잠재적 DoS 및 SQL 인덱스 비효율 차단. `_MAX_NODE_NAME_LEN = 200` 상수 도입, blank 검증 직후 길이 검증 실행
-
-### v0.9 (2026-06-10) — 압축 정확성 / 입력 방어
-
-ruthless-code-critic 감사 기반 TDD 개선 (208 tests · 0 failures):
-
-- **I12** `_split_sentences()` CJK 공백 없는 분리 — `r"(?<=[.!?。！？])\s+"` 패턴이 CJK 종결자 뒤 공백을 요구해 `"A。B。"` 형태를 1개 문장으로 처리하던 버그 수정. `r"(?<=[.!?])\s+|(?<=[。！？])"` 로 교정 — ASCII는 공백 필요, CJK는 종결자 자체로 즉시 분리
-- **I13** `_is_list_content()` middle dot 오탐 제거 — `·` (U+00B7)이 한국어 단어 구분자나 수학 점곱으로 사용되는 텍스트를 목록으로 오분류하던 문제. bullet 패턴에서 U+00B7 제거, `•` (U+2022)만 허용
-- **I17** `_validate_think_inputs()` `depends_on` 길이 상한 — `_resolve_parent_context`의 `IN (?, ...)` 파라미터가 SQLite 제한(999)을 초과할 수 있던 잠재적 `OperationalError`. `_MAX_DEPENDS_ON = 20` 상수 도입, 초과 시 즉시 `ValueError` 발생
-
-### v0.8 (2026-06-10) — 버그 수정 / 압축 품질
-
-ruthless-code-critic 감사 기반 TDD 개선 (194 tests · 0 failures):
-
-- **I09** `_compute_context_pressure()` 쓰기 트랜잭션 밖으로 이동 — `_action_think`의 PERF-2 원칙 완성. `with conn:` 블록 내에 남아있던 COUNT 읽기 쿼리를 커밋 후 실행으로 교정
-- **I10** `_compute_dag_health()` INVALIDATED 엣지 BFS 제외 — INVALIDATED 노드와 연결된 엣지가 `max_depth` / `orphan_nodes` 계산을 오염하는 버그 수정. COMPLETED 전용 서브그래프(양쪽 모두 COMPLETED인 엣지)만 사용
-- **I11** `_split_sentences()` 함수 추출 + 유니코드 문장 구분자 지원 — `_compress_prose` 내 인라인 분리 로직을 독립 함수로 추출. `r"(?<=[.!?。！？])\s+"` 패턴으로 한중일 구두점(。！？) 지원 추가
-
-### v0.7 (2026-06-09) — 성능 / 보안 / 타입 안전성
-
-ruthless-code-critic 감사 기반 TDD 개선 (181 tests · 0 failures):
-
-- **SEC-1** 세션 ID 정보 노출 차단 — `_action_restore`에서 타 세션 hash 조회 시 다른 세션의 ID를 에러 메시지에 포함하던 probe 쿼리 제거. `"Hash '...' not found in session '...'"` 형태로 통일
-- **PERF-1** `compress()` / `estimate_tokens()` DB 쓰기 락 밖으로 이동 — `_action_think`의 SHA-256 + 문장 스코어링 연산이 SQLite 쓰기 락을 불필요하게 점유하던 문제 해결
-- **PERF-2** `_action_status` / `_action_restore` 트랜잭션 범위 최소화 — `_ensure_session` 쓰기 1회만 `with conn:` 안에서 실행, 모든 읽기 쿼리를 트랜잭션 밖으로 이동
-- **TYPE-1** 타입 어노테이션 완성 — `_db() -> sqlite3.Connection`, `_compute_dag_health(node_rows: list[sqlite3.Row], edge_rows: list[sqlite3.Row])` 파라미터 타입 추가
-
-### v0.6 (2026-06-09) — 버그 수정 / 구조 정리
-
-ruthless-code-critic 감사 기반 TDD 개선 (173 tests · 0 failures):
-
-- **R-EDGE** 엣지 삭제 방향 버그 수정 — 노드 upsert 시 `DELETE WHERE parent=?` → `WHERE child=?`. 기존 코드는 노드를 업데이트할 때 자신의 자식 노드들의 부모 관계를 파괴해 cascade invalidate 경로를 끊는 버그가 있었음
-- **R-CCR** `ccr_store` 복합 PK 도입 — `hash TEXT PRIMARY KEY` → `PRIMARY KEY (hash, session_id)`. 두 세션이 동일 내용의 노드를 가질 때 `INSERT OR REPLACE`가 session_id를 덮어써서 한 세션의 restore를 파괴하는 충돌 버그 수정
-- **R-CCR** `INSERT OR REPLACE` → `INSERT OR IGNORE` + 고아 DELETE 제거 — 업데이트 시 기존 ccr 원본을 삭제하지 않아 content-addressed 보존 원칙 준수
-- **CLEAN-1** `_has_cycle()` 데드 코드 30줄 삭제 — v0.5 Q-2 리팩토링 이후 호출처 없는 함수
-- **CLEAN-2** 모듈 상수 순서 정규화 — `VALID_THOUGHT_TYPES`, `_PRESSURE_*`, `_NEXT_HINTS`를 첫 사용 함수 이전으로 이동
-
-### v0.5 (2026-06-09) — 내부 품질 개선
-
-ruthless-code-critic 감사 기반 TDD 개선 (165 tests · 0 failures):
-
-- **Q-1** `session_total_saved` 공식 버그 수정 — 노드 업데이트 시 `delta = new_saved − old_saved` (기존: `old_compressed` 기준으로 오차 발생)
-- **Q-2** edge 배치 조회 분리 — `_load_forward_edges` / `_has_cycle_graph` 신규 함수로 cycle check 루프의 N×DB 쿼리 → 1×DB 쿼리로 개선
-- **Q-3** SRP 적용 — `_validate_think_inputs` 독립 함수 추출, `_action_think` 책임 축소
-- **Q-4** import 가드 수정 — `from compressor import` → `from src.compressor import` (내부 ImportError 노출 방지)
-- **Q-5** dead fallback 제거 — `_NEXT_HINTS.get(thought_type, ...)` → `_NEXT_HINTS[thought_type]`
-- **Q-6** 스테일 주석 제거 — 태스크 트래킹 주석(`YELLOW_3`, `stub`) 완전 제거
-
-### v0.4 — I06/I07/I08
-- thought_type 키워드 가중치, context_pressure 경보, dag_health 수렴 진단
-
-### v0.3 — I03/I04/I05
-- invalidate 존재 검증, created_at 노출, next_hint 동적화
-
-### v0.2 — 통합 설계
-- 툴 5개 → 1개, 자동 resolve, 복원 매니페스트
+| 버전 구간 | 주요 내용 |
+|-----------|----------|
+| v0.31 ~ v0.34 | MCP 표준 재리뷰, 테스트 스위트 행위 기준 재구성(459→128 tests), 공급망 감사+SBOM(TD-8), 외부 리뷰 triage·`ccr_hash` 알고리즘 판정 |
+| v0.25 ~ v0.30 | MCP 프로토콜 표준 준수 — async+`ToolError`(protocol-level isError), MCP Resource, `action='info'`, 3+1 파일 분리, `prepare_release.py` |
+| v0.13 ~ v0.24 | 입력 방어·압축 정확성·MCP 스키마 풍부화 — ToolAnnotations 4종, 전 파라미터 Field 제약, `_split_sentences` false-split 수정 |
+| v0.5 ~ v0.12 | ruthless-code-critic 감사 사이클 — 엣지/CCR 버그 수정(R 시리즈), 성능(PERF)·보안(SEC-1)·CJK 안전성 |
+| v0.1 ~ v0.4 | 초기 설계 → 단일 툴 통합(v0.2), next_hint 동적화, `context_pressure`·`dag_health` 도입 |

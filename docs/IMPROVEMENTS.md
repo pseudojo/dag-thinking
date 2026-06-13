@@ -1,7 +1,8 @@
 # dag-thinking 개선 이력
 
 > v0.3 ~ v0.35 전체 개선 항목 등재 (v0.31 TD-2 해소 — 기존 미등재 시리즈 포함).
-> 상세 설계는 PLAN.md, 구현은 `src/` 5개 모듈 참조. 129 tests passing (v0.35 기준).
+> 상세 설계는 [PLAN.md](../PLAN.md), 버전별 변경 이력은 [CHANGELOG.md](CHANGELOG.md),
+> 구현은 `src/` 5개 모듈 참조. 129 tests passing (v0.35 기준).
 >
 > **주**: 아래 표의 I/Q/P 시리즈를 검증하던 버전별 테스트 파일은 v0.32에서 행위 기준
 > 8개 파일로 재구성됐다 (PLAN.md §12). 각 항목의 행위는 신규 스위트가 계속 보장한다.
@@ -122,7 +123,7 @@
 | FastMCP instructions | XML 시맨틱 태그 (`<use_case>`, `<important_notes>`) | v0.27–v0.28 |
 | 3-파일 분리 | db.py + actions.py + server.py (<500 LOC/파일) | v0.28 |
 | action='info' | §3.2 진단 엔드포인트 — 동적 버전(importlib.metadata) | v0.28–v0.29 |
-| think.py 추출 | actions.py 655→321 LOC | v0.29 |
+| think.py 추출 | actions.py 655→325 LOC (v0.30 import 정리 후 321) | v0.29 |
 | TD-5 ToolError | ValueError → `raise ToolError` → protocol-level isError | v0.30 |
 | TD-7 prepare_release.py | §4.2 릴리스 검증 — git/LOC/tests/smoke 4종 | v0.30 |
 | TD-4 import 정리 | `.compressor` 단일 relative import | v0.30 |
